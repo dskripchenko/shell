@@ -64,3 +64,31 @@ export function splitPathLine(text: string): { path: string; line?: number } {
   const m = /^(.*?)(?::(\d+))?(?::\d+)?$/.exec(text)!
   return { path: m[1]!, ...(m[2] ? { line: Number(m[2]) } : {}) }
 }
+
+/** A line of markdown as it reads: its marks (headings, lists, quotes, emphasis, links) taken off. */
+function plainLine(line: string): string {
+  return line
+    .replace(/^\s*(?:#{1,6}\s+|>\s*|[-*+]\s+(?:\[[ xX]\]\s+)?|\d+[.)]\s+)*/, '')
+    .replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/[*_~`]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+/**
+ * The line of a document's source where a shown text begins (1-based), or
+ * null: what was double-clicked in the rendered page, found in the source by
+ * its start, shorter and shorter, the marks of markdown left out.
+ */
+export function lineOfText(source: string, shown: string): number | null {
+  const text = shown.replace(/\s+/g, ' ').trim()
+  if (!text) return null
+  const lines = source.split('\n').map(plainLine)
+  for (const n of [80, 40, 20, 8]) {
+    const part = text.slice(0, n).trim()
+    if (part.length < Math.min(n, text.length) || !part) continue
+    const at = lines.findIndex((l) => l.includes(part))
+    if (at >= 0) return at + 1
+  }
+  return null
+}

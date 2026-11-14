@@ -7,6 +7,13 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added
+
+- Documents are edited in folio, shell's viewer only reads: Edit in folio in
+  the viewer's header, and a double click on a paragraph, a heading, an item
+  or a line of code opens the file in folio at that line (found by the
+  block's text in the source). Without folio, the system's program opens it.
+
 ## [0.4.0] - 2026-11-14
 
 Stage 3 begins: projects, git on the tabs, folio both ways, settings with fields.

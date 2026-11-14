@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { BookOpen, ExternalLink, X } from '@dskripchenko/ui/icons'
+import { ExternalLink, Pencil, X } from '@dskripchenko/ui/icons'
 import type { ViewerDoc } from '../../common/ipc'
+import { lineOfText, viewKind } from '../../common/viewer'
 import { api, say, shortPath, toFolio, ui } from '../store'
 import { currentTheme } from '../theme'
 
@@ -32,6 +33,24 @@ function send(): void {
   frame.value.contentWindow.postMessage({ type: 'show', name: d.name, base: d.base, url: d.url, text: d.text, size: d.size, theme: t.kind, background: t.background, foreground: t.foreground }, '*')
 }
 
+/**
+ * The document edited where it was double-clicked: in folio at that line when
+ * folio is there (shell's viewer only reads), else by the system's program.
+ * A code file is one block: its line is the place clicked; elsewhere the
+ * block's text is looked for in the source.
+ */
+function edit(text: string, index: number | null): void {
+  const d = doc.value
+  if (!d || d.text === null) return
+  if (!ui.folio) {
+    api.openPath(d.path)
+    return
+  }
+  const kind = viewKind(d.name, d.text).kind
+  const line = kind === 'code' && index !== null ? index + 1 : lineOfText(d.text, text)
+  toFolio({ file: { path: d.path, ...(line ? { line } : {}) } })
+}
+
 /** Only the viewer page is listened to: a link it was asked to follow. */
 function onMessage(e: MessageEvent): void {
   if (!frame.value || e.source !== frame.value.contentWindow || !e.data) return
@@ -40,6 +59,7 @@ function onMessage(e: MessageEvent): void {
     send()
     return
   }
+  if (e.data.type === 'edit' && doc.value) return edit(typeof e.data.text === 'string' ? e.data.text : '', typeof e.data.index === 'number' ? e.data.index : null)
   if (e.data.type !== 'link' || typeof e.data.href !== 'string' || !doc.value) return
   const href: string = e.data.href
   if (/^https?:\/\//.test(href) || href.startsWith('mailto:')) return api.openExternal(href)
@@ -65,7 +85,7 @@ watch(() => [ui.systemDark, ui.settings], send)
       <span class="changes-title">{{ doc?.name ?? 'Просмотр' }}</span>
       <span v-if="doc" class="changes-sub mono" :title="doc.path">{{ shortPath(doc.path.slice(0, doc.path.length - doc.name.length)) }}</span>
       <span class="changes-fill"></span>
-      <button v-if="doc && ui.folio" type="button" class="icon-button" aria-label="Открыть в folio" title="Открыть в folio" @click="toFolio({ file: { path: doc.path, ...(ui.viewer?.line ? { line: ui.viewer.line } : {}) } })"><BookOpen :size="14" aria-hidden="true" /></button>
+      <button v-if="doc && ui.folio" type="button" class="icon-button" aria-label="Править в folio" title="Править в folio (двойной щелчок по тексту — на этом месте)" @click="toFolio({ file: { path: doc.path, ...(ui.viewer?.line ? { line: ui.viewer.line } : {}) } })"><Pencil :size="14" aria-hidden="true" /></button>
       <button v-if="doc" type="button" class="icon-button" aria-label="Открыть программой системы" title="Открыть программой системы" @click="api.openPath(doc.path)"><ExternalLink :size="14" aria-hidden="true" /></button>
       <button type="button" class="icon-button" aria-label="Закрыть просмотр" title="Закрыть просмотр" @click="ui.viewer = null"><X :size="14" aria-hidden="true" /></button>
     </header>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { codeAsMarkdown, PATH_IN_OUTPUT, splitPathLine, viewKind } from '../../src/common/viewer'
+import { codeAsMarkdown, lineOfText, PATH_IN_OUTPUT, splitPathLine, viewKind } from '../../src/common/viewer'
 
 describe('what a file is shown as', () => {
   it('by its extension, and by its text for YAML and JSON', () => {
@@ -40,5 +40,18 @@ describe('paths in output, fast on any line', () => {
       expect(performance.now() - t).toBeLessThan(1000)
       expect(found.length).toBeGreaterThanOrEqual(0)
     }
+  })
+})
+
+describe('a shown text back to its line', () => {
+  it('finds where a block begins in the source, its marks left out', () => {
+    const src = '# The guide\n\nSome **bold** text and a [link](a.md)\nthat goes on.\n\n- [x] done item\n- `code` item\n\n```ts\nconst a = 1\n```\n'
+    expect(lineOfText(src, 'The guide')).toBe(1)
+    expect(lineOfText(src, 'Some bold text and a link that goes on.')).toBe(3)
+    expect(lineOfText(src, 'done item')).toBe(6)
+    expect(lineOfText(src, 'code item')).toBe(7)
+    expect(lineOfText(src, 'const a = 1')).toBe(10)
+    expect(lineOfText(src, 'not there at all')).toBeNull()
+    expect(lineOfText(src, '   ')).toBeNull()
   })
 })

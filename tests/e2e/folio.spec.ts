@@ -46,8 +46,24 @@ test('folio, when found: a file from the viewer at its line, a review of the rep
   await expect(link).toBeVisible()
   await link.click({ modifiers: [mac ? 'Meta' : 'Control'] })
   await expect(page.locator('.viewer .changes-title')).toHaveText('a.ts')
-  await page.locator('.viewer').getByRole('button', { name: 'Открыть в folio' }).click()
+  await page.locator('.viewer').getByRole('button', { name: 'Править в folio' }).click()
   await expect.poll(said).toContain(`${join(repo, 'src', 'a.ts')}:2\n`)
+  // A double click on a line of the code: edited in folio at that line.
+  const doc = page.frameLocator('.viewer-frame')
+  await doc.getByText('export const b = 3').dblclick()
+  await expect.poll(said).toContain(`${join(repo, 'src', 'a.ts')}:2\n`)
+  await doc.getByText('export const a = 1').dblclick()
+  await expect.poll(said).toContain(`${join(repo, 'src', 'a.ts')}:1\n`)
+
+  // Markdown: a paragraph double-clicked, found in the source by its text.
+  writeFileSync(join(repo, 'guide.md'), '# Guide\n\nFirst paragraph.\n\nThe **second** one, with a [link](a.md).\n')
+  await page.locator('.pane.focused .dsk-term').click()
+  await page.keyboard.type('echo "see guide.md"')
+  await page.keyboard.press('Enter')
+  await page.locator('.pane.focused .dsk-term-link', { hasText: 'guide.md' }).last().click({ modifiers: [mac ? 'Meta' : 'Control'] })
+  await expect(page.locator('.viewer .changes-title')).toHaveText('guide.md')
+  await doc.getByText('The second one').dblclick()
+  await expect.poll(said).toContain(`${join(repo, 'guide.md')}:5\n`)
 
   // The changes panel: the repository's review.
   await page.locator('.viewer').getByRole('button', { name: 'Закрыть просмотр' }).click()

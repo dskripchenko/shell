@@ -92,4 +92,22 @@ document.addEventListener('click', (e) => {
   window.parent.postMessage({ type: 'link', href: a.href }, '*')
 })
 
+// A double click: where, for the window to open the source there (in folio). The rendered
+// page does not say its source's lines: a block is told by its text, a line of code by its place.
+document.addEventListener('dblclick', (e) => {
+  const path = e.composedPath().filter((n): n is HTMLElement => n instanceof HTMLElement)
+  const pre = path.find((n) => n.tagName === 'PRE')
+  if (pre) {
+    const cs = getComputedStyle(pre)
+    const lh = parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.4
+    const top = pre.getBoundingClientRect().top + parseFloat(cs.paddingTop || '0')
+    const index = Math.max(0, Math.floor((e.clientY - top + pre.scrollTop) / lh))
+    const lines = (pre.textContent ?? '').split('\n')
+    window.parent.postMessage({ type: 'edit', text: lines[Math.min(index, lines.length - 1)] ?? '', index }, '*')
+    return
+  }
+  const block = path.find((n) => /^(P|LI|H[1-6]|TD|TH|BLOCKQUOTE|DT|DD)$/.test(n.tagName))
+  window.parent.postMessage({ type: 'edit', text: block?.textContent ?? '' }, '*')
+})
+
 window.parent.postMessage({ type: 'ready' }, '*')
