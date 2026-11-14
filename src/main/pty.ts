@@ -127,7 +127,13 @@ export class Ptys {
     private tailLimit: number,
     /** Where the shell integration's scripts are written. */
     private readonly scripts: string,
+    /** What every pane's shell is given to reach shell (shell-notify). */
+    private readonly paneEnv: (paneId: string, path: string | undefined) => Record<string, string> = () => ({}),
   ) {}
+
+  has(paneId: string): boolean {
+    return this.sessions.has(paneId)
+  }
 
   /** Output kept from before, put back as the pane's tail (it is saved again with what comes next). */
   seed(paneId: string, text: string): void {
@@ -148,7 +154,11 @@ export class Ptys {
       this.helperFixed = true
     }
     const base = opts.shell.program ? { file: opts.shell.program, args: opts.shell.args } : shellOf()
-    const env = { ...shellEnv(process.env, this.version), ...(opts.shell.env ?? {}) }
+    const own = { ...shellEnv(process.env, this.version), ...(opts.shell.env ?? {}) }
+    // PATH under the name the environment already has it (Windows often says Path).
+    const { PATH: panePath, ...paneVars } = this.paneEnv(paneId, own.PATH ?? own.Path)
+    const pathKey = own.PATH === undefined && own.Path !== undefined ? 'Path' : 'PATH'
+    const env: Record<string, string> = { ...own, ...paneVars, ...(panePath !== undefined ? { [pathKey]: panePath } : {}) }
     // The integration's marks and folder, where shell has a script for the shell.
     const launch = integrate(base.file, base.args, this.scripts, env)
     const shell = { file: base.file, args: launch?.args ?? base.args }

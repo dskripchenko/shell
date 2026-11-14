@@ -73,3 +73,20 @@ describe('what an agent is doing', () => {
     expect(strongest([null, undefined])).toBeNull()
   })
 })
+
+describe('an agent that says its turns itself', () => {
+  it('signals rule: quiet is not done, its screen does not make it work; done when it says so', () => {
+    let s = nextAgent(null, { kind: 'command', text: 'claude' }, 0, A)
+    s = nextAgent(s, { kind: 'signal', state: 'running' }, 10, A)
+    expect(s).toMatchObject({ status: 'running', precise: true })
+    expect(nextAgent(s, { kind: 'tick' }, 99_999, A)!.status).toBe('running')
+    s = nextAgent(s, { kind: 'signal', state: 'done' }, 20, A)
+    expect(nextAgent(s, { kind: 'output' }, 30, A)!.status).toBe('done')
+    s = nextAgent(s, { kind: 'signal', state: 'waiting', message: 'Claude needs your permission to use Bash' }, 40, A)
+    expect(s).toMatchObject({ status: 'waiting', message: 'Claude needs your permission to use Bash' })
+  })
+
+  it('a signal from a pane with no agent known yet makes one', () => {
+    expect(nextAgent(null, { kind: 'signal', state: 'waiting', agent: 'claude' }, 0, A)).toMatchObject({ name: 'claude', status: 'waiting', precise: true })
+  })
+})

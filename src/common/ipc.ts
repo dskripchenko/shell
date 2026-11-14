@@ -45,6 +45,10 @@ export interface ShellApi {
   onData(listener: (paneId: string, data: string) => void): void
   onExit(listener: (paneId: string, code: number) => void): void
   onEvents(listener: (paneId: string, events: ShellEvent[]) => void): void
+  /** An agent said what it is doing (shell-notify). */
+  onAgentSignal(listener: (signal: AgentSignal) => void): void
+  /** Claude Code's hooks for shell put in or taken out of ~/.claude/settings.json; what happened, in words. */
+  claudeHooks(on: boolean): Promise<string>
   onSettings(listener: (settings: Settings) => void): void
   /** A window-level command sent by the main process (the menu, the drop-down hotkey). */
   onCommand(listener: (command: string) => void): void
@@ -58,6 +62,13 @@ export interface ShellApi {
   /** The update put in place now: shell closes and starts again. */
   restartToUpdate(): void
   onUpdate(listener: (info: UpdateInfo) => void): void
+}
+
+export interface AgentSignal {
+  paneId: string
+  state: 'running' | 'waiting' | 'done'
+  agent?: string
+  message?: string
 }
 
 export type UpdateState =
@@ -88,6 +99,8 @@ export const IPC = {
   data: 'pty:data',
   exit: 'pty:exit',
   events: 'pty:events',
+  agentSignal: 'agent:signal',
+  claudeHooks: 'claude:hooks',
   saveWorkspace: 'session:save',
   settings: 'settings:changed',
   command: 'window:command',

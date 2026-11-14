@@ -68,6 +68,10 @@ export function onEvents(paneId: string, events: ShellEvent[]): void {
   }
 }
 
+export function onSignal(s: { paneId: string; state: 'running' | 'waiting' | 'done'; agent?: string; message?: string }): void {
+  apply(s.paneId, { kind: 'signal', state: s.state, agent: s.agent, message: s.message })
+}
+
 export function onOutput(paneId: string): void {
   if (ui.agents[paneId]) apply(paneId, { kind: 'output' })
 }

@@ -19,6 +19,8 @@ export interface AgentState {
   message?: string
   /** Its program ended: the shell's output after it is not the agent's. */
   ended?: boolean
+  /** It tells its turns itself (shell-notify, its hooks): quiet is not taken for done. */
+  precise?: boolean
 }
 
 export const DEFAULT_AGENTS = ['claude', 'codex', 'grok', 'gemini', 'aider', 'opencode', 'cursor-agent', 'amp', 'qwen', 'goose']
@@ -58,6 +60,8 @@ export type AgentInput =
   | { kind: 'seen' }
   /** Time passing: a quiet agent's turn is done. */
   | { kind: 'tick' }
+  /** The agent said it itself (shell-notify, from its hooks). */
+  | { kind: 'signal'; state: 'running' | 'waiting' | 'done'; agent?: string; message?: string }
 
 /** The next state of a pane's agent after something happens in it; null: no agent there. */
 export function nextAgent(state: AgentState | null, input: AgentInput, now: number, agents: string[]): AgentState | null {
@@ -75,8 +79,9 @@ export function nextAgent(state: AgentState | null, input: AgentInput, now: numb
       return { ...state, status: 'waiting', message: input.kind === 'notify' ? input.text : state.message }
     case 'output':
       if (!state) return null
-      // A waiting agent redraws its question; only the person's answer moves it on.
-      if (state.status === 'waiting' || state.ended) return state
+      // A waiting agent redraws its question; only the person's answer moves it on. One that tells
+      // its turns itself is not moved by its screen.
+      if (state.status === 'waiting' || state.ended || state.precise) return state
       return { ...state, status: 'running', lastOutput: now }
     case 'input':
       if (!state || state.ended) return state
@@ -86,8 +91,12 @@ export function nextAgent(state: AgentState | null, input: AgentInput, now: numb
       if (state?.ended) return null
       return state && state.status === 'done' ? { ...state, status: 'idle' } : state
     case 'tick':
-      if (state && state.status === 'running' && now - state.lastOutput > QUIET_MS) return { ...state, status: 'done' }
+      if (state && !state.precise && state.status === 'running' && now - state.lastOutput > QUIET_MS) return { ...state, status: 'done' }
       return state
+    case 'signal': {
+      const base: AgentState = state && !state.ended ? state : { name: input.agent ?? 'agent', status: 'running', lastOutput: now }
+      return { ...base, status: input.state, precise: true, lastOutput: now, message: input.state === 'waiting' ? input.message : undefined }
+    }
   }
 }
 

@@ -3,7 +3,7 @@
  * and the menu run the same ones, and the user's keys name them.
  */
 import { activeGroup, activeTab, addGroup, addTab, closeGroup, closePane, closeTab, cycleGroup, cycleTab, findPane, focusSide, newWorkspace, selectGroup, splitPane, tabAt, toggleZoom, updateActiveTab, updateTab, type Workspace } from '../common/layout'
-import { api, baseName, commit, newId, ui, ws } from './store'
+import { api, baseName, commit, newId, say, ui, ws } from './store'
 import * as agents from './agents'
 import * as terminals from './terminals'
 
@@ -66,6 +66,8 @@ const list: Command[] = [
   { id: 'sidebar.toggle', group: 'Окно', title: 'Свернуть или развернуть панель групп', run: () => commit({ ...w(), sidebarCollapsed: !w().sidebarCollapsed }) },
   { id: 'config.open', group: 'Окно', title: 'Открыть config.toml', run: () => api.openConfig() },
   { id: 'data.open', group: 'Окно', title: 'Открыть папку данных shell-data', run: () => api.openDataDir() },
+  { id: 'claude.hooksOn', group: 'Агенты', title: 'Claude Code: точные статусы через хуки (~/.claude/settings.json)', run: () => void api.claudeHooks(true).then(say) },
+  { id: 'claude.hooksOff', group: 'Агенты', title: 'Claude Code: убрать хуки shell', run: () => void api.claudeHooks(false).then(say) },
   { id: 'update.check', group: 'Окно', title: 'Проверить обновления', run: () => api.checkUpdate() },
   { id: 'update.restart', group: 'Окно', title: 'Перезапустить и обновить', run: () => api.restartToUpdate() },
   { id: 'font.bigger', group: 'Окно', title: 'Крупнее шрифт', run: () => fontBy(1) },

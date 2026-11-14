@@ -14,6 +14,8 @@ import { Ptys } from './pty'
 import { SessionStore, type Bounds } from './session'
 import { SettingsStore } from './settings'
 import { Updater, type UpdateState } from './update'
+import { NotifyServer } from './notify'
+import { setClaudeHooks } from './claudeHooks'
 import type { UpdateInfo } from '../common/ipc'
 
 const DATA = dataDir({ env: process.env, platform: process.platform, execPath: process.execPath, packaged: app.isPackaged, cwd: process.cwd() })
@@ -98,6 +100,7 @@ function createHost(kind: Kind): Host {
       VERSION,
       tailLimit(s),
       join(DATA, 'shell-integration'),
+      (paneId, path) => notify.env(paneId, path, process.platform),
     ),
     workspace: session.workspace(),
     replay: s.config.scrollback.restore ? session.readScrollback() : {},
@@ -261,6 +264,19 @@ ipcMain.on(IPC.openExternal, (_e, url: unknown) => {
 ipcMain.on(IPC.openConfig, () => void electronShell.openPath(settings.configFile))
 ipcMain.on(IPC.openDataDir, () => void electronShell.openPath(DATA))
 
+// Agents' signals (shell-notify) ---------------------------------------------------------------
+
+const notify = new NotifyServer(join(DATA, 'bin'), (s) => {
+  for (const host of hosts.values()) {
+    if (!host.ptys.has(s.paneId)) continue
+    send(host, IPC.agentSignal, s)
+    return true
+  }
+  return false
+})
+
+ipcMain.handle(IPC.claudeHooks, (_e, on: unknown) => setClaudeHooks(join(homedir(), '.claude', 'settings.json'), on === true))
+
 // Updates ----------------------------------------------------------------------------------
 
 // Checked and applied only in a packaged build (SHELL_UPDATE_URL points a development build at a test feed).
@@ -325,8 +341,13 @@ app.on('second-instance', () => {
   }
 })
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   if (E2E) app.dock?.hide()
+  try {
+    await notify.start()
+  } catch {
+    // No local port: agents' signals do not reach shell; the rest works.
+  }
   settings = new SettingsStore(DATA, (s) => {
     quakeErrors = registerQuake()
     for (const host of hosts.values()) {
@@ -365,6 +386,7 @@ app.on('window-all-closed', () => {
 })
 
 app.on('will-quit', () => {
+  notify.close()
   globalShortcut.unregisterAll()
   settings?.close()
   for (const host of hosts.values()) host.ptys.killAll()

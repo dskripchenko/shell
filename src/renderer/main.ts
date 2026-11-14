@@ -38,6 +38,7 @@ async function start(): Promise<void> {
     agents.onEvents(paneId, events)
     if (events.some((e) => e.kind === 'prompt')) agents.onPrompt(paneId)
   })
+  api.onAgentSignal((s) => agents.onSignal(s))
   onCommit((next) => agents.prune(next))
   setInterval(agents.tick, 1000)
   agents.setShowPane((paneId) => {

@@ -50,11 +50,21 @@ export const ui = reactive({
   chain: '',
   notices: [] as string[],
   update: null as UpdateInfo | null,
+  /** A short message in the status bar, gone after a while. */
+  message: '',
   /** The agent in each pane that runs one. */
   agents: {} as Record<string, AgentState>,
   /** A tab being dragged, to be dropped on a group. */
   draggingTab: null as string | null,
 })
+
+let messageTimer: number | undefined
+
+export function say(text: string): void {
+  ui.message = text
+  window.clearTimeout(messageTimer)
+  messageTimer = window.setTimeout(() => (ui.message = ''), 8000)
+}
 
 export function newId(): string {
   return crypto.randomUUID().replace(/-/g, '').slice(0, 16)
