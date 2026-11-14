@@ -28,6 +28,8 @@ export interface Config {
   agents: { commands: string[]; notify: boolean }
   /** folio: where it is when not found by itself ('' — found by itself); `enabled = false` hides it. */
   folio: { path: string; enabled: boolean }
+  /** macOS: Secure Keyboard Entry — other programs cannot read the keys typed in shell. */
+  security: { secureKeyboard: boolean }
   /** Keys of the user's own: `"cmd+t" = "tab.new"`, `"cmd+k" = "none"`. */
   keys: Record<string, string>
   profiles: Record<string, Profile>
@@ -43,6 +45,7 @@ export const DEFAULTS: Config = {
   updates: { auto: true },
   agents: { commands: [...DEFAULT_AGENTS], notify: true },
   folio: { path: '', enabled: true },
+  security: { secureKeyboard: false },
   keys: {},
   profiles: {},
 }
@@ -103,6 +106,10 @@ export const DEFAULT_TEXT = `# Настройки shell. Файл перечит
 # path = ""
 # enabled = true
 
+[security]
+# macOS: защищённый ввод (Secure Keyboard Entry) — другие программы не видят набираемые клавиши.
+# secure-keyboard = false
+
 [keys]
 # Свои сочетания: команда на клавиши, "none" — снять.
 # "cmd+k" = "palette.open"
@@ -125,7 +132,7 @@ export interface ConfigResult {
 
 type Kind = 'string' | 'number' | 'boolean' | 'strings'
 
-const FIELDS: Record<string, Record<string, { key: string; kind: Kind; min?: number; max?: number }>> = {
+export const FIELDS: Record<string, Record<string, { key: string; kind: Kind; min?: number; max?: number }>> = {
   font: { family: { key: 'family', kind: 'string' }, size: { key: 'size', kind: 'number', min: 6, max: 72 }, 'line-height': { key: 'lineHeight', kind: 'number', min: 0.8, max: 3 } },
   theme: { name: { key: 'name', kind: 'string' }, light: { key: 'light', kind: 'string' }, dark: { key: 'dark', kind: 'string' } },
   shell: { program: { key: 'program', kind: 'string' }, args: { key: 'args', kind: 'strings' } },
@@ -135,6 +142,7 @@ const FIELDS: Record<string, Record<string, { key: string; kind: Kind; min?: num
   updates: { auto: { key: 'auto', kind: 'boolean' } },
   agents: { commands: { key: 'commands', kind: 'strings' }, notify: { key: 'notify', kind: 'boolean' } },
   folio: { path: { key: 'path', kind: 'string' }, enabled: { key: 'enabled', kind: 'boolean' } },
+  security: { 'secure-keyboard': { key: 'secureKeyboard', kind: 'boolean' } },
 }
 
 const PROFILE_FIELDS: Record<string, Kind | 'table'> = { program: 'string', args: 'strings', env: 'table', cwd: 'string', theme: 'string' }
@@ -229,4 +237,51 @@ export function parseConfig(text: string): ConfigResult {
     }
   }
   return { config, errors }
+}
+
+/** A value as TOML writes it. */
+function tomlValue(value: string | number | boolean | string[]): string {
+  if (Array.isArray(value)) return `[${value.map((v) => JSON.stringify(v)).join(', ')}]`
+  return typeof value === 'string' ? JSON.stringify(value) : String(value)
+}
+
+/**
+ * The config's text with one setting set, the rest as it was — comments,
+ * order, the person's own lines: the line of the setting replaced, or written
+ * under its commented example, or under its section's header, or in a new
+ * section at the end.
+ */
+export function setConfigValue(text: string, section: string, key: string, value: string | number | boolean | string[]): string {
+  const lines = text.split('\n')
+  const line = `${key} = ${tomlValue(value)}`
+  const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\-]/g, '\\$&')
+  const header = lines.findIndex((l) => new RegExp(`^\\s*\\[${esc(section)}\\]\\s*(#.*)?$`).test(l))
+  if (header < 0) {
+    const body = text.endsWith('\n') || text === '' ? text : text + '\n'
+    return `${body}${body ? '\n' : ''}[${section}]\n${line}\n`
+  }
+  let end = lines.length
+  for (let i = header + 1; i < lines.length; i++) {
+    if (/^\s*\[/.test(lines[i]!)) {
+      end = i
+      break
+    }
+  }
+  const active = new RegExp(`^\\s*${esc(key)}\\s*=`)
+  const example = new RegExp(`^\\s*#\\s*${esc(key)}\\s*=`)
+  for (let i = header + 1; i < end; i++) {
+    if (active.test(lines[i]!)) {
+      lines[i] = lines[i]!.endsWith('\r') ? line + '\r' : line
+      return lines.join('\n')
+    }
+  }
+  let at = header + 1
+  for (let i = header + 1; i < end; i++) {
+    if (example.test(lines[i]!)) {
+      at = i + 1
+      break
+    }
+  }
+  lines.splice(at, 0, lines[header]!.endsWith('\r') ? line + '\r' : line)
+  return lines.join('\n')
 }

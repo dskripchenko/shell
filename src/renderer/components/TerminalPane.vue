@@ -11,7 +11,7 @@ const multiple = computed(() => props.tab.root.kind === 'split' && !props.tab.zo
 const exitCode = computed(() => ui.exited[props.paneId])
 
 function focusView(): void {
-  if (!ui.palette && !ui.dialog && !ui.find && !ui.worktree) terminals.get(props.paneId)?.view.focus()
+  if (!ui.palette && !ui.dialog && !ui.find && !ui.worktree && !ui.settingsOpen) terminals.get(props.paneId)?.view.focus()
 }
 
 onMounted(() => {
@@ -32,7 +32,7 @@ watch(focused, (now) => {
   if (now) void nextTick(focusView)
 })
 watch(
-  () => [ui.palette, ui.dialog, ui.find, ui.worktree] as const,
+  () => [ui.palette, ui.dialog, ui.find, ui.worktree, ui.settingsOpen] as const,
   ([palette, dialog, find]) => {
     if (!palette && !dialog && !find && focused.value) void nextTick(focusView)
   },

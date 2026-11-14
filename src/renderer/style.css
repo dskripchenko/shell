@@ -116,6 +116,14 @@ kbd:empty { display: none; }
 .dialog label, .dialog legend { font-size: 12px; color: var(--uid-text-secondary); }
 .dialog input { height: 32px; padding: 0 10px; border: 1px solid var(--uid-border-default); border-radius: var(--uid-radius-md); background: var(--uid-surface-base); color: var(--uid-text-primary); font: inherit; user-select: text; }
 .dialog select { height: 32px; padding: 0 8px; border: 1px solid var(--uid-border-default); border-radius: var(--uid-radius-md); background: var(--uid-surface-base); color: var(--uid-text-primary); font: inherit; }
+.settings { width: min(520px, 94vw); max-height: 86vh; }
+.settings-head { display: flex; align-items: center; justify-content: space-between; }
+.settings-body { display: flex; flex-direction: column; gap: 12px; overflow-y: auto; padding-right: 4px; }
+.settings fieldset { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 10px 12px 12px; border: 1px solid var(--uid-border-subtle); border-radius: var(--uid-radius-md); }
+.settings-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.settings-row > span { display: flex; flex-direction: column; gap: 6px; }
+.settings-check { display: flex; align-items: center; gap: 8px; color: var(--uid-text-primary) !important; font-size: 13px !important; }
+.status-secure { font-size: 11px; color: var(--uid-color-warning-text); }
 .dialog-error { font-size: 12px; color: var(--uid-color-danger-text); }
 .dialog-hint { font-size: 12px; color: var(--uid-text-secondary); }
 .dialog fieldset { border: 0; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }

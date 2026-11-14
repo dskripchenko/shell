@@ -113,6 +113,8 @@ export interface ShellApi {
   paste(): Promise<string>
   openExternal(url: string): void
   openConfig(): void
+  /** One setting written into config.toml (the rest of the file kept); the windows get it as from any edit. */
+  setSetting(section: string, key: string, value: string | number | boolean | string[]): Promise<{ ok: true } | { error: string }>
   openDataDir(): void
   updateState(): Promise<UpdateInfo>
   checkUpdate(): void
@@ -205,6 +207,7 @@ export const IPC = {
   paste: 'clipboard:paste',
   openExternal: 'open:external',
   openConfig: 'open:config',
+  setSetting: 'settings:set',
   openDataDir: 'open:data',
   updateState: 'update:state',
   updateCheck: 'update:check',

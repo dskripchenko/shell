@@ -63,6 +63,7 @@ const api: ShellApi = {
   paste: () => ipcRenderer.invoke(IPC.paste),
   openExternal: (url) => ipcRenderer.send(IPC.openExternal, url),
   openConfig: () => ipcRenderer.send(IPC.openConfig),
+  setSetting: (section, key, value) => ipcRenderer.invoke(IPC.setSetting, section, key, value),
   openDataDir: () => ipcRenderer.send(IPC.openDataDir),
   updateState: () => ipcRenderer.invoke(IPC.updateState),
   checkUpdate: () => ipcRenderer.send(IPC.updateCheck),

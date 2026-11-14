@@ -9,6 +9,7 @@ import FindBar from './components/FindBar.vue'
 import GroupsSidebar from './components/GroupsSidebar.vue'
 import NameDialog from './components/NameDialog.vue'
 import WorktreeDialog from './components/WorktreeDialog.vue'
+import SettingsDialog from './components/SettingsDialog.vue'
 import CommandPalette from './components/CommandPalette.vue'
 import PaneTree from './components/PaneTree.vue'
 import StatusBar from './components/StatusBar.vue'
@@ -39,7 +40,7 @@ const dim = computed(() => String(ui.settings?.config.window.dimInactive ?? 0.8)
           <span>Команды</span>
           <kbd>{{ keysOf('palette.open') }}</kbd>
         </button>
-        <button type="button" class="icon-button" :aria-label="`Настройки ${keysOf('config.open')}`" :title="`Настройки — config.toml ${keysOf('config.open')}`" @click="run('config.open')">
+        <button type="button" class="icon-button" :aria-label="`Настройки ${keysOf('settings.open')}`" :title="`Настройки ${keysOf('settings.open')}`" @click="run('settings.open')">
           <Settings2 :size="15" aria-hidden="true" />
         </button>
       </div>
@@ -59,5 +60,6 @@ const dim = computed(() => String(ui.settings?.config.window.dimInactive ?? 0.8)
     <CommandPalette v-if="ui.palette" />
     <NameDialog v-if="ui.dialog" />
     <WorktreeDialog v-if="ui.worktree" />
+    <SettingsDialog v-if="ui.settingsOpen" />
   </div>
 </template>

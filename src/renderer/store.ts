@@ -42,6 +42,7 @@ export const ui = reactive({
   /** The palette: everything, or only the projects (the switcher). */
   palette: false as false | 'all' | 'projects',
   projects: [] as Project[],
+  settingsOpen: false,
   /** Reviews waiting in folio for an agent, by repository: what folio said. */
   reviews: {} as Record<string, { message: string; roots: string[] }>,
   /** The new-worktree dialog, for the repository of a folder. */

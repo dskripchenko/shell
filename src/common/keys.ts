@@ -237,7 +237,7 @@ export function defaultBindings(platform: Platform): Binding[] {
     [mac ? 'cmd+=' : 'ctrl+=', 'font.bigger'],
     [mac ? 'cmd+-' : 'ctrl+-', 'font.smaller'],
     [mac ? 'cmd+0' : 'ctrl+0', 'font.reset'],
-    [mac ? 'cmd+,' : 'ctrl+,', 'config.open'],
+    [mac ? 'cmd+,' : 'ctrl+,', 'settings.open'],
   ]
   for (let i = 1; i <= 9; i++) {
     list.push([mac ? `cmd+${i}` : `alt+${i}`, `tab.select.${i}`])

@@ -4,7 +4,8 @@
  */
 import { existsSync, mkdirSync, readdirSync, readFileSync, watch, writeFileSync, type FSWatcher } from 'node:fs'
 import { join } from 'node:path'
-import { DEFAULT_TEXT, parseConfig } from '../common/config'
+import { DEFAULT_TEXT, FIELDS, parseConfig, setConfigValue } from '../common/config'
+import { writeAtomic } from './session'
 import type { Settings } from '../common/ipc'
 import { importThemes, type Theme } from '../common/themes'
 
@@ -45,6 +46,28 @@ export class SettingsStore {
     } catch {
       // No watching on this system: settings apply at the next start.
     }
+  }
+
+  /** One setting written into the file, checked as the file would be read; read again at once. */
+  set(section: string, key: string, value: unknown): { ok: true } | { error: string } {
+    const f = FIELDS[section]?.[key]
+    if (!f) return { error: `нет настройки [${section}] ${key}` }
+    const ok =
+      f.kind === 'strings' ? Array.isArray(value) && value.every((v) => typeof v === 'string') : typeof value === f.kind && (f.kind !== 'number' || Number.isFinite(value))
+    if (!ok) return { error: `[${section}] ${key}: не то значение` }
+    let text: string
+    try {
+      text = readFileSync(this.configFile, 'utf8')
+    } catch {
+      text = DEFAULT_TEXT
+    }
+    const next = setConfigValue(text, section, key, value as string | number | boolean | string[])
+    const errors = parseConfig(next).errors.filter((e) => e.startsWith(`[${section}] ${key}`))
+    if (errors.length) return { error: errors[0]! }
+    writeAtomic(this.configFile, next)
+    this.current = this.read()
+    this.onChange(this.current)
+    return { ok: true }
   }
 
   close(): void {

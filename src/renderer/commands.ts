@@ -87,7 +87,15 @@ const list: Command[] = [
   { id: 'project.save', group: 'Проекты', title: 'Сохранить группу как проект (раскладка и агенты)', run: () => void saveGroupAsProject() },
   { id: 'project.forget', group: 'Проекты', title: 'Убрать проект группы из списка', hidden: () => !ui.projects.some((p) => p.id === activeGroup(w()).project), run: forgetProject },
   { id: 'sidebar.toggle', group: 'Окно', title: 'Свернуть или развернуть панель групп', run: () => commit({ ...w(), sidebarCollapsed: !w().sidebarCollapsed }) },
+  { id: 'settings.open', group: 'Окно', title: 'Настройки', run: () => (ui.settingsOpen = !ui.settingsOpen) },
   { id: 'config.open', group: 'Окно', title: 'Открыть config.toml', run: () => api.openConfig() },
+  {
+    id: 'security.secureKeyboard', group: 'Окно', title: 'Защищённый ввод (Secure Keyboard Entry): включить или выключить', hidden: () => ui.os !== 'darwin',
+    run: () => {
+      const on = !ui.settings?.config.security.secureKeyboard
+      void api.setSetting('security', 'secure-keyboard', on).then((r) => say('error' in r ? r.error : on ? 'Защищённый ввод включён' : 'Защищённый ввод выключен'))
+    },
+  },
   { id: 'data.open', group: 'Окно', title: 'Открыть папку данных shell-data', run: () => api.openDataDir() },
   {
     id: 'commander.toggle', group: 'Файлы', title: 'Файловые панели (как в Midnight Commander)',

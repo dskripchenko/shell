@@ -24,6 +24,14 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   waiting in folio shown on the repository's tabs. On 127.0.0.1 under a
   token of its own (not the panes'), found through `shell-presence.json` in
   the user's runtime or temporary folder, removed on exit.
+- Settings with fields (Cmd/Ctrl+,): font, theme, scrollback, the drop-down
+  window, notifications, folio, updates — each change written into
+  `config.toml` at once, its comments and the person's own lines kept, and
+  applied as from any edit of the file. Profiles, keys and agents' commands
+  stay in the file (a button opens it).
+- Secure Keyboard Entry on macOS (settings, palette, `[security]
+  secure-keyboard`): while shell is in front, other programs cannot read the
+  keys typed; the status bar says when it is on.
 - A new worktree in a group of its own (palette): a new or existing branch,
   the folder beside the repository (`app-feature-x`), an agent started there
   if chosen.

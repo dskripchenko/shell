@@ -291,6 +291,21 @@ ipcMain.on(IPC.openExternal, (_e, url: unknown) => {
   if (typeof url === 'string' && /^(https?|mailto):/.test(url)) void electronShell.openExternal(url)
 })
 ipcMain.on(IPC.openConfig, () => void electronShell.openPath(settings.configFile))
+ipcMain.handle(IPC.setSetting, (_e, section: unknown, key: unknown, value: unknown) =>
+  typeof section === 'string' && typeof key === 'string' ? settings.set(section, key, value) : { error: 'нет настройки' },
+)
+
+/** macOS: Secure Keyboard Entry as the config says; elsewhere there is no such thing. */
+function applySecureKeyboard(active = !!BrowserWindow.getFocusedWindow()): void {
+  // Only while shell is in front, as Terminal.app does: secure input held in the background would take the keys from other programs' reach too.
+  if (process.platform === 'darwin') app.setSecureKeyboardEntryEnabled(active && settings.get().config.security.secureKeyboard)
+}
+app.on('did-become-active', () => {
+  if (settings) applySecureKeyboard(true)
+})
+app.on('did-resign-active', () => {
+  if (settings) applySecureKeyboard(false)
+})
 ipcMain.on(IPC.openDataDir, () => void electronShell.openPath(DATA))
 
 // Agents' signals (shell-notify) ---------------------------------------------------------------
@@ -533,7 +548,7 @@ function buildMenu(): void {
   }
   const template: Electron.MenuItemConstructorOptions[] = [
     ...(PLATFORM === 'mac'
-      ? [{ label: 'shell', submenu: [{ role: 'about' as const }, { type: 'separator' as const }, { label: 'Настройки…', click: command('config.open') }, { type: 'separator' as const }, { role: 'hide' as const }, { role: 'hideOthers' as const }, { role: 'unhide' as const }, { type: 'separator' as const }, { role: 'quit' as const }] }]
+      ? [{ label: 'shell', submenu: [{ role: 'about' as const }, { type: 'separator' as const }, { label: 'Настройки…', click: command('settings.open') }, { type: 'separator' as const }, { role: 'hide' as const }, { role: 'hideOthers' as const }, { role: 'unhide' as const }, { type: 'separator' as const }, { role: 'quit' as const }] }]
       : []),
     { label: 'Окно', submenu: [{ role: 'minimize' }, { role: 'zoom' }, { role: 'togglefullscreen' }, { type: 'separator' }, { label: 'Инструменты разработчика', role: 'toggleDevTools' }] },
   ]
@@ -560,6 +575,7 @@ app.whenReady().then(async () => {
     // No local port: agents' signals do not reach shell; the rest works.
   }
   settings = new SettingsStore(DATA, (s) => {
+    applySecureKeyboard()
     quakeErrors = registerQuake()
     for (const host of hosts.values()) {
       host.ptys.setTailLimit(tailLimit(s))
@@ -567,6 +583,7 @@ app.whenReady().then(async () => {
     }
   })
   settings.watch()
+  applySecureKeyboard()
   buildMenu()
   mainHost = createHost('main')
   quakeErrors = registerQuake()
