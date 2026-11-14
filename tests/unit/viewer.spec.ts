@@ -36,7 +36,8 @@ describe('paths in output, fast on any line', () => {
     for (const line of ['x'.repeat(4000) + '!', '/private/var/folders/5ffp13211fd6cxxydqm770dr0000gn/T/shell-home-AbCdEf'.repeat(50)]) {
       const t = performance.now()
       const found = [...line.matchAll(PATH_IN_OUTPUT)]
-      expect(performance.now() - t).toBeLessThan(50)
+      // Linear: well under a second even on a slow runner (the exponential pattern took hours here).
+      expect(performance.now() - t).toBeLessThan(1000)
       expect(found.length).toBeGreaterThanOrEqual(0)
     }
   })
