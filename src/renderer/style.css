@@ -87,6 +87,8 @@ kbd:empty { display: none; }
 .split.column > .divider { height: 1px; cursor: row-resize; }
 .divider:hover { background: var(--uid-accent); }
 .pane { position: relative; flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; background: var(--term-bg); }
+.pane.broadcast { box-shadow: inset 0 0 0 1px var(--uid-color-warning-text); }
+.status-broadcast { border: 0; background: var(--uid-color-warning-subtle); color: var(--uid-color-warning-text); font: inherit; font-size: 11px; padding: 0 6px; border-radius: var(--uid-radius-sm); cursor: pointer; }
 .pane.dimmed .pane-slot { opacity: var(--dim, 0.8); }
 .pane-slot { flex: 1; min-height: 0; display: flex; }
 .term-host { flex: 1; min-width: 0; min-height: 0; padding-top: 6px; user-select: text; }

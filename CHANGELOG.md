@@ -7,6 +7,14 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added
+
+- Input to every pane at once (Broadcast Input): Cmd+Alt+I (Ctrl+Shift+Alt+I
+  elsewhere) sends what is typed in a pane to every pane of its tab; the
+  palette has it for the whole group too. The panes it reaches are outlined,
+  the status bar says it is on and turns it off. Only what the person types
+  or pastes goes — not the terminal's answers to a program, not the mouse.
+
 ## [0.6.0] - 2026-11-14
 
 Stage 3 closes: the rest shared with folio.

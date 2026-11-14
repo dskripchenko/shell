@@ -4,7 +4,7 @@
  * place the layout gives it, and out again when its tab is hidden.
  */
 import { Terminal, TerminalView, type TerminalViewOptions } from '@dskripchenko/terminal'
-import { allPanes, findPane, type PaneLeaf, type Workspace } from '../common/layout'
+import { activeGroup, activeTab, allPanes, findPane, panes, type PaneLeaf, type Workspace } from '../common/layout'
 import { api, ui, ws } from './store'
 import * as agents from './agents'
 import { allThemes, currentTheme } from './theme'
@@ -17,6 +17,8 @@ interface Entry {
   view: TerminalView
   host: HTMLDivElement
   exited: boolean
+  /** The person types in it now (see `typing`). */
+  typing?: boolean
 }
 
 const entries = new Map<string, Entry>()
@@ -70,6 +72,32 @@ function spawn(entry: Entry, cwd?: string): void {
   })
 }
 
+/** The person types in this pane now (until the event is done). */
+export function typing(entry: Entry): void {
+  entry.typing = true
+  setTimeout(() => (entry.typing = false), 0)
+}
+
+/** With broadcasting on, what is typed in a pane goes to the other panes of its tab or group as well. */
+function broadcastFrom(paneId: string, data: string): void {
+  for (const id of broadcastTargets()) {
+    if (id === paneId) continue
+    const e = entries.get(id)
+    if (!e || e.exited) continue
+    agents.onInput(id, data)
+    api.write(id, data)
+  }
+}
+
+/** The panes broadcasting reaches now: the active tab's, or the active group's. */
+export function broadcastTargets(): string[] {
+  const w = ws.value
+  if (!ui.broadcast || !w) return []
+  const g = activeGroup(w)
+  const tabs = ui.broadcast === 'tab' ? [activeTab(g)] : g.tabs
+  return tabs.flatMap((t) => panes(t.root).map((p) => p.id))
+}
+
 function create(pane: PaneLeaf, replay?: string): Entry {
   const term = new Terminal({ scrollback: ui.settings?.config.scrollback.lines ?? 10000 })
   const host = document.createElement('div')
@@ -77,9 +105,12 @@ function create(pane: PaneLeaf, replay?: string): Entry {
   host.dataset.pane = pane.id
   const entry: Entry = { id: pane.id, profile: pane.profile, term, view: new TerminalView(term, host, options(pane.id, pane.profile)), host, exited: false }
   entries.set(pane.id, entry)
+  // What the person types here (keys, text, a paste) — not the terminal's own answers to the program — is told apart for broadcasting.
+  for (const type of ['keydown', 'beforeinput', 'input', 'paste', 'compositionend']) host.addEventListener(type, () => typing(entry), true)
   term.onData((data) => {
     if (!entry.exited) {
       agents.onInput(pane.id, data)
+      if (entry.typing) broadcastFrom(pane.id, data)
       return api.write(pane.id, data)
     }
     // A shell that ended with an error waits: Enter starts it again.

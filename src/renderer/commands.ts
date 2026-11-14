@@ -68,6 +68,11 @@ async function folioRepo(kind: 'review' | 'project'): Promise<void> {
   toFolio(kind === 'review' ? { review: repo } : { project: repo ?? cwd })
 }
 
+function toggleBroadcast(scope: 'tab' | 'group'): void {
+  ui.broadcast = ui.broadcast === scope ? null : scope
+  say(ui.broadcast ? `Ввод уходит во все панели ${scope === 'tab' ? 'вкладки' : 'группы'}` : 'Ввод — только в активную панель')
+}
+
 function fontBy(delta: number | null): void {
   ui.fontDelta = delta === null ? 0 : Math.max(-6, Math.min(24, ui.fontDelta + delta))
   terminals.restyle()
@@ -83,6 +88,8 @@ const list: Command[] = [
       void api.changesBaseline(cwd, 'head').then((b) => (b ? (ui.worktree = { cwd, root: b.root }) : say('Папка панели — не репозиторий git')))
     },
   },
+  { id: 'input.broadcastTab', group: 'Терминал', title: 'Ввод во все панели вкладки: включить или выключить', run: () => toggleBroadcast('tab') },
+  { id: 'input.broadcastGroup', group: 'Терминал', title: 'Ввод во все панели группы: включить или выключить', run: () => toggleBroadcast('group') },
   { id: 'project.switch', group: 'Проекты', title: 'Проекты: открыть или перейти', run: () => (ui.palette = ui.palette === 'projects' ? false : 'projects') },
   { id: 'project.save', group: 'Проекты', title: 'Сохранить группу как проект (раскладка и агенты)', run: () => void saveGroupAsProject() },
   { id: 'project.forget', group: 'Проекты', title: 'Убрать проект группы из списка', hidden: () => !ui.projects.some((p) => p.id === activeGroup(w()).project), run: forgetProject },
@@ -165,6 +172,7 @@ const list: Command[] = [
         if (!e || !text) return
         e.view.clearSelection()
         e.view.scrollToBottom()
+        terminals.typing(e)
         e.term.paste(text)
       })
     },

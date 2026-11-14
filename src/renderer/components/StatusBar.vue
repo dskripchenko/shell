@@ -45,6 +45,7 @@ const problems = computed(() => [...(ui.settings?.errors ?? []), ...(ui.settings
     <span v-if="ui.chain" class="status-chain" aria-live="polite">{{ ui.chain }} …</span>
     <span v-if="agentsNote" class="status-agents" aria-live="polite">{{ agentsNote }}</span>
     <span v-if="ui.message" class="status-message" role="status">{{ ui.message }}</span>
+    <button v-if="ui.broadcast" type="button" class="status-broadcast" title="Выключить" @click="ui.broadcast = null">Ввод во все панели {{ ui.broadcast === 'tab' ? 'вкладки' : 'группы' }}</button>
     <span class="status-fill"></span>
     <span v-if="ui.os === 'darwin' && ui.settings?.config.security.secureKeyboard" class="status-secure" title="Защищённый ввод: другие программы не видят набираемые клавиши">Защищённый ввод</span>
     <button v-if="problems.length" type="button" class="status-problem" :title="problems.join('\n')" @click="api.openConfig()">

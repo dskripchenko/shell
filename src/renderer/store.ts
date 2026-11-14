@@ -43,6 +43,8 @@ export const ui = reactive({
   palette: false as false | 'all' | 'projects',
   projects: [] as Project[],
   settingsOpen: false,
+  /** Input typed in a pane goes to the others of its tab or of its group too (Broadcast Input). */
+  broadcast: null as null | 'tab' | 'group',
   /** Reviews waiting in folio for an agent, by repository: what folio said. */
   reviews: {} as Record<string, { message: string; roots: string[] }>,
   /** The new-worktree dialog, for the repository of a folder. */
