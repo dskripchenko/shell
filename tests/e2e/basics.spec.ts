@@ -67,10 +67,14 @@ test('a shell runs; panes split and close; tabs and groups; the palette in any l
   await expect(page.locator('.tab')).toHaveCount(2)
   await expect(page.locator('.tab-name').first()).toHaveText('сервер')
   await expect(page.locator('.pane')).toHaveCount(2)
-  // The output from before the restart, set apart, in the pane it was in.
-  const all = () => page.evaluate(() => document.body.innerText)
-  await expect.poll(all).toContain('вывод до перезапуска')
-  await expect.poll(all).toContain('hello-42')
+  // The output from before the restart, set apart, in the scrollback of the pane it was in.
+  const history = () =>
+    page.evaluate(() => {
+      for (const el of document.querySelectorAll('.dsk-term')) el.scrollTop = 0
+      return new Promise<string>((done) => requestAnimationFrame(() => requestAnimationFrame(() => done(document.body.innerText))))
+    })
+  await expect.poll(history).toContain('hello-42')
+  await expect.poll(history).toContain('вывод до перезапуска')
   await app.close()
 })
 

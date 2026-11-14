@@ -18,8 +18,14 @@ interface Entry {
 
 const entries = new Map<string, Entry>()
 
-/** A pane's output from before the restart, set apart from what the new shell writes. */
-const RESTORED = '\x1b[0m\x1b[?1049l\x1b[?25h\r\n\x1b[2m── вывод до перезапуска ──\x1b[0m\r\n'
+/**
+ * A pane's output from before the restart, set apart from what the new shell
+ * writes and scrolled up into the scrollback: a shell that clears the screen
+ * as it starts (ConPTY on Windows does) cannot wipe it.
+ */
+function restored(rows: number): string {
+  return '\x1b[0m\x1b[?1049l\x1b[?25h\r\n\x1b[2m── вывод до перезапуска ──\x1b[0m' + '\r\n'.repeat(Math.max(1, rows))
+}
 
 function options(id: string): TerminalViewOptions {
   const c = ui.settings?.config
@@ -62,7 +68,7 @@ function create(pane: PaneLeaf, replay?: string): Entry {
   })
   term.onTitle((title) => (ui.titles[pane.id] = title))
   term.onCwd((cwd) => (ui.cwds[pane.id] = cwd))
-  if (replay) term.write(replay + RESTORED)
+  if (replay) term.write(replay + restored(term.rows))
   spawn(entry, pane.cwd)
   return entry
 }
