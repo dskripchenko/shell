@@ -114,6 +114,7 @@ const list: Command[] = [
     when: () => ui.commander || terminals.get(focusedPane())?.term.buffer !== terminals.get(focusedPane())?.term.alt,
     run: () => (ui.commander = !ui.commander),
   },
+  { id: 'tree.toggle', group: 'Окно', title: 'Дерево проекта: показать или скрыть', run: () => (ui.treeOpen = !ui.treeOpen) },
   { id: 'changes.toggle', group: 'Агенты', title: 'Изменения агента: показать или скрыть', run: () => (ui.changesOpen = !ui.changesOpen) },
   { id: 'claude.hooksOn', group: 'Агенты', title: 'Claude Code: точные статусы через хуки (~/.claude/settings.json)', run: () => void api.claudeHooks(true).then(say) },
   { id: 'claude.hooksOff', group: 'Агенты', title: 'Claude Code: убрать хуки shell', run: () => void api.claudeHooks(false).then(say) },

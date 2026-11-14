@@ -175,6 +175,16 @@ kbd:empty { display: none; }
 .status-message { color: var(--uid-accent-text); overflow: hidden; text-overflow: ellipsis; }
 
 /* The changes panel: files on top, the diff below, beside the panes. */
+.project-tree { width: 260px; flex: none; display: flex; flex-direction: column; min-height: 0; background: var(--uid-surface-base); border-right: 1px solid var(--uid-border-subtle); }
+.tree-list { flex: 1; min-height: 0; overflow: auto; padding: 4px 0; font-size: 12px; outline: none; }
+.tree-row { display: flex; align-items: center; gap: 4px; height: 22px; padding-right: 8px; white-space: nowrap; cursor: default; color: var(--uid-text-primary); }
+.tree-row:hover { background: color-mix(in srgb, var(--uid-text-primary) 5%, transparent); }
+.tree-list:focus .tree-row.current { background: var(--uid-accent-subtle); }
+.tree-row.current { background: color-mix(in srgb, var(--uid-text-primary) 8%, transparent); }
+.tree-row.hiddenFile { color: var(--uid-text-tertiary); }
+.tree-row.changed .tree-name { color: var(--uid-color-warning-text); }
+.tree-pad { width: 12px; flex: none; }
+.tree-name { overflow: hidden; text-overflow: ellipsis; }
 .changes { width: min(560px, 46vw); flex: none; display: flex; flex-direction: column; min-height: 0; background: var(--uid-surface-base); border-left: 1px solid var(--uid-border-subtle); }
 .changes-head { height: 38px; flex: none; display: flex; align-items: center; gap: 8px; padding: 0 8px 0 14px; border-bottom: 1px solid var(--uid-border-subtle); }
 .changes-title { font-weight: 600; }

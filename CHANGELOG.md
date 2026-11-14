@@ -9,6 +9,11 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- The project's tree beside the panes (Cmd+Shift+E, Ctrl+Shift+X
+  elsewhere): the focused pane's repository (or its folder), folders opened
+  as they are clicked, the files git sees changed — and the folders they are
+  in — marked. Enter or a double click shows a file in the viewer;
+  Cmd/Ctrl+Enter on a folder takes the pane there.
 - Finding files in the file panels (Alt+F7, as in MC): a name mask
   (`*.ts;*.vue`) and a text inside if wanted, from the panel's folder down
   (`.git` and `node_modules` passed over); Enter on a result takes the panel

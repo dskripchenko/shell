@@ -4,6 +4,7 @@ import { activeGroup, activeTab, findPane } from '../common/layout'
 import { Settings2, Search } from '@dskripchenko/ui/icons'
 import ChangesPanel from './components/ChangesPanel.vue'
 import ViewerPanel from './components/ViewerPanel.vue'
+import ProjectTree from './components/ProjectTree.vue'
 import FileCommander from './components/FileCommander.vue'
 import FindBar from './components/FindBar.vue'
 import GroupsSidebar from './components/GroupsSidebar.vue'
@@ -49,6 +50,7 @@ const dim = computed(() => String(ui.settings?.config.window.dimInactive ?? 0.8)
     </header>
     <div class="body">
       <GroupsSidebar v-if="!ui.quake" />
+      <ProjectTree v-if="ui.treeOpen && !ui.quake" />
       <main class="panes">
         <PaneTree :key="tab.id" :node="root" :tab="tab" :path="[]" />
         <FindBar v-if="ui.find" />

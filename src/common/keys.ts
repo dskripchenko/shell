@@ -227,6 +227,7 @@ export function defaultBindings(platform: Platform): Binding[] {
     ['ctrl+alt+left', 'group.prev'],
     [mac ? 'cmd+b' : 'ctrl+shift+b', 'sidebar.toggle'],
     [mac ? 'cmd+shift+g' : 'ctrl+shift+g', 'changes.toggle'],
+    [mac ? 'cmd+shift+e' : 'ctrl+shift+x', 'tree.toggle'],
     // As in Midnight Commander; a full-screen program (vim, less) keeps Ctrl+O for itself.
     ['ctrl+o', 'commander.toggle'],
     [mac ? 'cmd+k' : 'ctrl+shift+k', 'terminal.clear'],
