@@ -106,7 +106,7 @@ folio уже умеет: md с живыми блоками и их редакт�
 | «Ревью в folio»: рабочая копия репозитория или worktree | shell → folio | 2 | сделано: `--review` |
 | Комментарии ревью в консоль агента в shell | folio → shell | 3 | API shell готов: `POST /api/paste {repo, text}` |
 | «Открыть терминал здесь» в folio | folio → shell | 3 | API shell готов: `shell-presence.json`, `POST /api/open-tab {cwd, name?}` |
-| Агент ждёт ответа по MCP `show_changes` → бейдж в shell | folio → shell | 3 | API shell готов: `POST /api/review {repo, state: waiting|none, message?}` |
+| Агент ждёт ответа по MCP `show_changes` → бейдж в shell | folio → shell | 3 | API shell готов: `POST /api/review {repo, state: waiting или none, message?}` |
 | Кто из агентов что правил | общий | 3 | единый формат событий и один хук на двоих |
 | Общие темы, цвета групп, список проектов, хоткеи | общий | 3 | общий формат или импорт |
 
