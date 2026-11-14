@@ -7,6 +7,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-14
+
+Stage 3 begins: projects, git on the tabs, folio both ways, settings with fields.
+
 ### Added
 
 - Projects: a group saved as a project (Save group as project in the
