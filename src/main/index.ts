@@ -18,6 +18,7 @@ import { NotifyServer } from './notify'
 import { copyInto, listDir, makeDir, moveInto, moveTo, readHead, type OpResult } from './files'
 import { dirname, isAbsolute, resolve as resolvePath } from 'node:path'
 import { SCHEME, ViewerFiles } from './viewer'
+import { remoteFetch, remoteGet, remoteHome, remoteList, remoteMkdir, remotePut, remoteRemove, remoteRename, sshHosts } from './remote'
 import { setClaudeHooks } from './claudeHooks'
 import { changedFiles, fileDiff, headBaseline, repoRoot, takeBaseline, type Baseline } from './changes'
 import type { UpdateInfo } from '../common/ipc'
@@ -368,6 +369,21 @@ ipcMain.handle(IPC.filesHead, async (_e, path: unknown) => {
     return { error: said(e) }
   }
 })
+
+// SSH hosts and sftp: a host's name and remote paths as given (sftp quotes them); local paths absolute.
+const str = (v: unknown): v is string => typeof v === 'string' && v.length > 0
+const strs = (v: unknown): v is string[] => Array.isArray(v) && v.every(str)
+ipcMain.handle(IPC.remoteHosts, () => sshHosts())
+ipcMain.handle(IPC.remoteHome, (_e, a: unknown) => (str(a) ? remoteHome(a) : { error: 'нет хоста' }))
+ipcMain.handle(IPC.remoteList, (_e, a: unknown, p: unknown) => (str(a) && str(p) ? remoteList(a, p) : { error: 'нет пути' }))
+ipcMain.handle(IPC.remoteGet, (_e, a: unknown, items: unknown, dir: unknown) => (str(a) && strs(items) && str(dir) && isAbsolute(dir) ? remoteGet(a, items, dir) : { done: [], failed: [] }))
+ipcMain.handle(IPC.remotePut, (_e, a: unknown, items: unknown, dir: unknown) => (str(a) && strs(items) && items.every((i) => isAbsolute(i)) && str(dir) ? remotePut(a, items, dir) : { done: [], failed: [] }))
+ipcMain.handle(IPC.remoteMkdir, (_e, a: unknown, p: unknown) => (str(a) && str(p) ? remoteMkdir(a, p) : 'нет пути'))
+ipcMain.handle(IPC.remoteRename, (_e, a: unknown, f: unknown, t: unknown) => (str(a) && str(f) && str(t) ? remoteRename(a, f, t) : 'нет пути'))
+ipcMain.handle(IPC.remoteRemove, (_e, a: unknown, items: unknown) =>
+  str(a) && Array.isArray(items) && items.every((i) => i && typeof i === 'object' && str((i as { path?: unknown }).path)) ? remoteRemove(a, items as { path: string; dir: boolean }[]) : { done: [], failed: [] },
+)
+ipcMain.handle(IPC.remoteFetch, (_e, a: unknown, p: unknown) => (str(a) && str(p) ? remoteFetch(a, p) : { error: 'нет пути' }))
 
 // A file for the viewer: a path, absolute or relative to the pane's folder (`~` the home).
 ipcMain.handle(IPC.viewerOpen, async (_e, path: unknown, cwd: unknown) => {

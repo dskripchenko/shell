@@ -11,6 +11,7 @@ import type { ShellEvent } from '@dskripchenko/shell-integration'
 import type { Baseline, ChangedFile } from '../main/changes'
 import type { OpResult } from '../main/files'
 import type { Entry } from './commander'
+import type { SshHost } from './ssh'
 export type { OpResult }
 export type { Baseline, ChangedFile }
 
@@ -62,6 +63,18 @@ export interface ShellApi {
   viewerOpen(path: string, cwd?: string): Promise<ViewerDoc | { error: string }>
   /** A file opened by the system's own program. */
   openPath(path: string): void
+  /** SSH hosts (~/.ssh/config) and their files over sftp. */
+  remote: {
+    hosts(): Promise<SshHost[]>
+    home(alias: string): Promise<{ path: string } | { error: string }>
+    list(alias: string, path: string): Promise<Entry[] | { error: string }>
+    get(alias: string, items: string[], localDir: string): Promise<OpResult>
+    put(alias: string, items: string[], remoteDir: string): Promise<OpResult>
+    mkdir(alias: string, path: string): Promise<string | null>
+    rename(alias: string, from: string, to: string): Promise<string | null>
+    remove(alias: string, items: { path: string; dir: boolean }[]): Promise<OpResult>
+    fetch(alias: string, path: string): Promise<{ local: string } | { error: string }>
+  }
   /** The file panels' work on disk. */
   files: {
     list(dir: string): Promise<Entry[] | { error: string }>
@@ -140,6 +153,15 @@ export const IPC = {
   changesDiff: 'changes:diff',
   viewerOpen: 'viewer:open',
   openPath: 'open:path',
+  remoteHosts: 'remote:hosts',
+  remoteHome: 'remote:home',
+  remoteList: 'remote:list',
+  remoteGet: 'remote:get',
+  remotePut: 'remote:put',
+  remoteMkdir: 'remote:mkdir',
+  remoteRename: 'remote:rename',
+  remoteRemove: 'remote:remove',
+  remoteFetch: 'remote:fetch',
   filesList: 'files:list',
   filesCopy: 'files:copy',
   filesMove: 'files:move',

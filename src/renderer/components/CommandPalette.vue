@@ -3,9 +3,12 @@ import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { Search } from '@dskripchenko/ui/icons'
 import { fuzzy } from '../../common/fuzzy'
 import { selectGroup, selectTab } from '../../common/layout'
-import { COMMANDS, newAgentTab, newTabWithProfile, run } from '../commands'
+import { COMMANDS, newAgentTab, newNamedTab, newTabWithProfile, run } from '../commands'
+import { typeWhenReady } from '../agents'
+import { shellQuote } from '../../common/commander'
+import type { SshHost } from '../../common/ssh'
 import { keysOf } from '../keyboard'
-import { commit, ui, ws } from '../store'
+import { api, commit, ui, ws } from '../store'
 import { tabTitle } from '../titles'
 
 interface Item {
@@ -17,6 +20,7 @@ interface Item {
   action: () => void
 }
 
+const hosts = ref<SshHost[]>([])
 const query = ref('')
 const index = ref(0)
 const input = ref<HTMLInputElement | null>(null)
@@ -28,6 +32,12 @@ const items = computed<Item[]>(() => {
   for (const c of COMMANDS.values()) {
     if (c.hidden || c.id === 'palette.open') continue
     out.push({ id: c.id, title: c.title, section: c.group, keys: keysOf(c.id), action: () => run(c.id) })
+  }
+  for (const h of hosts.value) {
+    out.push({
+      id: `ssh:${h.alias}`, title: `SSH: ${h.alias}`, section: h.user ? `${h.user}@${h.hostname ?? h.alias}` : (h.hostname ?? 'SSH'), keys: '',
+      action: () => typeWhenReady(newNamedTab(h.alias), `ssh ${shellQuote(h.alias, ui.os === 'win32')}`),
+    })
   }
   for (const agent of ui.settings?.config.agents.commands ?? []) {
     out.push({ id: `agent:${agent}`, title: `Новый агент: ${agent}`, section: 'Агенты', keys: '', action: () => newAgentTab(agent) })
@@ -55,7 +65,10 @@ const shown = computed(() => {
 watch(query, () => (index.value = 0))
 watch(index, () => void nextTick(() => list.value?.querySelector('[aria-selected="true"]')?.scrollIntoView({ block: 'nearest' })))
 
-onMounted(() => input.value?.focus())
+onMounted(() => {
+  input.value?.focus()
+  void api.remote.hosts().then((list) => (hosts.value = list))
+})
 
 function close(): void {
   ui.palette = false

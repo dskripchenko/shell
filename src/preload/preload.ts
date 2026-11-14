@@ -17,6 +17,17 @@ const api: ShellApi = {
   claudeHooks: (on) => ipcRenderer.invoke(IPC.claudeHooks, on),
   viewerOpen: (path, cwd) => ipcRenderer.invoke(IPC.viewerOpen, path, cwd),
   openPath: (path) => ipcRenderer.send(IPC.openPath, path),
+  remote: {
+    hosts: () => ipcRenderer.invoke(IPC.remoteHosts),
+    home: (alias) => ipcRenderer.invoke(IPC.remoteHome, alias),
+    list: (alias, path) => ipcRenderer.invoke(IPC.remoteList, alias, path),
+    get: (alias, items, localDir) => ipcRenderer.invoke(IPC.remoteGet, alias, items, localDir),
+    put: (alias, items, remoteDir) => ipcRenderer.invoke(IPC.remotePut, alias, items, remoteDir),
+    mkdir: (alias, path) => ipcRenderer.invoke(IPC.remoteMkdir, alias, path),
+    rename: (alias, from, to) => ipcRenderer.invoke(IPC.remoteRename, alias, from, to),
+    remove: (alias, items) => ipcRenderer.invoke(IPC.remoteRemove, alias, items),
+    fetch: (alias, path) => ipcRenderer.invoke(IPC.remoteFetch, alias, path),
+  },
   files: {
     list: (dir) => ipcRenderer.invoke(IPC.filesList, dir),
     copy: (items, target) => ipcRenderer.invoke(IPC.filesCopy, items, target),

@@ -9,6 +9,13 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- SSH hosts of `~/.ssh/config` (its Includes too) in the palette, each opened
+  in a tab of its own; a host's files in the file panels over sftp — browsed,
+  copied both ways, moved, renamed, a folder made, deleted (for good: no
+  trash there) — by the system's OpenSSH: keys and the ssh-agent, nothing
+  secret kept. The places (Ctrl+\\ in the panels): home, the groups' folders,
+  the hosts.
+
 - A viewer beside the panes: markdown with live blocks (diagrams of every
   notation, BPMN, draw.io, OpenAPI…), diagram and API files, pictures, video
   and sound, code highlighted. Opened by Cmd/Ctrl+click on a path in the
