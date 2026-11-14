@@ -192,7 +192,7 @@ let quakeErrors: string[] = []
 ipcMain.handle(IPC.startup, (e): Startup | null => {
   const host = hostOf(e.sender)
   if (!host) return null
-  return { platform: PLATFORM, quake: host.kind === 'quake', home: homedir(), workspace: host.workspace, replay: host.replay, settings: settingsWithShortcuts(), version: VERSION }
+  return { platform: PLATFORM, quake: host.kind === 'quake', home: homedir(), workspace: host.workspace, replay: host.replay, settings: settingsWithShortcuts(), version: VERSION, e2e: E2E }
 })
 
 ipcMain.handle(IPC.spawn, (e, paneId: unknown, opts: unknown) => {

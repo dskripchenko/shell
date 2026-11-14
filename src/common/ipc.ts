@@ -18,6 +18,8 @@ export interface Startup {
   replay: Record<string, string>
   settings: Settings
   version: string
+  /** Under test: the window lets the tests read each pane's whole buffer. */
+  e2e: boolean
 }
 
 export interface Settings extends ConfigResult {

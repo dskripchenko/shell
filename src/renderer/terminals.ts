@@ -137,6 +137,13 @@ export function onExit(paneId: string, code: number, close: (paneId: string) => 
   e.term.write(`\r\n\x1b[2m[процесс завершён с кодом ${code} — Enter запустит оболочку снова]\x1b[0m\r\n`)
 }
 
+/** A pane's whole buffer as text, scrollback included (for the tests). */
+export function bufferText(paneId: string): string {
+  const t = entries.get(paneId)?.term
+  if (!t) return ''
+  return Array.from({ length: t.buffer.length }, (_, i) => t.lineText(i)).join('\n')
+}
+
 export function write(paneId: string, data: string): void {
   entries.get(paneId)?.term.write(data)
 }

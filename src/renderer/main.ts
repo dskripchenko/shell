@@ -3,7 +3,7 @@ import '@dskripchenko/ui/styles/themes.css'
 import '@dskripchenko/ui/styles/fonts.css'
 import './style.css'
 import { createApp } from 'vue'
-import { activeGroup, activeTab, newWorkspace, setPaneCwd } from '../common/layout'
+import { activeGroup, activeTab, allPanes, newWorkspace, setPaneCwd } from '../common/layout'
 import App from './App.vue'
 import { closePaneById, run } from './commands'
 import { install, rebuild } from './keyboard'
@@ -65,6 +65,12 @@ async function start(): Promise<void> {
     if (!prev || activeTab(activeGroup(next)).focus !== activeTab(activeGroup(prev)).focus) void probe()
   })
 
+  if (s.e2e) {
+    // What the tests read: every pane's whole buffer, hidden tabs too.
+    ;(window as unknown as { shellTest: object }).shellTest = {
+      text: () => (ws.value ? allPanes(ws.value).map((p) => terminals.bufferText(p.id)).join('\n') : ''),
+    }
+  }
   install()
   createApp(App).mount('#app')
 }
