@@ -3,7 +3,7 @@
  * saved by the main process) and what the window shows around it.
  */
 import { reactive, shallowRef } from 'vue'
-import type { Settings, ShellApi } from '../common/ipc'
+import type { Settings, ShellApi, UpdateInfo } from '../common/ipc'
 import type { Platform } from '../common/keys'
 import type { Workspace } from '../common/layout'
 
@@ -22,6 +22,8 @@ export interface Dialog {
   id: string
   name: string
   color: string | null
+  /** A group's profile ('' for none). */
+  profile?: string
   /** A new group: the dialog names it; cancelling keeps it under its first name. */
   isNew?: boolean
 }
@@ -46,6 +48,9 @@ export const ui = reactive({
   /** The first chords of a chain typed so far, shown in the status bar. */
   chain: '',
   notices: [] as string[],
+  update: null as UpdateInfo | null,
+  /** A tab being dragged, to be dropped on a group. */
+  draggingTab: null as string | null,
 })
 
 export function newId(): string {

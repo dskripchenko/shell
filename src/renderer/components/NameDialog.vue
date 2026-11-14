@@ -6,6 +6,8 @@ import { commit, ui, ws } from '../store'
 const d = ui.dialog!
 const name = ref(d.name)
 const color = ref<string | null>(d.color)
+const profile = ref(d.profile ?? '')
+const profiles = computed(() => Object.keys(ui.settings?.config.profiles ?? {}))
 const input = ref<HTMLInputElement | null>(null)
 const title = computed(() => (d.kind === 'tab' ? 'Вкладка' : d.isNew ? 'Новая группа' : 'Группа'))
 
@@ -17,7 +19,7 @@ onMounted(() => {
 function save(): void {
   const w = ws.value!
   if (d.kind === 'tab') commit(updateTab(w, d.id, { name: name.value, color: color.value }))
-  else commit(updateGroup(w, d.id, { name: name.value.trim() || d.name, color: color.value ?? d.color ?? COLORS[0]! }))
+  else commit(updateGroup(w, d.id, { name: name.value.trim() || d.name, color: color.value ?? d.color ?? COLORS[0]!, profile: profile.value || null }))
   ui.dialog = null
 }
 
@@ -56,6 +58,14 @@ function cancel(): void {
           ></button>
         </div>
       </fieldset>
+      <template v-if="d.kind === 'group'">
+        <label for="profile-field">Профиль новых вкладок</label>
+        <select id="profile-field" v-model="profile">
+          <option value="">Оболочка по умолчанию</option>
+          <option v-for="p in profiles" :key="p" :value="p">{{ p }}</option>
+        </select>
+        <span v-if="profiles.length === 0" class="dialog-hint">Профили задаются в config.toml, разделы [profiles.имя]</span>
+      </template>
       <div class="dialog-actions">
         <button type="button" class="button" @click="cancel">Отмена</button>
         <button type="submit" class="button primary">Сохранить</button>

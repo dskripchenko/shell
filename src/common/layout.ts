@@ -12,6 +12,8 @@ export interface PaneLeaf {
   id: string
   /** The folder the shell was last seen in (OSC 7), for the next start. */
   cwd?: string
+  /** The profile its shell was started with (config.toml [profiles.<name>]); none: the default shell. */
+  profile?: string
 }
 
 export interface PaneSplit {
@@ -41,6 +43,8 @@ export interface Group {
   color: string
   /** Where new tabs of the group start. */
   cwd?: string
+  /** The profile new tabs of the group start with. */
+  profile?: string
   tabs: Tab[]
   activeTab: string
 }
@@ -131,14 +135,14 @@ export function neighbour(node: PaneNode, from: string, side: Side): string | nu
 
 // Building -----------------------------------------------------------------------------
 
-export function newTab(newId: NewId, opts: { cwd?: string; name?: string; color?: string } = {}): Tab {
-  const pane: PaneLeaf = { kind: 'pane', id: newId(), ...(opts.cwd ? { cwd: opts.cwd } : {}) }
+export function newTab(newId: NewId, opts: { cwd?: string; name?: string; color?: string; profile?: string } = {}): Tab {
+  const pane: PaneLeaf = { kind: 'pane', id: newId(), ...(opts.cwd ? { cwd: opts.cwd } : {}), ...(opts.profile ? { profile: opts.profile } : {}) }
   return { id: newId(), root: pane, focus: pane.id, ...(opts.name ? { name: opts.name } : {}), ...(opts.color ? { color: opts.color } : {}) }
 }
 
-export function newGroup(newId: NewId, opts: { name: string; color?: string; cwd?: string; taken?: string[] }): Group {
-  const tab = newTab(newId, { cwd: opts.cwd })
-  return { id: newId(), name: opts.name, color: opts.color ?? freeColor(opts.taken ?? []), ...(opts.cwd ? { cwd: opts.cwd } : {}), tabs: [tab], activeTab: tab.id }
+export function newGroup(newId: NewId, opts: { name: string; color?: string; cwd?: string; profile?: string; taken?: string[] }): Group {
+  const tab = newTab(newId, { cwd: opts.cwd, profile: opts.profile })
+  return { id: newId(), name: opts.name, color: opts.color ?? freeColor(opts.taken ?? []), ...(opts.cwd ? { cwd: opts.cwd } : {}), ...(opts.profile ? { profile: opts.profile } : {}), tabs: [tab], activeTab: tab.id }
 }
 
 export function newWorkspace(newId: NewId, cwd?: string): Workspace {
@@ -162,7 +166,7 @@ export function updateActiveTab(ws: Workspace, f: (t: Tab) => Tab): Workspace {
   return mapGroup(ws, g.id, (group) => mapTab(group, activeTab(group).id, f))
 }
 
-export function addGroup(ws: Workspace, newId: NewId, opts: { name: string; color?: string; cwd?: string }): Workspace {
+export function addGroup(ws: Workspace, newId: NewId, opts: { name: string; color?: string; cwd?: string; profile?: string }): Workspace {
   const group = newGroup(newId, { ...opts, taken: ws.groups.map((g) => g.color) })
   return { ...ws, groups: [...ws.groups, group], activeGroup: group.id }
 }
@@ -186,13 +190,19 @@ export function closeGroup(ws: Workspace, id: string, newId: NewId): Workspace {
   return { ...ws, groups, activeGroup }
 }
 
-export function updateGroup(ws: Workspace, id: string, patch: Partial<Pick<Group, 'name' | 'color' | 'cwd'>>): Workspace {
-  return mapGroup(ws, id, (g) => ({ ...g, ...patch }))
+export function updateGroup(ws: Workspace, id: string, patch: { name?: string; color?: string; cwd?: string; profile?: string | null }): Workspace {
+  return mapGroup(ws, id, (g) => {
+    const { profile, ...rest } = patch
+    const next: Group = { ...g, ...rest }
+    if (profile === null || profile === '') delete next.profile
+    else if (profile !== undefined) next.profile = profile
+    return next
+  })
 }
 
-export function addTab(ws: Workspace, newId: NewId, opts: { cwd?: string } = {}): Workspace {
+export function addTab(ws: Workspace, newId: NewId, opts: { cwd?: string; profile?: string } = {}): Workspace {
   const g = activeGroup(ws)
-  const tab = newTab(newId, { cwd: opts.cwd ?? g.cwd })
+  const tab = newTab(newId, { cwd: opts.cwd ?? g.cwd, profile: opts.profile ?? g.profile })
   const at = g.tabs.findIndex((t) => t.id === g.activeTab)
   const tabs = [...g.tabs.slice(0, at + 1), tab, ...g.tabs.slice(at + 1)]
   return mapGroup(ws, g.id, (group) => ({ ...group, tabs, activeTab: tab.id }))
@@ -258,9 +268,25 @@ export function moveTab(ws: Workspace, id: string, to: number): Workspace {
   return mapGroup(ws, g.id, (group) => ({ ...group, tabs: [...rest.slice(0, at), tab, ...rest.slice(at)] }))
 }
 
+/** A tab moved to the end of another group, which becomes the active one with it. */
+export function moveTabToGroup(ws: Workspace, tabId: string, groupId: string, newId: NewId): Workspace {
+  const from = ws.groups.find((g) => g.tabs.some((t) => t.id === tabId))
+  const to = ws.groups.find((g) => g.id === groupId)
+  if (!from || !to || from.id === to.id) return ws
+  const tab = from.tabs.find((t) => t.id === tabId)!
+  // The last tab leaving closes its group, as closing it would.
+  const left = from.tabs.length === 1 ? closeGroup(ws, from.id, newId) : closeTab(ws, tabId, newId)
+  return {
+    ...left,
+    groups: left.groups.map((g) => (g.id === to.id ? { ...g, tabs: [...g.tabs, tab], activeTab: tab.id } : g)),
+    activeGroup: to.id,
+  }
+}
+
 /** A pane split in two: the new one goes after it (right or below) and takes the focus. */
 export function splitPane(tab: Tab, paneId: string, dir: Direction, newId: NewId): Tab {
-  const added: PaneLeaf = { kind: 'pane', id: newId(), ...(findPane(tab.root, paneId)?.cwd ? { cwd: findPane(tab.root, paneId)!.cwd } : {}) }
+  const from = findPane(tab.root, paneId)
+  const added: PaneLeaf = { kind: 'pane', id: newId(), ...(from?.cwd ? { cwd: from.cwd } : {}), ...(from?.profile ? { profile: from.profile } : {}) }
   const walk = (n: PaneNode): PaneNode => {
     if (n.kind === 'pane') return n.id === paneId ? { kind: 'split', dir, children: [n, added], sizes: [0.5, 0.5] } : n
     // Split in the direction the parent already goes: a sibling, sharing the pane's room.

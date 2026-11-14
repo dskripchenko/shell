@@ -2,7 +2,7 @@
  * The main process: the window (and the drop-down one), the shells, the
  * settings and the last session — everything the window may not touch itself.
  */
-import { app, BrowserWindow, clipboard, globalShortcut, ipcMain, Menu, nativeTheme, screen, shell as electronShell, type WebContents } from 'electron'
+import { app, BrowserWindow, clipboard, globalShortcut, ipcMain, Menu, nativeTheme, net, screen, shell as electronShell, type WebContents } from 'electron'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { toAccelerator, type Platform } from '../common/keys'
@@ -13,6 +13,8 @@ import { gitBranch, processCwd } from './probe'
 import { Ptys } from './pty'
 import { SessionStore, type Bounds } from './session'
 import { SettingsStore } from './settings'
+import { Updater, type UpdateState } from './update'
+import type { UpdateInfo } from '../common/ipc'
 
 const DATA = dataDir({ env: process.env, platform: process.platform, execPath: process.execPath, packaged: app.isPackaged, cwd: process.cwd() })
 // Chromium's own files too: nothing in the user's profile.
@@ -68,6 +70,7 @@ function createHost(kind: Kind): Host {
     show: false,
     backgroundColor: nativeTheme.shouldUseDarkColors ? '#1c1c1e' : '#fafafa',
     title: 'shell',
+    icon: join(__dirname, 'icon.png'),
     ...(quake
       ? { frame: false, alwaysOnTop: true, skipTaskbar: true, resizable: false, movable: false, fullscreenable: false }
       : PLATFORM === 'mac'
@@ -198,13 +201,18 @@ ipcMain.handle(IPC.startup, (e): Startup | null => {
 ipcMain.handle(IPC.spawn, (e, paneId: unknown, opts: unknown) => {
   const host = hostOf(e.sender)
   if (!host || typeof paneId !== 'string' || !opts || typeof opts !== 'object') return { ok: false, error: 'bad request' }
-  const o = opts as { cwd?: unknown; cols?: unknown; rows?: unknown }
-  const shell = settings.get().config.shell
+  const o = opts as { cwd?: unknown; cols?: unknown; rows?: unknown; profile?: unknown }
+  const config = settings.get().config
+  // A profile's program with its own arguments; else the [shell] one, with the profile's arguments if it gives them.
+  const p = typeof o.profile === 'string' ? config.profiles[o.profile] : undefined
+  const program = p?.program ?? config.shell.program
+  const args = p?.args ?? (p?.program ? [] : config.shell.args)
+  const home = (path: string) => path.replace(/^~(?=$|[\\/])/, homedir())
   return host.ptys.spawn(paneId, {
-    cwd: typeof o.cwd === 'string' ? o.cwd : undefined,
+    cwd: typeof o.cwd === 'string' ? o.cwd : p?.cwd ? home(p.cwd) : undefined,
     cols: typeof o.cols === 'number' ? o.cols : 80,
     rows: typeof o.rows === 'number' ? o.rows : 24,
-    shell: { program: shell.program, args: shell.args },
+    shell: { program, args, env: p?.env },
   })
 })
 
@@ -251,6 +259,44 @@ ipcMain.on(IPC.openExternal, (_e, url: unknown) => {
 ipcMain.on(IPC.openConfig, () => void electronShell.openPath(settings.configFile))
 ipcMain.on(IPC.openDataDir, () => void electronShell.openPath(DATA))
 
+// Updates ----------------------------------------------------------------------------------
+
+// Checked and applied only in a packaged build (SHELL_UPDATE_URL points a development build at a test feed).
+const UPDATABLE = app.isPackaged || !!process.env.SHELL_UPDATE_URL
+const updater = new Updater({
+  product: { name: 'shell', repo: 'dskripchenko/shell', dataFolder: 'shell-data' },
+  dir: join(DATA, 'update'),
+  current: VERSION,
+  platform: process.platform,
+  arch: process.arch,
+  execPath: process.execPath,
+  appImage: process.env.APPIMAGE,
+  fetch: (url, init) => net.fetch(url, init),
+  releases: process.env.SHELL_UPDATE_URL,
+  onState: () => {
+    for (const host of hosts.values()) send(host, IPC.updateChanged, updateInfo())
+  },
+})
+
+function updateInfo(state: UpdateState = updater.current): UpdateInfo {
+  return { state, current: VERSION, available: UPDATABLE, auto: settings?.get().config.updates.auto ?? true }
+}
+
+ipcMain.handle(IPC.updateState, () => updateInfo())
+ipcMain.on(IPC.updateCheck, () => {
+  if (UPDATABLE) void updater.check()
+})
+ipcMain.on(IPC.updateRestart, () => {
+  if (updater.current.status !== 'ready') return
+  updater.restartAfter()
+  app.quit()
+})
+
+app.on('quit', () => {
+  const r = updater.apply(process.pid)
+  if (r.relaunch) app.relaunch(r.execPath ? { execPath: r.execPath } : undefined)
+})
+
 // The app ----------------------------------------------------------------------------------
 
 function buildMenu(): void {
@@ -290,6 +336,10 @@ app.whenReady().then(() => {
   buildMenu()
   mainHost = createHost('main')
   quakeErrors = registerQuake()
+  updater.tidy()
+  if (UPDATABLE && settings.get().config.updates.auto && updater.due()) void updater.check()
+  // Under test the drop-down window is shown by a call: no global key can be pressed from a test.
+  if (E2E) (globalThis as { shellToggleQuake?: () => void }).shellToggleQuake = toggleQuake
   // Each pane's output saved now and then too, not only at the end: a crash keeps most of it.
   setInterval(() => {
     for (const host of hosts.values()) saveScrollback(host)

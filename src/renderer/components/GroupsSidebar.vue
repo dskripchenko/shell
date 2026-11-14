@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { PanelLeftClose, PanelLeftOpen, Plus } from '@dskripchenko/ui/icons'
-import { selectGroup, type Group } from '../../common/layout'
+import { moveTabToGroup, selectGroup, type Group } from '../../common/layout'
 import { run } from '../commands'
 import { keysOf } from '../keyboard'
-import { commit, ui, ws } from '../store'
+import { commit, newId, ui, ws } from '../store'
 import { initials } from '../titles'
 
 const collapsed = computed(() => ws.value!.sidebarCollapsed)
@@ -15,7 +15,14 @@ function select(g: Group): void {
 }
 
 function rename(g: Group): void {
-  ui.dialog = { kind: 'group', id: g.id, name: g.name, color: g.color }
+  ui.dialog = { kind: 'group', id: g.id, name: g.name, color: g.color, profile: g.profile ?? '' }
+}
+
+/** A tab dragged from the strip and dropped on a group goes to that group. */
+function drop(g: Group): void {
+  const tab = ui.draggingTab
+  ui.draggingTab = null
+  if (tab) commit(moveTabToGroup(ws.value!, tab, g.id, newId))
 }
 
 function keys(i: number): string {
@@ -38,9 +45,11 @@ function keys(i: number): string {
       class="group-row"
       :class="{ active: g.id === ws!.activeGroup }"
       :aria-current="g.id === ws!.activeGroup ? 'true' : undefined"
-      :title="`${g.name} — двойной щелчок: имя и цвет`"
+      :title="`${g.name} — двойной щелчок: имя, цвет, профиль; сюда можно перетащить вкладку`"
       @click="select(g)"
       @dblclick="rename(g)"
+      @dragover.prevent
+      @drop="drop(g)"
     >
       <span class="swatch" :style="{ background: g.color }" aria-hidden="true"></span>
       <span class="group-name">{{ g.name }}</span>
@@ -70,6 +79,8 @@ function keys(i: number): string {
       :title="`${g.name} ${keys(i)}`"
       @click="select(g)"
       @dblclick="rename(g)"
+      @dragover.prevent
+      @drop="drop(g)"
     >
       {{ initials(g.name) }}
     </button>

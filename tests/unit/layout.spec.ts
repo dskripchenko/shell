@@ -199,3 +199,37 @@ describe('a saved workspace read back', () => {
     expect(isWorkspace(null)).toBe(false)
   })
 })
+
+describe('profiles and moving tabs between groups', () => {
+  it('a group’s profile goes to its new tabs and on to their splits', async () => {
+    const { addGroup: add, addTab: tab, activeGroup: g, activeTab: t, splitPane: split, updateGroup, newWorkspace: fresh, panes: all } = await import('../../src/common/layout')
+    const id = ids()
+    let ws = add(fresh(id), id, { name: 'py', profile: 'python' })
+    expect(all(t(g(ws)).root)[0]).toMatchObject({ profile: 'python' })
+    ws = updateGroup(ws, g(ws).id, { profile: 'node' })
+    ws = tab(ws, id)
+    const pane = t(g(ws))
+    expect(all(pane.root)[0]).toMatchObject({ profile: 'node' })
+    expect(all(split(pane, pane.focus, 'row', id).root)[1]).toMatchObject({ profile: 'node' })
+    expect(updateGroup(ws, g(ws).id, { profile: null }).groups.at(-1)!.profile).toBeUndefined()
+  })
+
+  it('a tab moved to another group goes last there; the group it left closes when empty', async () => {
+    const { addGroup: add, addTab: tab, moveTabToGroup, newWorkspace: fresh } = await import('../../src/common/layout')
+    const id = ids()
+    let ws = tab(fresh(id), id)
+    const first = ws.groups[0]!
+    ws = add(ws, id, { name: 'b' })
+    const second = ws.groups[1]!
+    const moving = first.tabs[1]!.id
+    ws = moveTabToGroup(ws, moving, second.id, id)
+    expect(ws.groups[0]!.tabs).toHaveLength(1)
+    expect(ws.groups[1]!.tabs.map((x) => x.id)).toEqual([second.tabs[0]!.id, moving])
+    expect(ws.activeGroup).toBe(second.id)
+    expect(ws.groups[1]!.activeTab).toBe(moving)
+    const lastOfFirst = ws.groups[0]!.tabs[0]!.id
+    ws = moveTabToGroup(ws, lastOfFirst, second.id, id)
+    expect(ws.groups.map((x) => x.name)).toEqual(['b'])
+    expect(ws.groups[0]!.tabs).toHaveLength(3)
+  })
+})

@@ -18,6 +18,14 @@ const size = computed(() => {
   const t = terminals.get(paneId.value)?.term
   return t ? `${t.cols}×${t.rows}` : ''
 })
+const update = computed(() => {
+  const u = ui.update
+  if (!u || !u.available) return null
+  const s = u.state
+  if (s.status === 'ready') return { text: `Обновление ${s.version} готово — перезапустить`, action: true }
+  if (s.status === 'downloading') return { text: `Загрузка ${s.version}${s.total && s.received ? ` · ${Math.round((s.received / s.total) * 100)}%` : ''}`, action: false }
+  return null
+})
 const problems = computed(() => [...(ui.settings?.errors ?? []), ...(ui.settings?.themeErrors ?? []), ...keyErrors])
 </script>
 
@@ -32,6 +40,8 @@ const problems = computed(() => [...(ui.settings?.errors ?? []), ...(ui.settings
       <TriangleAlert :size="12" aria-hidden="true" />
       {{ problems.length === 1 ? problems[0] : `${problems.length} ошибки в настройках` }}
     </button>
+    <button v-if="update?.action" type="button" class="status-update" @click="api.restartToUpdate()">{{ update.text }}</button>
+    <span v-else-if="update">{{ update.text }}</span>
     <span v-if="size" class="mono">{{ size }}</span>
   </footer>
 </template>

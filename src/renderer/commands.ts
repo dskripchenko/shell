@@ -65,6 +65,8 @@ const list: Command[] = [
   { id: 'sidebar.toggle', group: 'Окно', title: 'Свернуть или развернуть панель групп', run: () => commit({ ...w(), sidebarCollapsed: !w().sidebarCollapsed }) },
   { id: 'config.open', group: 'Окно', title: 'Открыть config.toml', run: () => api.openConfig() },
   { id: 'data.open', group: 'Окно', title: 'Открыть папку данных shell-data', run: () => api.openDataDir() },
+  { id: 'update.check', group: 'Окно', title: 'Проверить обновления', run: () => api.checkUpdate() },
+  { id: 'update.restart', group: 'Окно', title: 'Перезапустить и обновить', run: () => api.restartToUpdate() },
   { id: 'font.bigger', group: 'Окно', title: 'Крупнее шрифт', run: () => fontBy(1) },
   { id: 'font.smaller', group: 'Окно', title: 'Мельче шрифт', run: () => fontBy(-1) },
   { id: 'font.reset', group: 'Окно', title: 'Обычный размер шрифта', run: () => fontBy(null) },
@@ -74,7 +76,7 @@ const list: Command[] = [
     id: 'group.rename', group: 'Группы', title: 'Переименовать группу или сменить цвет',
     run: () => {
       const g = activeGroup(w())
-      ui.dialog = { kind: 'group', id: g.id, name: g.name, color: g.color }
+      ui.dialog = { kind: 'group', id: g.id, name: g.name, color: g.color, profile: g.profile ?? '' }
     },
   },
   { id: 'group.close', group: 'Группы', title: 'Закрыть группу', run: () => commit(closeGroup(w(), activeGroup(w()).id, newId)) },
@@ -141,6 +143,11 @@ for (let i = 1; i <= 9; i++) {
 }
 
 export const COMMANDS = new Map(list.map((c) => [c.id, c]))
+
+/** A new tab in the active group, started with a profile. */
+export function newTabWithProfile(profile: string): void {
+  commit(addTab(w(), newId, { profile }))
+}
 
 export function run(id: string): boolean {
   const c = COMMANDS.get(id)

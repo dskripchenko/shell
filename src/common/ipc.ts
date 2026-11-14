@@ -33,7 +33,7 @@ export type SpawnResult = { ok: true; pid: number } | { ok: false; error: string
 
 export interface ShellApi {
   startup(): Promise<Startup>
-  spawn(paneId: string, opts: { cwd?: string; cols: number; rows: number }): Promise<SpawnResult>
+  spawn(paneId: string, opts: { cwd?: string; cols: number; rows: number; profile?: string }): Promise<SpawnResult>
   write(paneId: string, data: string): void
   resize(paneId: string, cols: number, rows: number): void
   kill(paneId: string): void
@@ -51,6 +51,27 @@ export interface ShellApi {
   openExternal(url: string): void
   openConfig(): void
   openDataDir(): void
+  updateState(): Promise<UpdateInfo>
+  checkUpdate(): void
+  /** The update put in place now: shell closes and starts again. */
+  restartToUpdate(): void
+  onUpdate(listener: (info: UpdateInfo) => void): void
+}
+
+export type UpdateState =
+  | { status: 'idle' }
+  | { status: 'checking' }
+  | { status: 'latest' }
+  | { status: 'downloading'; version: string; received?: number; total?: number }
+  | { status: 'ready'; version: string }
+  | { status: 'error'; error: string }
+
+export interface UpdateInfo {
+  state: UpdateState
+  current: string
+  /** Updates are possible here: a packaged build, auto or by hand. */
+  available: boolean
+  auto: boolean
 }
 
 /** The channels behind it. */
@@ -72,4 +93,8 @@ export const IPC = {
   openExternal: 'open:external',
   openConfig: 'open:config',
   openDataDir: 'open:data',
+  updateState: 'update:state',
+  updateCheck: 'update:check',
+  updateRestart: 'update:restart',
+  updateChanged: 'update:changed',
 } as const

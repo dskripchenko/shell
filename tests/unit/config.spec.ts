@@ -29,3 +29,13 @@ describe('config.toml', () => {
     expect(errors[0]).toMatch(/^config.toml не прочитан/)
   })
 })
+
+describe('profiles and updates', () => {
+  it('profiles read by name; a mistake in one keeps the rest of it', () => {
+    const { config, errors } = parseConfig('[updates]\nauto = false\n[profiles.python]\nprogram = "/bin/zsh"\nargs = ["-l"]\nenv = { A = "1" }\ncwd = "~/p"\ntheme = "UID светлая"\n[profiles.bad]\nprogram = 5\ncolour = "x"\nenv = { B = 2 }\n')
+    expect(config.updates.auto).toBe(false)
+    expect(config.profiles.python).toEqual({ program: '/bin/zsh', args: ['-l'], env: { A: '1' }, cwd: '~/p', theme: 'UID светлая' })
+    expect(config.profiles.bad).toEqual({})
+    expect(errors).toEqual(['[profiles.bad] program: ожидается строка', '[profiles.bad] неизвестная настройка «colour»', '[profiles.bad] env: ожидается таблица строк'])
+  })
+})

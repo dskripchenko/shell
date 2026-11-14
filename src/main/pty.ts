@@ -81,6 +81,27 @@ export function shellEnv(from: NodeJS.ProcessEnv, version: string, platform: Nod
   return env
 }
 
+/**
+ * PowerShell says its folder after each command (OSC 7), as other shells do
+ * with their integration: its prompt function wrapped, the user's kept. Run
+ * after the profile, as an encoded command, so no execution policy stops it.
+ */
+const PWSH_CWD = [
+  '$__shellPrompt = $function:prompt',
+  'function prompt {',
+  '  $p = $executionContext.SessionState.Path.CurrentLocation',
+  "  if ($p.Provider.Name -eq 'FileSystem') { [Console]::Write([char]27 + ']7;file://' + $env:COMPUTERNAME + '/' + ($p.ProviderPath -replace '\\\\', '/') + [char]7) }",
+  '  & $__shellPrompt',
+  '}',
+].join('\n')
+
+/** The shell's arguments, with what makes it say its folder where shell can add it (PowerShell). */
+export function withCwdReport(shell: { file: string; args: string[] }): { file: string; args: string[] } {
+  if (!/(^|[\\/])(pwsh|powershell)(\.exe)?$/i.test(shell.file) || shell.args.some((a) => /^-(EncodedCommand|Command|File|c)$/i.test(a))) return shell
+  const encoded = Buffer.from(PWSH_CWD, 'utf16le').toString('base64')
+  return { file: shell.file, args: [...shell.args.filter((a) => !/^-NoExit$/i.test(a)), '-NoExit', '-EncodedCommand', encoded] }
+}
+
 /** node-pty's helper on macOS comes out of the package without the right to run (pnpm drops it). */
 function fixSpawnHelper(): void {
   if (process.platform !== 'darwin') return
@@ -109,6 +130,8 @@ interface Session {
 export interface ShellChoice {
   program: string
   args: string[]
+  /** Variables of a profile, over the user's environment. */
+  env?: Record<string, string>
 }
 
 export class Ptys {
@@ -140,12 +163,12 @@ export class Ptys {
       fixSpawnHelper()
       this.helperFixed = true
     }
-    const shell = opts.shell.program ? { file: opts.shell.program, args: opts.shell.args } : shellOf()
+    const shell = withCwdReport(opts.shell.program ? { file: opts.shell.program, args: opts.shell.args } : shellOf())
     const cwd = opts.cwd && existsSync(opts.cwd) ? opts.cwd : homedir()
     let pty: IPty
     try {
       const { spawn } = require('node-pty') as typeof import('node-pty')
-      pty = spawn(shell.file, shell.args, { name: 'xterm-256color', cols: Math.max(2, opts.cols), rows: Math.max(1, opts.rows), cwd, env: shellEnv(process.env, this.version) })
+      pty = spawn(shell.file, shell.args, { name: 'xterm-256color', cols: Math.max(2, opts.cols), rows: Math.max(1, opts.rows), cwd, env: { ...shellEnv(process.env, this.version), ...(opts.shell.env ?? {}) } })
     } catch (e) {
       return { ok: false, error: e instanceof Error ? e.message : String(e) }
     }

@@ -5,6 +5,15 @@
  */
 import { parse } from 'smol-toml'
 
+/** A way to start a shell: its program, arguments, environment, folder and theme. */
+export interface Profile {
+  program?: string
+  args?: string[]
+  env?: Record<string, string>
+  cwd?: string
+  theme?: string
+}
+
 export interface Config {
   font: { family: string; size: number; lineHeight: number }
   /** `system` follows the system's light or dark; or a theme by name, built in or imported. */
@@ -13,8 +22,10 @@ export interface Config {
   scrollback: { lines: number; restore: boolean; restoreKb: number }
   window: { dimInactive: number }
   quake: { enabled: boolean; hotkey: string; height: number }
+  updates: { auto: boolean }
   /** Keys of the user's own: `"cmd+t" = "tab.new"`, `"cmd+k" = "none"`. */
   keys: Record<string, string>
+  profiles: Record<string, Profile>
 }
 
 export const DEFAULTS: Config = {
@@ -24,7 +35,9 @@ export const DEFAULTS: Config = {
   scrollback: { lines: 10000, restore: true, restoreKb: 512 },
   window: { dimInactive: 0.8 },
   quake: { enabled: true, hotkey: 'ctrl+`', height: 0.45 },
+  updates: { auto: true },
   keys: {},
+  profiles: {},
 }
 
 export const DEFAULT_TEXT = `# Настройки shell. Файл перечитывается при сохранении — перезапуск не нужен.
@@ -66,10 +79,23 @@ export const DEFAULT_TEXT = `# Настройки shell. Файл перечит
 # Доля высоты экрана.
 # height = 0.45
 
+[updates]
+# Раз в сутки при запуске проверять релизы на GitHub; обновление ставится при выходе.
+# auto = true
+
 [keys]
 # Свои сочетания: команда на клавиши, "none" — снять.
 # "cmd+k" = "palette.open"
 # "ctrl+a>c" = "tab.new"
+
+# Профили: как запускать оболочку. Профиль назначается группе (двойной щелчок
+# по группе) или открывается из палитры: «Новая вкладка: имя».
+# [profiles.python]
+# program = "/bin/zsh"
+# args = ["-l"]
+# env = { VIRTUAL_ENV_DISABLE_PROMPT = "1" }
+# cwd = "~/projects"
+# theme = "UID светлая"
 `
 
 export interface ConfigResult {
@@ -86,6 +112,42 @@ const FIELDS: Record<string, Record<string, { key: string; kind: Kind; min?: num
   scrollback: { lines: { key: 'lines', kind: 'number', min: 0, max: 1_000_000 }, restore: { key: 'restore', kind: 'boolean' }, 'restore-kb': { key: 'restoreKb', kind: 'number', min: 0, max: 65536 } },
   window: { 'dim-inactive': { key: 'dimInactive', kind: 'number', min: 0.5, max: 1 } },
   quake: { enabled: { key: 'enabled', kind: 'boolean' }, hotkey: { key: 'hotkey', kind: 'string' }, height: { key: 'height', kind: 'number', min: 0.15, max: 1 } },
+  updates: { auto: { key: 'auto', kind: 'boolean' } },
+}
+
+const PROFILE_FIELDS: Record<string, Kind | 'table'> = { program: 'string', args: 'strings', env: 'table', cwd: 'string', theme: 'string' }
+
+function parseProfile(name: string, value: unknown, errors: string[]): Profile | null {
+  if (!/^[\w.-]{1,40}$/.test(name)) {
+    errors.push(`[profiles.${name}]: имя — буквы, цифры, «.», «_», «-»`)
+    return null
+  }
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    errors.push(`[profiles.${name}]: ожидается таблица`)
+    return null
+  }
+  const out: Profile = {}
+  for (const [k, v] of Object.entries(value)) {
+    const kind = PROFILE_FIELDS[k]
+    if (!kind) {
+      errors.push(`[profiles.${name}] неизвестная настройка «${k}»`)
+      continue
+    }
+    if (kind === 'table') {
+      if (!v || typeof v !== 'object' || Array.isArray(v) || !Object.values(v).every((x) => typeof x === 'string')) {
+        errors.push(`[profiles.${name}] ${k}: ожидается таблица строк`)
+        continue
+      }
+      out.env = { ...(v as Record<string, string>) }
+      continue
+    }
+    if (!fits(v, kind)) {
+      errors.push(`[profiles.${name}] ${k}: ожидается ${kind === 'strings' ? 'список строк' : 'строка'}`)
+      continue
+    }
+    ;(out as Record<string, unknown>)[k] = v
+  }
+  return out
 }
 
 function fits(value: unknown, kind: Kind): boolean {
@@ -104,6 +166,15 @@ export function parseConfig(text: string): ConfigResult {
     return { config, errors: [`config.toml не прочитан: ${message}`] }
   }
   for (const [section, value] of Object.entries(data)) {
+    if (section === 'profiles') {
+      if (value && typeof value === 'object' && !Array.isArray(value)) {
+        for (const [name, p] of Object.entries(value)) {
+          const profile = parseProfile(name, p, errors)
+          if (profile) config.profiles[name] = profile
+        }
+      } else errors.push('[profiles]: ожидается таблица')
+      continue
+    }
     if (section === 'keys') {
       if (value && typeof value === 'object' && !Array.isArray(value)) {
         for (const [k, v] of Object.entries(value)) {

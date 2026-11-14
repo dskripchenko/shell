@@ -44,7 +44,8 @@ function drop(to: number): void {
       @dblclick="rename(tab)"
       @keydown.enter="select(tab)"
       @auxclick.middle="close(tab)"
-      @dragstart="dragging = tab.id"
+      @dragstart="dragging = tab.id; ui.draggingTab = tab.id"
+      @dragend="ui.draggingTab = null"
       @dragover.prevent
       @drop="drop(i)"
     >

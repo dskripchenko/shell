@@ -6,10 +6,11 @@
 import { Terminal, TerminalView, type TerminalViewOptions } from '@dskripchenko/terminal'
 import { allPanes, findPane, type PaneLeaf, type Workspace } from '../common/layout'
 import { api, ui, ws } from './store'
-import { currentTheme } from './theme'
+import { allThemes, currentTheme } from './theme'
 
 interface Entry {
   id: string
+  profile?: string
   term: Terminal
   view: TerminalView
   host: HTMLDivElement
@@ -27,10 +28,16 @@ function restored(rows: number): string {
   return '\x1b[0m\x1b[?1049l\x1b[?25h\r\n\x1b[2m── вывод до перезапуска ──\x1b[0m' + '\r\n'.repeat(Math.max(1, rows))
 }
 
-function options(id: string): TerminalViewOptions {
+/** A pane's theme: its profile's, if it names one that exists; else the window's. */
+function themeOf(profile?: string) {
+  const name = profile ? ui.settings?.config.profiles[profile]?.theme : undefined
+  return (name && allThemes().find((t) => t.name === name)) || currentTheme()
+}
+
+function options(id: string, profile?: string): TerminalViewOptions {
   const c = ui.settings?.config
   return {
-    theme: currentTheme(),
+    theme: themeOf(profile),
     fontFamily: c?.font.family,
     fontSize: Math.max(6, (c?.font.size ?? 13) + ui.fontDelta),
     lineHeight: c?.font.lineHeight ?? 1.3,
@@ -42,7 +49,7 @@ function options(id: string): TerminalViewOptions {
 function spawn(entry: Entry, cwd?: string): void {
   entry.exited = false
   delete ui.exited[entry.id]
-  void api.spawn(entry.id, { cwd, cols: entry.term.cols, rows: entry.term.rows }).then((r) => {
+  void api.spawn(entry.id, { cwd, cols: entry.term.cols, rows: entry.term.rows, profile: entry.profile }).then((r) => {
     if (!r.ok) {
       entry.term.write(`\r\n\x1b[31mОболочка не запустилась: ${r.error}\x1b[0m\r\n`)
       entry.exited = true
@@ -56,7 +63,7 @@ function create(pane: PaneLeaf, replay?: string): Entry {
   const host = document.createElement('div')
   host.className = 'term-host'
   host.dataset.pane = pane.id
-  const entry: Entry = { id: pane.id, term, view: new TerminalView(term, host, options(pane.id)), host, exited: false }
+  const entry: Entry = { id: pane.id, profile: pane.profile, term, view: new TerminalView(term, host, options(pane.id, pane.profile)), host, exited: false }
   entries.set(pane.id, entry)
   term.onData((data) => {
     if (!entry.exited) return api.write(pane.id, data)
@@ -67,7 +74,8 @@ function create(pane: PaneLeaf, replay?: string): Entry {
     }
   })
   term.onTitle((title) => (ui.titles[pane.id] = title))
-  term.onCwd((cwd) => (ui.cwds[pane.id] = cwd))
+  // A Windows path in a file URL comes as /C:/Users/…: the drive first.
+  term.onCwd((cwd) => (ui.cwds[pane.id] = /^\/[A-Za-z]:/.test(cwd) ? cwd.slice(1) : cwd))
   if (replay) term.write(replay + restored(term.rows))
   spawn(entry, pane.cwd)
   return entry
@@ -119,7 +127,7 @@ export function restyle(): void {
   for (const e of entries.values()) {
     const focused = e.host.contains(document.activeElement)
     e.view.dispose()
-    e.view = new TerminalView(e.term, e.host, options(e.id))
+    e.view = new TerminalView(e.term, e.host, options(e.id, e.profile))
     if (focused) e.view.focus()
   }
 }

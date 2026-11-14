@@ -7,16 +7,31 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-11-14
+
+The first release: stage 1 of the plan — a terminal to use instead of the
+system one.
+
 ### Added
 
-- The first skeleton of stage 1: a window with groups (a sidebar that folds to
-  a rail), tabs named and coloured by hand or after their program and folder,
-  panes split right and down, resized by their borders, zoomed, closed.
-- Shells in pseudo-terminals drawn by `@dskripchenko/terminal`; the workspace,
-  each pane's folder and its last output come back after a restart.
-- Every action a command with an id: keys (chains too, read by the key's place
-  so they work on any layout), a palette that finds in either layout.
-- `config.toml` in `shell-data/`, read again on save; themes imported from
-  iTerm2, Ghostty, Windows Terminal and base16; the drop-down window on a
+- Groups of tabs in a sidebar that folds to a rail (Cmd/Ctrl+B); tabs named
+  and coloured by hand or after their program and folder, dragged within their
+  group or onto another; panes split right and down, resized by their borders,
+  zoomed, closed; the unfocused panes dimmed.
+- Shells in pseudo-terminals drawn by `@dskripchenko/terminal`; each pane's
+  folder followed (asked of the system on macOS and Linux, said by PowerShell
+  on Windows) with its git branch in the status bar.
+- The workspace, each pane's folder and its last output back after a restart.
+- Every action a command with an id: keys read by the key's place, so they
+  work on any layout; chains (`ctrl+a>c`); defaults for each system (Cmd on a
+  Mac, Ctrl+Shift elsewhere); a palette that finds in either keyboard layout.
+- `config.toml` in `shell-data/`, read again on save, its mistakes in the
+  status bar; profiles (`[profiles.<name>]`: program, arguments, environment,
+  folder, theme) given to a group or opened from the palette; themes imported
+  from iTerm2, Ghostty, Windows Terminal and base16; a drop-down window on a
   global key.
-- Portable builds: zip and AppImage with checksums; CI on three systems.
+- Find in the output, copy and paste, font size, clear.
+- Updates: once a day at start the latest release is fetched, checked against
+  its `.sha256` and put in the program's place on leaving.
+- Portable builds — zip for macOS and Windows, AppImage for Linux — with
+  checksums and build provenance.

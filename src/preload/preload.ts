@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import { IPC, type Settings, type ShellApi } from '../common/ipc'
+import { IPC, type Settings, type ShellApi, type UpdateInfo } from '../common/ipc'
 
 const api: ShellApi = {
   startup: () => ipcRenderer.invoke(IPC.startup),
@@ -19,6 +19,10 @@ const api: ShellApi = {
   openExternal: (url) => ipcRenderer.send(IPC.openExternal, url),
   openConfig: () => ipcRenderer.send(IPC.openConfig),
   openDataDir: () => ipcRenderer.send(IPC.openDataDir),
+  updateState: () => ipcRenderer.invoke(IPC.updateState),
+  checkUpdate: () => ipcRenderer.send(IPC.updateCheck),
+  restartToUpdate: () => ipcRenderer.send(IPC.updateRestart),
+  onUpdate: (listener) => void ipcRenderer.on(IPC.updateChanged, (_e, info: UpdateInfo) => listener(info)),
 }
 
 contextBridge.exposeInMainWorld('shell', api)

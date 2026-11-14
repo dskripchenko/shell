@@ -71,6 +71,8 @@ async function start(): Promise<void> {
       text: () => (ws.value ? allPanes(ws.value).map((p) => terminals.bufferText(p.id)).join('\n') : ''),
     }
   }
+  ui.update = await api.updateState()
+  api.onUpdate((info) => (ui.update = info))
   install()
   createApp(App).mount('#app')
 }
