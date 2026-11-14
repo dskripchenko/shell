@@ -47,6 +47,7 @@ kbd:empty { display: none; }
 .file-editor.mine { background: var(--uid-accent-subtle); color: var(--uid-accent-text); }
 .changes-filter { padding: 4px 10px; font-size: 12px; color: var(--uid-text-secondary); list-style: none; }
 .changes-filter label { display: flex; gap: 6px; align-items: center; }
+.tab-marked { flex: none; width: 7px; height: 7px; border-radius: 9999px; background: var(--uid-accent); }
 .tab-review { flex: none; font-size: 10px; line-height: 16px; padding: 0 5px; border-radius: var(--uid-radius-sm); background: var(--uid-color-warning-subtle); color: var(--uid-color-warning-text); }
 .tab-note { font-size: 11px; color: var(--uid-accent-text); }
 .tab-close { width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: var(--uid-radius-sm); background: transparent; color: var(--uid-text-secondary); opacity: 0; cursor: pointer; }

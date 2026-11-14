@@ -20,7 +20,7 @@ function placeOf(w: Workspace, paneId: string): { group: string; groupId: string
 }
 
 /** Whether the person sees this pane now: the window focused, its tab shown, it focused. */
-function inSight(paneId: string): boolean {
+export function inSight(paneId: string): boolean {
   const w = ws.value
   if (!w || !document.hasFocus() || document.hidden) return false
   return activeTab(activeGroup(w)).focus === paneId

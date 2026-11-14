@@ -9,6 +9,12 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- Triggers (`[[triggers]]` in config.toml): a pattern in the output and what
+  a line with it does — highlighted in a colour, said (a notification when
+  the pane is out of sight, the status bar when in it), a dot on the tab
+  until it is looked at, or a text typed in (an answer to `[y/N]`). With the
+  shell's marks only a command's output is read, never the line typed at
+  the prompt; a line fires once, a prompt not ended by a newline too.
 - Input to every pane at once (Broadcast Input): Cmd+Alt+I (Ctrl+Shift+Alt+I
   elsewhere) sends what is typed in a pane to every pane of its tab; the
   palette has it for the whole group too. The panes it reaches are outlined,

@@ -9,6 +9,7 @@ import App from './App.vue'
 import { closePaneById, run } from './commands'
 import { install, rebuild } from './keyboard'
 import { handle as handleRequest, showPane } from './requests'
+import * as triggers from './triggers'
 import { api, commit, findFolio, newId, onCommit, ui, ws } from './store'
 import * as terminals from './terminals'
 import { applyChrome, currentTheme } from './theme'
@@ -26,7 +27,10 @@ async function start(): Promise<void> {
   rebuild()
 
   terminals.setReplays(s.replay)
-  onCommit((next) => terminals.prune(next))
+  onCommit((next) => {
+    terminals.prune(next)
+    triggers.seen()
+  })
   const initial = s.workspace ?? newWorkspace(newId, s.home)
   ws.value = initial
   terminals.startAll(initial)
@@ -35,6 +39,7 @@ async function start(): Promise<void> {
   api.onData((paneId, data) => {
     terminals.write(paneId, data)
     agents.onOutput(paneId)
+    triggers.onOutput(paneId, data)
   })
   api.onEvents((paneId, events) => {
     agents.onEvents(paneId, events)

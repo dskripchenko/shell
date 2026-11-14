@@ -65,6 +65,7 @@ function drop(to: number): void {
       <span class="tab-name">{{ tabTitle(tab) }}</span>
       <span v-if="ui.git[tab.id]" class="tab-git mono" :title="gitTitle(ui.git[tab.id]!)">{{ ui.git[tab.id]!.branch }}<span v-if="ui.git[tab.id]!.changed" class="tab-git-changed">●</span></span>
       <AgentMark :status="tabStatus(tab)" />
+      <span v-if="panes(tab.root).some((p) => ui.marked[p.id])" class="tab-marked" role="img" aria-label="Триггер сработал" title="Триггер сработал"></span>
       <span v-if="reviewOf(panes(tab.root).map((p) => p.id))" class="tab-review" :title="`folio: ${reviewOf(panes(tab.root).map((p) => p.id))}`">ревью</span>
       <span v-if="tab.zoomed" class="tab-note" title="Панель развёрнута на всю вкладку">zoom</span>
       <button type="button" class="tab-close" :aria-label="`Закрыть вкладку ${tabTitle(tab)}`" @click.stop="close(tab)">

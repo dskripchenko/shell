@@ -9,6 +9,7 @@ import { api, ui, ws } from './store'
 import * as agents from './agents'
 import { allThemes, currentTheme } from './theme'
 import { PATH_IN_OUTPUT, splitPathLine } from '../common/viewer'
+import { HIGHLIGHT, regexOf } from '../common/triggers'
 
 interface Entry {
   id: string
@@ -56,6 +57,8 @@ function options(id: string, profile?: string): TerminalViewOptions {
           ui.viewer = { path, cwd: paneCwd(id), ...(line ? { line } : {}) }
         },
       },
+      // Triggers that highlight: what their pattern finds, marked in the output.
+      ...(c?.triggers ?? []).filter((t) => t.action === 'highlight').map((t) => ({ pattern: regexOf(t, true), highlight: t.color ?? HIGHLIGHT })),
     ],
   }
 }

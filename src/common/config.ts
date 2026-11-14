@@ -5,6 +5,7 @@
  */
 import { parse } from 'smol-toml'
 import { DEFAULT_AGENTS } from './agents'
+import { parseTriggers, type Trigger } from './triggers'
 
 /** A way to start a shell: its program, arguments, environment, folder and theme. */
 export interface Profile {
@@ -30,6 +31,8 @@ export interface Config {
   folio: { path: string; enabled: boolean }
   /** macOS: Secure Keyboard Entry — other programs cannot read the keys typed in shell. */
   security: { secureKeyboard: boolean }
+  /** Patterns in the output and what each does (`[[triggers]]`). */
+  triggers: Trigger[]
   /** Keys of the user's own: `"cmd+t" = "tab.new"`, `"cmd+k" = "none"`. */
   keys: Record<string, string>
   profiles: Record<string, Profile>
@@ -46,6 +49,7 @@ export const DEFAULTS: Config = {
   agents: { commands: [...DEFAULT_AGENTS], notify: true },
   folio: { path: '', enabled: true },
   security: { secureKeyboard: false },
+  triggers: [],
   keys: {},
   profiles: {},
 }
@@ -114,6 +118,17 @@ export const DEFAULT_TEXT = `# Настройки shell. Файл перечит
 # Свои сочетания: команда на клавиши, "none" — снять.
 # "cmd+k" = "palette.open"
 # "ctrl+a>c" = "tab.new"
+
+# Триггеры: шаблон в выводе и что сделать со строкой, где он есть —
+# highlight (подсветить, color — фон), notify (уведомление), mark (точка на
+# вкладке), send (ввести text в панель; "\\r" — Enter).
+# [[triggers]]
+# pattern = "error|failed"
+# action = "highlight"
+# ignore-case = true
+# [[triggers]]
+# pattern = "tests passed"
+# action = "notify"
 
 # Профили: как запускать оболочку. Профиль назначается группе (двойной щелчок
 # по группе) или открывается из палитры: «Новая вкладка: имя».
@@ -203,6 +218,10 @@ export function parseConfig(text: string): ConfigResult {
           if (profile) config.profiles[name] = profile
         }
       } else errors.push('[profiles]: ожидается таблица')
+      continue
+    }
+    if (section === 'triggers') {
+      config.triggers = parseTriggers(value, errors)
       continue
     }
     if (section === 'keys') {
