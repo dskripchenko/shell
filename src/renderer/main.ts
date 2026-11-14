@@ -90,6 +90,21 @@ async function start(): Promise<void> {
     ui.branch = cwd ? await api.gitBranch(cwd) : null
   }
   setInterval(() => void probe(), 2000)
+
+  // The tabs' git status: the active group's, every few seconds while the window is seen.
+  const gitProbe = async () => {
+    const w = ws.value
+    if (!w || document.hidden) return
+    const tabs = activeGroup(w).tabs.map((t) => [t.id, terminals.paneCwd(t.focus)] as const)
+    const byCwd = await api.gitStatus(tabs.map(([, c]) => c).filter((c): c is string => !!c))
+    const next: typeof ui.git = {}
+    for (const [id, cwd] of tabs) next[id] = cwd ? (byCwd[cwd] ?? null) : null
+    if (JSON.stringify(next) !== JSON.stringify(ui.git)) ui.git = next
+  }
+  setInterval(() => void gitProbe(), 4000)
+  onCommit((next, prev) => {
+    if (!prev || next.activeGroup !== prev.activeGroup) void gitProbe()
+  })
   onCommit((next, prev) => {
     if (!prev || activeTab(activeGroup(next)).focus !== activeTab(activeGroup(prev)).focus) void probe()
   })

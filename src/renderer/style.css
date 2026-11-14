@@ -41,6 +41,8 @@ kbd:empty { display: none; }
 .tab:hover { color: var(--uid-text-primary); }
 .tab.active { background: var(--term-bg); color: var(--uid-text-primary); font-weight: 500; margin-bottom: -1px; }
 .tab-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tab-git { flex: none; max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; color: var(--uid-text-tertiary); font-weight: 400; }
+.tab-git-changed { margin-left: 3px; color: var(--uid-color-warning-text); }
 .tab-note { font-size: 11px; color: var(--uid-accent-text); }
 .tab-close { width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: var(--uid-radius-sm); background: transparent; color: var(--uid-text-secondary); opacity: 0; cursor: pointer; }
 .tab:hover .tab-close, .tab.active .tab-close, .tab-close:focus-visible { opacity: 1; }
@@ -113,6 +115,7 @@ kbd:empty { display: none; }
 .dialog label, .dialog legend { font-size: 12px; color: var(--uid-text-secondary); }
 .dialog input { height: 32px; padding: 0 10px; border: 1px solid var(--uid-border-default); border-radius: var(--uid-radius-md); background: var(--uid-surface-base); color: var(--uid-text-primary); font: inherit; user-select: text; }
 .dialog select { height: 32px; padding: 0 8px; border: 1px solid var(--uid-border-default); border-radius: var(--uid-radius-md); background: var(--uid-surface-base); color: var(--uid-text-primary); font: inherit; }
+.dialog-error { font-size: 12px; color: var(--uid-color-danger-text); }
 .dialog-hint { font-size: 12px; color: var(--uid-text-secondary); }
 .dialog fieldset { border: 0; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .colors { display: flex; gap: 8px; }

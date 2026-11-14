@@ -8,6 +8,7 @@ import { commit, newId, ui, ws } from '../store'
 import { tabTitle } from '../titles'
 import { tabStatus } from '../agentStatus'
 import AgentMark from './AgentMark.vue'
+import type { GitStatus } from '../../common/git'
 
 const group = computed(() => activeGroup(ws.value!))
 const dragging = ref<string | null>(null)
@@ -22,6 +23,14 @@ function close(tab: Tab): void {
 
 function rename(tab: Tab): void {
   ui.dialog = { kind: 'tab', id: tab.id, name: tab.name ?? '', color: tab.color ?? null }
+}
+
+function gitTitle(g: GitStatus): string {
+  const parts = [`Ветка ${g.branch}`]
+  if (g.changed) parts.push(`изменено файлов: ${g.changed}`)
+  if (g.ahead) parts.push(`впереди на ${g.ahead}`)
+  if (g.behind) parts.push(`позади на ${g.behind}`)
+  return parts.join(', ')
 }
 
 function drop(to: number): void {
@@ -53,6 +62,7 @@ function drop(to: number): void {
     >
       <span class="swatch" :style="{ background: tab.color ?? 'var(--uid-text-tertiary)' }" aria-hidden="true"></span>
       <span class="tab-name">{{ tabTitle(tab) }}</span>
+      <span v-if="ui.git[tab.id]" class="tab-git mono" :title="gitTitle(ui.git[tab.id]!)">{{ ui.git[tab.id]!.branch }}<span v-if="ui.git[tab.id]!.changed" class="tab-git-changed">●</span></span>
       <AgentMark :status="tabStatus(tab)" />
       <span v-if="tab.zoomed" class="tab-note" title="Панель развёрнута на всю вкладку">zoom</span>
       <button type="button" class="tab-close" :aria-label="`Закрыть вкладку ${tabTitle(tab)}`" @click.stop="close(tab)">

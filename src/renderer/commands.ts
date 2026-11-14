@@ -75,6 +75,14 @@ function fontBy(delta: number | null): void {
 
 const list: Command[] = [
   { id: 'palette.open', group: 'Окно', title: 'Палитра команд', run: () => (ui.palette = ui.palette ? false : 'all') },
+  {
+    id: 'git.worktree', group: 'Проекты', title: 'Новый worktree в новой группе (с агентом)',
+    run: () => {
+      const cwd = terminals.paneCwd(focusedPane())
+      if (!cwd) return say('Папка панели неизвестна')
+      void api.changesBaseline(cwd, 'head').then((b) => (b ? (ui.worktree = { cwd, root: b.root }) : say('Папка панели — не репозиторий git')))
+    },
+  },
   { id: 'project.switch', group: 'Проекты', title: 'Проекты: открыть или перейти', run: () => (ui.palette = ui.palette === 'projects' ? false : 'projects') },
   { id: 'project.save', group: 'Проекты', title: 'Сохранить группу как проект (раскладка и агенты)', run: () => void saveGroupAsProject() },
   { id: 'project.forget', group: 'Проекты', title: 'Убрать проект группы из списка', hidden: () => !ui.projects.some((p) => p.id === activeGroup(w()).project), run: forgetProject },

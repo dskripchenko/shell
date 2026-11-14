@@ -12,6 +12,8 @@ const api: ShellApi = {
   cwd: (paneId) => ipcRenderer.invoke(IPC.cwd, paneId),
   gitBranch: (folder) => ipcRenderer.invoke(IPC.gitBranch, folder),
   saveWorkspace: (ws) => ipcRenderer.send(IPC.saveWorkspace, ws),
+  gitStatus: (cwds) => ipcRenderer.invoke(IPC.gitStatus, cwds),
+  addWorktree: (cwd, branch) => ipcRenderer.invoke(IPC.addWorktree, cwd, branch),
   projects: () => ipcRenderer.invoke(IPC.projects),
   saveProjects: (list) => ipcRenderer.send(IPC.saveProjects, list),
   onProjects: (listener) => void ipcRenderer.on(IPC.projectsChanged, (_e, list: Project[]) => listener(list)),

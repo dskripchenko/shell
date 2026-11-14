@@ -7,6 +7,7 @@ import type { ConfigResult } from './config'
 import type { Platform } from './keys'
 import type { Workspace } from './layout'
 import type { Project } from './projects'
+import type { GitStatus } from './git'
 import type { Theme } from './themes'
 import type { ShellEvent } from '@dskripchenko/shell-integration'
 import type { Baseline, ChangedFile } from '../main/changes'
@@ -51,6 +52,10 @@ export interface ShellApi {
   cwd(paneId: string): Promise<string | null>
   gitBranch(folder: string): Promise<string | null>
   saveWorkspace(ws: Workspace): void
+  /** Each folder's git status (null: not a repository), asked together. */
+  gitStatus(cwds: string[]): Promise<Record<string, GitStatus | null>>
+  /** A worktree of the folder's repository on a branch (made when new), beside the repository. */
+  addWorktree(cwd: string, branch: string): Promise<{ path: string } | { error: string }>
   /** The projects (shared by the windows); saved whole, each window told. */
   projects(): Promise<Project[]>
   saveProjects(projects: Project[]): void
@@ -181,6 +186,8 @@ export const IPC = {
   filesTrash: 'files:trash',
   filesHead: 'files:head',
   saveWorkspace: 'session:save',
+  gitStatus: 'git:status',
+  addWorktree: 'git:worktree',
   projects: 'projects:list',
   saveProjects: 'projects:save',
   projectsChanged: 'projects:changed',

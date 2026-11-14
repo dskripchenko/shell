@@ -15,6 +15,12 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   (Cmd+Shift+O, Ctrl+Shift+O elsewhere) opens a project — its group back, its
   agents started again — or shows its group when it is open. Kept in
   `shell-data/projects.json`.
+- git on the tabs: each tab of the group shows its folder's branch, with a
+  mark when files are changed (ahead, behind and the count on hover); looked
+  at with git's optional locks off, never in an agent's way.
+- A new worktree in a group of its own (palette): a new or existing branch,
+  the folder beside the repository (`app-feature-x`), an agent started there
+  if chosen.
 
 ## [0.3.0] - 2026-11-14
 

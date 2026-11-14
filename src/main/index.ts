@@ -18,6 +18,7 @@ import { NotifyServer } from './notify'
 import { copyInto, listDir, makeDir, moveInto, moveTo, readHead, type OpResult } from './files'
 import { dirname, isAbsolute, resolve as resolvePath } from 'node:path'
 import { findFolio, folioRequest, launchFolio } from './folio'
+import { addWorktree, gitStatus } from './git'
 import { ProjectsStore } from './projects'
 import { SCHEME, ViewerFiles } from './viewer'
 import { remoteFetch, remoteGet, remoteHome, remoteList, remoteMkdir, remotePut, remoteRemove, remoteRename, sshHosts } from './remote'
@@ -251,6 +252,14 @@ ipcMain.handle(IPC.cwd, async (e, paneId: unknown) => {
 ipcMain.handle(IPC.gitBranch, (_e, folder: unknown) => (typeof folder === 'string' && folder ? gitBranch(folder) : null))
 
 let saveTimer: NodeJS.Timeout | null = null
+ipcMain.handle(IPC.gitStatus, async (_e, cwds: unknown) => {
+  const list = Array.isArray(cwds) ? [...new Set(cwds.filter((c): c is string => typeof c === 'string' && isAbsolute(c)))].slice(0, 64) : []
+  return Object.fromEntries(await Promise.all(list.map(async (c) => [c, await gitStatus(c)] as const)))
+})
+ipcMain.handle(IPC.addWorktree, (_e, cwd: unknown, branch: unknown) =>
+  typeof cwd === 'string' && isAbsolute(cwd) && typeof branch === 'string' && branch.trim() ? addWorktree(cwd, branch.trim()) : { error: 'нет ветки' },
+)
+
 const projects = new ProjectsStore(DATA)
 ipcMain.handle(IPC.projects, () => projects.all())
 ipcMain.on(IPC.saveProjects, (_e, list: unknown) => {

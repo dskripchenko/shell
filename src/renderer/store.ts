@@ -6,6 +6,7 @@ import { reactive, shallowRef } from 'vue'
 import type { AgentState } from '../common/agents'
 import type { FolioRequest, Settings, ShellApi, UpdateInfo } from '../common/ipc'
 import type { Project } from '../common/projects'
+import type { GitStatus } from '../common/git'
 import type { Platform } from '../common/keys'
 import type { Workspace } from '../common/layout'
 
@@ -41,6 +42,10 @@ export const ui = reactive({
   /** The palette: everything, or only the projects (the switcher). */
   palette: false as false | 'all' | 'projects',
   projects: [] as Project[],
+  /** The new-worktree dialog, for the repository of a folder. */
+  worktree: null as null | { cwd: string; root: string },
+  /** Each tab's git status (its focused pane's folder), the active group's tabs only. */
+  git: {} as Record<string, GitStatus | null>,
   dialog: null as Dialog | null,
   find: null as null | { query: string; count: number; index: number },
   fontDelta: 0,
