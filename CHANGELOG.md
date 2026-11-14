@@ -7,6 +7,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-14
+
+Agents' edits told apart; documents edited in folio.
+
 ### Added
 
 - A journal of agents' edits shared with folio: Claude Code's hook (added

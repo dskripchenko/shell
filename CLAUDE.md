@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Репозиторий: https://github.com/dskripchenko/shell (MIT, открытый); CI — `.github/workflows/tests.yml` на трёх ОС, релиз по тегу `v<версия>` — `release.yml`.
 
-Этапы 1 и 2 сделаны (0.3.0), этап 3 идёт (0.4.0: проекты, git на вкладках и worktree, связка с folio в обе стороны, настройки в окне, Secure Keyboard Entry, протокол клавиатуры kitty): каркас (окно, группы, вкладки, сплиты, палитра, хоткеи, конфиг, темы, выпадающее окно, восстановление сессии со scrollback), shell integration, агенты, изменения агента, файловые панели, просмотрщик, SSH/SFTP, связка с folio. Карту этапов см. в `FEATURES.md`.
+Этапы 1 и 2 сделаны (0.3.0), этап 3 идёт (0.5.0: проекты, git на вкладках и worktree, связка с folio в обе стороны, настройки в окне, Secure Keyboard Entry, протокол клавиатуры kitty, общий с folio журнал правок агентов, правка документов через folio): каркас (окно, группы, вкладки, сплиты, палитра, хоткеи, конфиг, темы, выпадающее окно, восстановление сессии со scrollback), shell integration, агенты, изменения агента, файловые панели, просмотрщик, SSH/SFTP, связка с folio. Карту этапов см. в `FEATURES.md`.
 
 ## Команды
 
