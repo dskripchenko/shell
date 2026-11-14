@@ -7,6 +7,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-14
+
+Stage 2 closes: a viewer with live blocks, SSH hosts and sftp, folio.
+
 ### Added
 
 - folio, when it is on the machine (a running one, the config's `[folio]
