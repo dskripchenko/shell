@@ -29,6 +29,8 @@ describe('Claude Code hooks', () => {
     expect(hooksInstalled(off)).toBe(false)
     expect(withoutHooks(withHooks({}))).toEqual({})
     expect(hookCommand('done')).toContain('shell-notify done --agent claude')
+    // The journal of edits, shared with folio: on edits only.
+    expect(on.hooks!.PostToolUse).toEqual([{ matcher: 'Edit|Write|MultiEdit|NotebookEdit', hooks: [{ type: 'command', command: expect.stringContaining('agent-edits.jsonl') }] }])
   })
 
   it('the settings file: written with a copy of the old one; a file that is not JSON left alone', () => {

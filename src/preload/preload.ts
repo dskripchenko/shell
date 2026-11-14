@@ -55,6 +55,7 @@ const api: ShellApi = {
   folioOpen: (request) => ipcRenderer.invoke(IPC.folioOpen, request),
   changesBaseline: (cwd, kind) => ipcRenderer.invoke(IPC.changesBaseline, cwd, kind),
   changesList: (b) => ipcRenderer.invoke(IPC.changesList, b),
+  changesEdits: (b) => ipcRenderer.invoke(IPC.changesEdits, b),
   changesDiff: (b, path, untracked) => ipcRenderer.invoke(IPC.changesDiff, b, path, untracked),
   onEvents: (listener) => void ipcRenderer.on(IPC.events, (_e, paneId: string, events: ShellEvent[]) => listener(paneId, events)),
   onSettings: (listener) => void ipcRenderer.on(IPC.settings, (_e, s: Settings) => listener(s)),

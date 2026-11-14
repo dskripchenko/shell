@@ -11,12 +11,12 @@ import type { GitStatus } from './git'
 import type { ApiRequest } from '../main/api'
 import type { Theme } from './themes'
 import type { ShellEvent } from '@dskripchenko/shell-integration'
-import type { Baseline, ChangedFile } from '../main/changes'
+import type { Baseline, ChangedFile, RepoEdit } from '../main/changes'
 import type { OpResult } from '../main/files'
 import type { Entry } from './commander'
 import type { SshHost } from './ssh'
 export type { OpResult }
-export type { Baseline, ChangedFile }
+export type { Baseline, ChangedFile, RepoEdit }
 
 export interface Startup {
   platform: Platform
@@ -73,6 +73,8 @@ export interface ShellApi {
   /** A baseline to count an agent's changes from: the working tree now ('agent'), or HEAD ('head'). */
   changesBaseline(cwd: string, kind: 'agent' | 'head'): Promise<Baseline | null>
   changesList(baseline: Baseline): Promise<ChangedFile[] | { error: string }>
+  /** The agents' edits in the baseline's repository (the shared journal), newest last. */
+  changesEdits(baseline: Baseline): Promise<RepoEdit[]>
   changesDiff(baseline: Baseline, path: string, untracked: boolean): Promise<{ diff: string } | { text: string } | { error: string }>
   /** Whether folio is on the machine (the config's path, a running folio, the usual places). */
   folioFind(): Promise<boolean>
@@ -172,6 +174,7 @@ export const IPC = {
   changesBaseline: 'changes:baseline',
   changesList: 'changes:list',
   changesDiff: 'changes:diff',
+  changesEdits: 'changes:edits',
   viewerOpen: 'viewer:open',
   folioFind: 'folio:find',
   folioOpen: 'folio:open',

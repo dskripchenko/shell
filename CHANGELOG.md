@@ -9,6 +9,13 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- A journal of agents' edits shared with folio: Claude Code's hook (added
+  with the others by the palette's Claude Code command) appends each edit to
+  `.git/agent-edits.jsonl` of the repository — the same for its worktrees,
+  never committed — with the shell pane the agent runs in. The changes panel
+  says who edited each file: this pane's agent, another tab's, or one outside
+  shell; and shows only this agent's edits on request.
+
 - Documents are edited in folio, shell's viewer only reads: Edit in folio in
   the viewer's header, and a double click on a paragraph, a heading, an item
   or a line of code opens the file in folio at that line (found by the

@@ -6,8 +6,10 @@
  * folder, with arguments as a list.
  */
 import { execFile } from 'node:child_process'
+import { readFileSync, realpathSync, statSync, writeFileSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
-import { isAbsolute, normalize, relative, resolve, sep } from 'node:path'
+import { compactEdits, JOURNAL, readEdits } from '@dskripchenko/shell-integration'
+import { isAbsolute, join, normalize, relative, resolve, sep } from 'node:path'
 
 export interface Baseline {
   root: string
@@ -121,4 +123,60 @@ export async function fileDiff(b: Baseline, path: string, untracked: boolean): P
     }
   }
   return { diff: await git(b.root, ['diff', '--no-renames', '--no-color', b.base, '--', path]) }
+}
+
+/** An agent's edit of a file of the repository (the shared journal, `.git/agent-edits.jsonl`). */
+export interface RepoEdit {
+  /** From the repository's root, `/`-separated. */
+  path: string
+  pane: string
+  session: string
+  tool: string
+  time: number
+}
+
+const realOr = (p: string): string => {
+  try {
+    return realpathSync.native(p)
+  } catch {
+    return p
+  }
+}
+
+/**
+ * The agents' edits in a repository, newest last, from the journal its hook
+ * keeps (see `editsHookCommand`); the journal written again small when it has grown.
+ */
+export async function repoEdits(root: string): Promise<RepoEdit[]> {
+  let gitDir: string
+  try {
+    gitDir = resolve(root, (await git(root, ['rev-parse', '--git-common-dir'])).trim())
+  } catch {
+    return []
+  }
+  const file = join(gitDir, JOURNAL)
+  let text: string
+  try {
+    if (statSync(file).size > 64 << 20) return []
+    text = readFileSync(file, 'utf8')
+  } catch {
+    return []
+  }
+  const edits = readEdits(text)
+  if (text.length > 4 << 20) {
+    try {
+      writeFileSync(file, compactEdits(edits.slice(-20_000)))
+    } catch {
+      // Read again next time.
+    }
+  }
+  const base = realOr(root)
+  const out: RepoEdit[] = []
+  for (const e of edits.slice(-5000)) {
+    const full = realOr(isAbsolute(e.path) ? e.path : resolve(e.cwd || root, e.path))
+    const rel = relative(base, full)
+    if (!rel || rel.startsWith('..') || isAbsolute(rel)) continue
+    out.push({ path: rel.split(sep).join('/'), pane: e.pane, session: e.session, tool: e.tool, time: e.time })
+  }
+  return out
 }

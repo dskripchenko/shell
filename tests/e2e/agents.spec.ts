@@ -96,6 +96,6 @@ test('an agent that tells its turns with shell-notify: waiting, then done while 
   await page.keyboard.press('Enter')
   await expect(page.locator('.status-message')).toContainText('подключены')
   const settings = JSON.parse(readFileSync(join(home, '.claude', 'settings.json'), 'utf8'))
-  expect(Object.keys(settings.hooks).sort()).toEqual(['Notification', 'Stop', 'UserPromptSubmit'])
+  expect(Object.keys(settings.hooks).sort()).toEqual(['Notification', 'PostToolUse', 'Stop', 'UserPromptSubmit'])
   await app.close()
 })

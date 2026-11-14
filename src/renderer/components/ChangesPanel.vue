@@ -2,8 +2,9 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { BookOpen, GitCompare, RefreshCw, X } from '@dskripchenko/ui/icons'
 import { addedFile, commentFor, parseDiff, type DiffLine } from '../../common/diff'
-import { activeGroup, activeTab, panes } from '../../common/layout'
-import type { Baseline, ChangedFile } from '../../common/ipc'
+import { activeGroup, activeTab, findPane, panes } from '../../common/layout'
+import type { Baseline, ChangedFile, RepoEdit } from '../../common/ipc'
+import { tabTitle } from '../titles'
 import { keysOf } from '../keyboard'
 import { api, say, shortPath, toFolio, ui, ws } from '../store'
 import * as terminals from '../terminals'
@@ -23,6 +24,9 @@ const selected = ref<string | null>(null)
 const lines = ref<DiffLine[]>([])
 const diffError = ref('')
 const commentAt = ref<number | null>(null)
+/** The agents' edits in the repository (the journal shared with folio), the last for each file. */
+const edits = ref<Map<string, RepoEdit>>(new Map())
+const mineOnly = ref(false)
 const comment = ref('')
 
 /** The agent's baseline, or the working copy against HEAD when no agent started one. */
@@ -51,6 +55,8 @@ async function refresh(): Promise<void> {
     return
   }
   error.value = ''
+  const journal = await api.changesEdits(JSON.parse(JSON.stringify(b)))
+  edits.value = new Map(journal.map((e) => [e.path, e]))
   files.value = r
   if (selected.value && !r.some((f) => f.path === selected.value)) selected.value = null
   if (!selected.value && r[0]) await select(r[0])
@@ -132,6 +138,22 @@ function fileToFolio(): void {
   toFolio({ file: { path: b.root + sep + f.path.split('/').join(sep), ...(at?.new ? { line: at.new } : {}) } })
 }
 
+/** Who edited a file last, as the journal says: this pane's agent, another tab's, one outside shell. */
+function editor(f: ChangedFile): { label: string; title: string; mine: boolean } | null {
+  const e = edits.value.get(f.path)
+  if (!e) return null
+  const at = new Date(e.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  if (e.pane && e.pane === paneId.value) return { label: 'этот агент', title: `Правил агент этой панели (${e.tool}, ${at})`, mine: true }
+  if (e.pane) {
+    const tab = ws.value!.groups.flatMap((g) => g.tabs).find((t) => findPane(t.root, e.pane))
+    const name = tab ? tabTitle(tab) : 'закрытая вкладка'
+    return { label: name, title: `Правил агент во вкладке «${name}» (${e.tool}, ${at})`, mine: false }
+  }
+  return { label: 'вне shell', title: `Правил агент вне shell, сессия ${e.session.slice(0, 8)} (${e.tool}, ${at})`, mine: false }
+}
+const hasMine = computed(() => files.value.some((f) => edits.value.get(f.path)?.pane === paneId.value))
+const shown = computed(() => (mineOnly.value && hasMine.value ? files.value.filter((f) => edits.value.get(f.path)?.pane === paneId.value) : files.value))
+
 const STATUS = { added: 'A', modified: 'M', deleted: 'D' } as const
 </script>
 
@@ -154,9 +176,11 @@ const STATUS = { added: 'A', modified: 'M', deleted: 'D' } as const
     <div v-else-if="files.length === 0" class="changes-empty">Изменений нет</div>
     <div v-else class="changes-body">
       <ul class="changes-files" role="listbox" aria-label="Изменённые файлы">
-        <li v-for="f in files" :key="f.path" class="changes-file" :class="{ active: f.path === selected }" role="option" :aria-selected="f.path === selected" title="Двойной щелчок — открыть в просмотре" @click="select(f)" @dblclick="f.status !== 'deleted' && baseline && (ui.viewer = { path: f.path, cwd: baseline.root })">
+        <li v-if="hasMine" class="changes-filter" role="none"><label><input v-model="mineOnly" type="checkbox" /> Только правки этого агента</label></li>
+        <li v-for="f in shown" :key="f.path" class="changes-file" :class="{ active: f.path === selected }" role="option" :aria-selected="f.path === selected" title="Двойной щелчок — открыть в просмотре" @click="select(f)" @dblclick="f.status !== 'deleted' && baseline && (ui.viewer = { path: f.path, cwd: baseline.root })">
           <span class="file-status" :class="f.status">{{ STATUS[f.status] }}</span>
           <span class="file-path mono" :title="f.path">{{ f.path }}</span>
+          <span v-if="editor(f)" class="file-editor" :class="{ mine: editor(f)!.mine }" :title="editor(f)!.title">{{ editor(f)!.label }}</span>
           <span class="plus mono">{{ f.adds ? `+${f.adds}` : '' }}</span>
           <span class="minus mono">{{ f.dels ? `−${f.dels}` : '' }}</span>
           <input type="checkbox" class="file-viewed" :checked="isViewed(f)" :aria-label="`Просмотрено: ${f.path}`" title="Просмотрено" @click.stop="toggleViewed(f)" />

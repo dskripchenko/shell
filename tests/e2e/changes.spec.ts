@@ -3,6 +3,7 @@ import { execFileSync } from 'node:child_process'
 import { chmodSync, mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { editsHookCommand } from '../../packages/shell-integration/src/agentEdits'
 
 const mac = process.platform === 'darwin'
 
@@ -10,6 +11,8 @@ const mac = process.platform === 'darwin'
 const EDITOR = `#!/bin/sh
 sleep 1
 printf 'one\\nTWO, by the agent\\nthree\\n' > a.txt
+# Its edit of a.txt told to the journal, as Claude Code's hook does it (added.txt not: made by hand, say).
+printf '{"session_id":"s1","tool_name":"Edit","cwd":"%s","tool_input":{"file_path":"%s/a.txt"}}' "$PWD" "$PWD" | sh "$EDITS_HOOK"
 printf 'new file\\n' > added.txt
 shell-notify done --agent editor
 sleep 30
@@ -22,6 +25,7 @@ test('an agent’s changes: the files since it started, a diff, a comment on a l
   const bin = join(home, 'bin')
   mkdirSync(bin)
   writeFileSync(join(bin, 'editor'), EDITOR)
+  writeFileSync(join(home, 'edits-hook.sh'), editsHookCommand())
   chmodSync(join(bin, 'editor'), 0o755)
   const repo = join(home, 'project')
   mkdirSync(repo)
@@ -35,7 +39,7 @@ test('an agent’s changes: the files since it started, a diff, a comment on a l
 
   const data = mkdtempSync(join(tmpdir(), 'shell-e2e-'))
   writeFileSync(join(data, 'config.toml'), `[shell]\nprogram = "/bin/bash"\nargs = []\n[quake]\nenabled = false\n[agents]\ncommands = ["editor"]\n[profiles.project]\ncwd = "${repo}"\n`)
-  const app = await electron.launch({ args: ['.'], env: { ...process.env, SHELL_DATA: data, SHELL_E2E: '1', HOME: home, PATH: `${bin}:${process.env.PATH}` } })
+  const app = await electron.launch({ args: ['.'], env: { ...process.env, SHELL_DATA: data, SHELL_E2E: '1', HOME: home, PATH: `${bin}:${process.env.PATH}`, EDITS_HOOK: join(home, 'edits-hook.sh') } })
   const page = await app.firstWindow()
   await page.waitForSelector('.term-host .dsk-term')
   const palette = async (text: string) => {
@@ -71,6 +75,13 @@ test('an agent’s changes: the files since it started, a diff, a comment on a l
   await panel.locator('.diff-comment button[type=submit]').click()
   const text = () => page.evaluate(() => (window as unknown as { shellTest: { text(): string } }).shellTest.text())
   await expect.poll(text).toContain('a.txt:2 — keep it lower case')
+
+  // Who edited what, from the journal shared with folio: a.txt by this pane's agent; only its edits on request.
+  await expect(panel.locator('.changes-file', { hasText: 'a.txt' }).locator('.file-editor')).toHaveText('этот агент')
+  await expect(panel.locator('.changes-file', { hasText: 'added.txt' }).locator('.file-editor')).toHaveCount(0)
+  await panel.getByLabel('Только правки этого агента').check()
+  await expect(panel.locator('.changes-file')).toHaveCount(1)
+  await panel.getByLabel('Только правки этого агента').uncheck()
 
   // Marked viewed; the count says so.
   await panel.locator('.file-viewed').nth(0).check()

@@ -25,7 +25,7 @@ import { ProjectsStore } from './projects'
 import { SCHEME, ViewerFiles } from './viewer'
 import { remoteFetch, remoteGet, remoteHome, remoteList, remoteMkdir, remotePut, remoteRemove, remoteRename, sshHosts } from './remote'
 import { setClaudeHooks } from './claudeHooks'
-import { changedFiles, fileDiff, headBaseline, repoRoot, takeBaseline, type Baseline } from './changes'
+import { changedFiles, fileDiff, headBaseline, repoEdits, repoRoot, takeBaseline, type Baseline } from './changes'
 import type { UpdateInfo } from '../common/ipc'
 
 const DATA = dataDir({ env: process.env, platform: process.platform, execPath: process.execPath, packaged: app.isPackaged, cwd: process.cwd() })
@@ -386,6 +386,10 @@ ipcMain.handle(IPC.changesList, async (_e, b: unknown) => {
   } catch (e) {
     return { error: e instanceof Error && /ENOENT/.test(e.message) ? 'нужна программа git' : String(e instanceof Error ? e.message : e).split('\n')[0] }
   }
+})
+ipcMain.handle(IPC.changesEdits, async (_e, b: unknown) => {
+  const base = await checkedBaseline(b)
+  return base ? repoEdits(base.root) : []
 })
 ipcMain.handle(IPC.changesDiff, async (_e, b: unknown, path: unknown, untracked: unknown) => {
   const base = await checkedBaseline(b)
