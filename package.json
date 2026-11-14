@@ -1,6 +1,6 @@
 {
   "name": "shell",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "private": true,
   "description": "A terminal for macOS, Windows and Linux: groups, coloured tabs, splits, agents beside your code, files the Midnight Commander way — portable, offline, no account.",
   "license": "MIT",

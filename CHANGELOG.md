@@ -7,6 +7,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-11-14
+
+The «later» list done: input to every pane, triggers, prompts, blocks, pictures, archives, finding and comparing files, the project's tree, previews.
+
 ### Added
 
 - Previews in the viewer: a PDF in Chromium's own viewer (pages, zoom,

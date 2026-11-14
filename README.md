@@ -6,7 +6,7 @@ on keys of your own — and, next, AI agents in their panes, files the Midnight
 Commander way, documents with live diagrams. Portable and offline: no
 installer, no account, no telemetry.
 
-> Status: **0.6.** Stage 1 — groups, tabs, splits, a palette, keys of your own
+> Status: **0.7.** Stage 1 — groups, tabs, splits, a palette, keys of your own
 > (on any keyboard layout), `config.toml`, profiles, imported themes, a
 > drop-down window, the session and each pane's output back after a restart,
 > updates. Stage 2 — shell integration in zsh, bash and PowerShell; AI
@@ -18,8 +18,11 @@ installer, no account, no telemetry.
 > projects (a group's layout and agents saved, a switcher), git on the tabs
 > and worktrees in groups of their own, folio both ways (documents edited
 > there, a journal of agents' edits, console colours, projects), settings
-> with fields, Secure Keyboard Entry, the kitty keyboard protocol. The plan is
-> in [FEATURES.md](FEATURES.md) (in Russian).
+> with fields, Secure Keyboard Entry, the kitty keyboard protocol. Then —
+> input to every pane at once, triggers, a prompt library, commands as
+> blocks, pictures (sixel, kitty), archives as folders, finding and comparing
+> files, the project's tree, HTML and PDF previews. The plan is in
+> [FEATURES.md](FEATURES.md) (in Russian).
 
 ## Download
 
