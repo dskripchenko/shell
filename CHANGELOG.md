@@ -7,6 +7,15 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added
+
+- Projects: a group saved as a project (Save group as project in the
+  palette) keeps its tabs, splits, each pane's folder — by its place in the
+  repository — and profile, and the agent that ran in it. The switcher
+  (Cmd+Shift+O, Ctrl+Shift+O elsewhere) opens a project — its group back, its
+  agents started again — or shows its group when it is open. Kept in
+  `shell-data/projects.json`.
+
 ## [0.3.0] - 2026-11-14
 
 Stage 2 closes: a viewer with live blocks, SSH hosts and sftp, folio.

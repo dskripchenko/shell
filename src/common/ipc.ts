@@ -6,6 +6,7 @@
 import type { ConfigResult } from './config'
 import type { Platform } from './keys'
 import type { Workspace } from './layout'
+import type { Project } from './projects'
 import type { Theme } from './themes'
 import type { ShellEvent } from '@dskripchenko/shell-integration'
 import type { Baseline, ChangedFile } from '../main/changes'
@@ -50,6 +51,10 @@ export interface ShellApi {
   cwd(paneId: string): Promise<string | null>
   gitBranch(folder: string): Promise<string | null>
   saveWorkspace(ws: Workspace): void
+  /** The projects (shared by the windows); saved whole, each window told. */
+  projects(): Promise<Project[]>
+  saveProjects(projects: Project[]): void
+  onProjects(listener: (projects: Project[]) => void): void
   onData(listener: (paneId: string, data: string) => void): void
   onExit(listener: (paneId: string, code: number) => void): void
   onEvents(listener: (paneId: string, events: ShellEvent[]) => void): void
@@ -176,6 +181,9 @@ export const IPC = {
   filesTrash: 'files:trash',
   filesHead: 'files:head',
   saveWorkspace: 'session:save',
+  projects: 'projects:list',
+  saveProjects: 'projects:save',
+  projectsChanged: 'projects:changed',
   settings: 'settings:changed',
   command: 'window:command',
   copy: 'clipboard:copy',

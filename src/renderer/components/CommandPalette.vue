@@ -8,7 +8,8 @@ import { typeWhenReady } from '../agents'
 import { shellQuote } from '../../common/commander'
 import type { SshHost } from '../../common/ssh'
 import { keysOf } from '../keyboard'
-import { api, commit, ui, ws } from '../store'
+import { openProject, recentProjects } from '../projects'
+import { api, commit, shortPath, ui, ws } from '../store'
 import { tabTitle } from '../titles'
 
 interface Item {
@@ -26,9 +27,31 @@ const index = ref(0)
 const input = ref<HTMLInputElement | null>(null)
 const list = ref<HTMLElement | null>(null)
 
+const projectsOnly = computed(() => ui.palette === 'projects')
+
+/** The projects, most recent first; an open one says so. */
+function projectItems(prefix: string): Item[] {
+  const open = new Set(ws.value!.groups.map((g) => g.project))
+  return recentProjects().map((p) => ({
+    id: `project:${p.id}`,
+    title: prefix + p.name,
+    section: open.has(p.id) ? `открыт · ${shortPath(p.root)}` : shortPath(p.root),
+    keys: '',
+    swatch: p.color,
+    action: () => openProject(p.id),
+  }))
+}
+
 const items = computed<Item[]>(() => {
   const w = ws.value!
   const out: Item[] = []
+  if (projectsOnly.value) {
+    out.push(...projectItems(''))
+    const save = COMMANDS.get('project.save')!
+    out.push({ id: save.id, title: save.title, section: 'Проекты', keys: keysOf(save.id), action: () => run(save.id) })
+    return out
+  }
+  out.push(...projectItems('Проект: '))
   for (const c of COMMANDS.values()) {
     if ((typeof c.hidden === 'function' ? c.hidden() : c.hidden) || c.id === 'palette.open') continue
     out.push({ id: c.id, title: c.title, section: c.group, keys: keysOf(c.id), action: () => run(c.id) })
@@ -107,14 +130,14 @@ function parts(title: string, positions: number[]): { text: string; hit: boolean
 
 <template>
   <div class="overlay" @pointerdown.self="close">
-    <div class="palette" role="dialog" aria-label="Палитра команд">
+    <div class="palette" role="dialog" :aria-label="projectsOnly ? 'Проекты' : 'Палитра команд'">
       <div class="palette-input">
         <Search :size="16" aria-hidden="true" />
         <input
           ref="input"
           v-model="query"
-          aria-label="Команда, группа или вкладка"
-          placeholder="Команда, группа или вкладка — можно в любой раскладке"
+          :aria-label="projectsOnly ? 'Проект' : 'Команда, группа или вкладка'"
+          :placeholder="projectsOnly ? 'Проект — можно в любой раскладке' : 'Команда, группа или вкладка — можно в любой раскладке'"
           role="combobox"
           aria-expanded="true"
           aria-controls="palette-list"

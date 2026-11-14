@@ -3,6 +3,7 @@
  * and the menu run the same ones, and the user's keys name them.
  */
 import { activeGroup, activeTab, addGroup, addTab, closeGroup, closePane, closeTab, cycleGroup, cycleTab, findPane, focusSide, newWorkspace, selectGroup, splitPane, tabAt, toggleZoom, updateActiveTab, updateTab, type Workspace } from '../common/layout'
+import { forgetProject, saveGroupAsProject } from './projects'
 import { api, baseName, commit, newId, say, toFolio, ui, ws } from './store'
 import * as agents from './agents'
 import * as terminals from './terminals'
@@ -73,7 +74,10 @@ function fontBy(delta: number | null): void {
 }
 
 const list: Command[] = [
-  { id: 'palette.open', group: 'Окно', title: 'Палитра команд', run: () => (ui.palette = !ui.palette) },
+  { id: 'palette.open', group: 'Окно', title: 'Палитра команд', run: () => (ui.palette = ui.palette ? false : 'all') },
+  { id: 'project.switch', group: 'Проекты', title: 'Проекты: открыть или перейти', run: () => (ui.palette = ui.palette === 'projects' ? false : 'projects') },
+  { id: 'project.save', group: 'Проекты', title: 'Сохранить группу как проект (раскладка и агенты)', run: () => void saveGroupAsProject() },
+  { id: 'project.forget', group: 'Проекты', title: 'Убрать проект группы из списка', hidden: () => !ui.projects.some((p) => p.id === activeGroup(w()).project), run: forgetProject },
   { id: 'sidebar.toggle', group: 'Окно', title: 'Свернуть или развернуть панель групп', run: () => commit({ ...w(), sidebarCollapsed: !w().sidebarCollapsed }) },
   { id: 'config.open', group: 'Окно', title: 'Открыть config.toml', run: () => api.openConfig() },
   { id: 'data.open', group: 'Окно', title: 'Открыть папку данных shell-data', run: () => api.openDataDir() },

@@ -5,6 +5,7 @@
 import { reactive, shallowRef } from 'vue'
 import type { AgentState } from '../common/agents'
 import type { FolioRequest, Settings, ShellApi, UpdateInfo } from '../common/ipc'
+import type { Project } from '../common/projects'
 import type { Platform } from '../common/keys'
 import type { Workspace } from '../common/layout'
 
@@ -37,7 +38,9 @@ export const ui = reactive({
   version: '',
   settings: null as Settings | null,
   systemDark: matchMedia('(prefers-color-scheme: dark)').matches,
-  palette: false,
+  /** The palette: everything, or only the projects (the switcher). */
+  palette: false as false | 'all' | 'projects',
+  projects: [] as Project[],
   dialog: null as Dialog | null,
   find: null as null | { query: string; count: number; index: number },
   fontDelta: 0,

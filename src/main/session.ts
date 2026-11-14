@@ -20,7 +20,7 @@ interface Saved {
   bounds?: Bounds
 }
 
-function writeAtomic(path: string, text: string): void {
+export function writeAtomic(path: string, text: string): void {
   const tmp = `${path}.tmp`
   writeFileSync(tmp, text)
   renameSync(tmp, path)

@@ -18,6 +18,7 @@ import { NotifyServer } from './notify'
 import { copyInto, listDir, makeDir, moveInto, moveTo, readHead, type OpResult } from './files'
 import { dirname, isAbsolute, resolve as resolvePath } from 'node:path'
 import { findFolio, folioRequest, launchFolio } from './folio'
+import { ProjectsStore } from './projects'
 import { SCHEME, ViewerFiles } from './viewer'
 import { remoteFetch, remoteGet, remoteHome, remoteList, remoteMkdir, remotePut, remoteRemove, remoteRename, sshHosts } from './remote'
 import { setClaudeHooks } from './claudeHooks'
@@ -250,6 +251,13 @@ ipcMain.handle(IPC.cwd, async (e, paneId: unknown) => {
 ipcMain.handle(IPC.gitBranch, (_e, folder: unknown) => (typeof folder === 'string' && folder ? gitBranch(folder) : null))
 
 let saveTimer: NodeJS.Timeout | null = null
+const projects = new ProjectsStore(DATA)
+ipcMain.handle(IPC.projects, () => projects.all())
+ipcMain.on(IPC.saveProjects, (_e, list: unknown) => {
+  const saved = projects.save(list)
+  for (const host of hosts.values()) send(host, IPC.projectsChanged, saved)
+})
+
 ipcMain.on(IPC.saveWorkspace, (e, ws: unknown) => {
   const host = hostOf(e.sender)
   if (!host) return

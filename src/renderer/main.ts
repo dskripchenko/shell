@@ -63,6 +63,8 @@ async function start(): Promise<void> {
   })
   // folio: looked for at start, after a change of settings and when the window comes back.
   void findFolio()
+  void api.projects().then((list) => (ui.projects = list))
+  api.onProjects((list) => (ui.projects = list))
   api.onSettings(() => void findFolio())
   window.addEventListener('focus', () => void findFolio())
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {

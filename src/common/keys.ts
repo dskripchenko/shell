@@ -204,6 +204,7 @@ export function defaultBindings(platform: Platform): Binding[] {
   const m = mac ? 'cmd' : 'ctrl+shift'
   const list: [string, string][] = [
     [mac ? 'cmd+shift+p' : 'ctrl+shift+p', 'palette.open'],
+    [mac ? 'cmd+shift+o' : 'ctrl+shift+o', 'project.switch'],
     [`${m}+t`, 'tab.new'],
     [mac ? 'cmd+alt+w' : 'ctrl+shift+alt+w', 'tab.close'],
     ['ctrl+tab', 'tab.next'],

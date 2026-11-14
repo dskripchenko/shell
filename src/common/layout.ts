@@ -45,6 +45,8 @@ export interface Group {
   cwd?: string
   /** The profile new tabs of the group start with. */
   profile?: string
+  /** The project the group was opened from (projects.ts): opening it again comes here. */
+  project?: string
   tabs: Tab[]
   activeTab: string
 }
@@ -169,6 +171,21 @@ export function updateActiveTab(ws: Workspace, f: (t: Tab) => Tab): Workspace {
 export function addGroup(ws: Workspace, newId: NewId, opts: { name: string; color?: string; cwd?: string; profile?: string }): Workspace {
   const group = newGroup(newId, { ...opts, taken: ws.groups.map((g) => g.color) })
   return { ...ws, groups: [...ws.groups, group], activeGroup: group.id }
+}
+
+/** A group made elsewhere (a project's) put last and shown; its colour kept. */
+export function insertGroup(ws: Workspace, group: Group): Workspace {
+  return { ...ws, groups: [...ws.groups, group], activeGroup: group.id }
+}
+
+/** A group linked to a project, or no longer (null). */
+export function linkGroup(ws: Workspace, id: string, project: string | null): Workspace {
+  return mapGroup(ws, id, (g) => {
+    const next: Group = { ...g }
+    if (project === null) delete next.project
+    else next.project = project
+    return next
+  })
 }
 
 export function selectGroup(ws: Workspace, id: string): Workspace {
