@@ -7,6 +7,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-11-14
+
+The interface in four languages: English, Russian, German, Chinese.
+
 ### Added
 
 - The interface in English, Russian, German and Chinese: `[ui] language`

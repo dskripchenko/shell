@@ -5,7 +5,7 @@ AI 智能体（Claude Code、Codex、Grok 等）一起工作：标签分组与�
 工作还是在等你，查看它们的改动和 diff，Midnight Commander 风格的文件面板，带实时图表的
 文档，SSH 主机。便携、离线：无需安装，无需账号，没有遥测。
 
-> 状态：**0.7** —— 请从[最新版本](https://github.com/dskripchenko/shell/releases/latest)下载适合你系统的压缩包。
+> 状态：**0.8** —— 请从[最新版本](https://github.com/dskripchenko/shell/releases/latest)下载适合你系统的压缩包。
 
 - [使用指南](guide.md) —— 能做什么、怎么做：分组、智能体、文件、查看器、项目、设置、快捷键
 - [开发](development.md) —— 构建、运行与测试
