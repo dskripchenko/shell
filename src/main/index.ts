@@ -101,6 +101,8 @@ function createHost(kind: Kind): Host {
       sandbox: true,
       nodeIntegration: false,
       spellcheck: false,
+      // Chromium's PDF viewer for a PDF in the viewer (its own frame, PDFs only).
+      plugins: true,
     },
   })
   const s = settings.get()

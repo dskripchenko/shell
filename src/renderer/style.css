@@ -154,6 +154,7 @@ kbd:empty { display: none; }
 .color.none[aria-pressed='true'] { border: 2px solid var(--uid-text-primary); }
 .dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
 .button { height: 30px; padding: 0 14px; border: 1px solid var(--uid-border-default); border-radius: var(--uid-radius-md); background: transparent; cursor: pointer; }
+.button.small { height: 22px; padding: 0 8px; font-size: 12px; }
 .button.primary { border: 0; background: var(--uid-accent-solid); color: var(--uid-text-on-accent); font-weight: 600; }
 
 /* Find in the output. */

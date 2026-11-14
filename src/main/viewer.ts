@@ -17,8 +17,12 @@ const TYPES: Record<string, string> = {
   '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.gif': 'image/gif', '.webp': 'image/webp',
   '.avif': 'image/avif', '.ico': 'image/x-icon', '.bmp': 'image/bmp', '.mp4': 'video/mp4', '.webm': 'video/webm', '.mov': 'video/quicktime', '.ogv': 'video/ogg',
   '.mp3': 'audio/mpeg', '.wav': 'audio/wav', '.ogg': 'audio/ogg', '.oga': 'audio/ogg', '.flac': 'audio/flac', '.m4a': 'audio/mp4', '.aac': 'audio/aac', '.opus': 'audio/opus',
+  '.pdf': 'application/pdf', '.htm': 'text/html; charset=utf-8',
   '.woff2': 'font/woff2', '.woff': 'font/woff', '.ttf': 'font/ttf', '.md': 'text/markdown; charset=utf-8', '.txt': 'text/plain; charset=utf-8',
 }
+
+/** What an HTML page of a viewed folder may do: its folder's files, inline code; no network, no forms, no frames. */
+export const PAGE_CSP = "default-src shell-doc: data: blob: 'unsafe-inline' 'unsafe-eval'; connect-src 'none'; form-action 'none'; frame-src 'none'; base-uri 'none'"
 
 export class ViewerFiles {
   private readonly roots = new Map<string, string>()
@@ -60,12 +64,15 @@ export class ViewerFiles {
     if (!full) return notFound()
     try {
       const body = await readFile(full)
+      const type = TYPES[extname(full).toLowerCase()] ?? 'application/octet-stream'
       return new Response(new Uint8Array(body), {
         headers: {
-          'content-type': TYPES[extname(full).toLowerCase()] ?? 'application/octet-stream',
+          'content-type': type,
           // The viewer page runs sandboxed (an opaque origin): its reads of the folder's files need this.
           'access-control-allow-origin': '*',
           'cache-control': 'no-cache',
+          // A page of the folder shown as a page: its own files only, no network, nothing sent anywhere.
+          ...(type.startsWith('text/html') && u.hostname !== 'app' ? { 'content-security-policy': PAGE_CSP } : {}),
         },
       })
     } catch {

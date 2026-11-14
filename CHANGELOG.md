@@ -9,6 +9,9 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- Previews in the viewer: a PDF in Chromium's own viewer (pages, zoom,
+  search, printing); an HTML page as a page — sandboxed, its folder's files
+  only, no network, nothing of the window — or as code on request.
 - The project's tree beside the panes (Cmd+Shift+E, Ctrl+Shift+X
   elsewhere): the focused pane's repository (or its folder), folders opened
   as they are clicked, the files git sees changed — and the folders they are

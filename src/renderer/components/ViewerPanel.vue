@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { ExternalLink, Pencil, X } from '@dskripchenko/ui/icons'
 import type { ViewerDoc } from '../../common/ipc'
 import { lineOfText, viewKind } from '../../common/viewer'
@@ -51,6 +51,18 @@ function edit(text: string, index: number | null): void {
   toFolio({ file: { path: d.path, ...(line ? { line } : {}) } })
 }
 
+/** PDFs and HTML pages in frames of their own; the rest in the viewer page. */
+const asCode = ref(false)
+const isHtml = computed(() => /\.html?$/i.test(doc.value?.name ?? ''))
+const frameKind = computed(() => {
+  const name = doc.value?.name ?? ''
+  if (/\.pdf$/i.test(name)) return 'pdf'
+  if (isHtml.value && !asCode.value) return 'html'
+  return 'viewer'
+})
+watch(() => ui.viewer?.path, () => (asCode.value = false))
+watch(frameKind, (k) => k === 'viewer' && void nextTick(send))
+
 /** Only the viewer page is listened to: a link it was asked to follow. */
 function onMessage(e: MessageEvent): void {
   if (!frame.value || e.source !== frame.value.contentWindow || !e.data) return
@@ -86,11 +98,16 @@ watch(() => [ui.systemDark, ui.settings], send)
       <span v-if="doc" class="changes-sub mono" :title="doc.path">{{ shortPath(doc.path.slice(0, doc.path.length - doc.name.length)) }}</span>
       <span class="changes-fill"></span>
       <button v-if="doc && ui.folio" type="button" class="icon-button" aria-label="Править в folio" title="Править в folio (двойной щелчок по тексту — на этом месте)" @click="toFolio({ file: { path: doc.path, ...(ui.viewer?.line ? { line: ui.viewer.line } : {}) } })"><Pencil :size="14" aria-hidden="true" /></button>
+      <button v-if="doc && isHtml" type="button" class="button small" :aria-pressed="asCode" @click="asCode = !asCode">{{ asCode ? 'Как страница' : 'Как код' }}</button>
       <button v-if="doc" type="button" class="icon-button" aria-label="Открыть программой системы" title="Открыть программой системы" @click="api.openPath(doc.path)"><ExternalLink :size="14" aria-hidden="true" /></button>
       <button type="button" class="icon-button" aria-label="Закрыть просмотр" title="Закрыть просмотр" @click="ui.viewer = null"><X :size="14" aria-hidden="true" /></button>
     </header>
     <div v-if="error" class="changes-empty">{{ error }}</div>
+    <!-- A PDF in Chromium's own viewer: a frame of its own, served as a PDF only. -->
+    <iframe v-if="!error && doc && frameKind === 'pdf'" class="viewer-frame" :src="doc.url" :title="doc.name" data-kind="pdf"></iframe>
+    <!-- An HTML page as a page: sandboxed (an opaque origin), its folder's files only, no network (the scheme's CSP). -->
+    <iframe v-else-if="!error && doc && frameKind === 'html'" class="viewer-frame page" :src="doc.url" sandbox="allow-scripts" :title="doc.name" data-kind="html"></iframe>
     <!-- Sandboxed, on an origin of its own: the document cannot reach the window or its IPC. -->
-    <iframe v-show="!error" ref="frame" class="viewer-frame" src="shell-doc://app/viewer.html" sandbox="allow-scripts" title="Просмотр файла"></iframe>
+    <iframe v-show="!error && frameKind === 'viewer'" ref="frame" class="viewer-frame" src="shell-doc://app/viewer.html" sandbox="allow-scripts" title="Просмотр файла"></iframe>
   </aside>
 </template>
