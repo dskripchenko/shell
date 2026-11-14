@@ -65,8 +65,11 @@ test('SSH hosts from ~/.ssh/config in the palette; a host in the file panels ove
   // A folder made on the host.
   await page.keyboard.press('Tab')
   await page.keyboard.press('F7')
-  await page.keyboard.type('made-there')
-  await page.keyboard.press('Enter')
+  // Typed once the dialog has its field: a key before it would go to the panel.
+  const field = page.getByRole('dialog').getByLabel('Значение')
+  await expect(field).toBeFocused()
+  await field.fill('made-there')
+  await field.press('Enter')
   await expect.poll(() => existsSync(join(server, 'home', 'made-there'))).toBe(true)
   await expect(left.locator('.fpanel-row.cursor')).toContainText('made-there/')
   await app.close()

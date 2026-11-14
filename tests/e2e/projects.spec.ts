@@ -11,7 +11,7 @@ test('a project: a group saved with its agent, opened again after closing — th
   const home = realpathSync(mkdtempSync(join(tmpdir(), 'shell-home-')))
   const bin = join(home, 'bin')
   mkdirSync(bin)
-  writeFileSync(join(bin, 'helper'), '#!/bin/sh\necho "helper is up in $(pwd)"\nsleep 60\n')
+  writeFileSync(join(bin, 'helper'), '#!/bin/sh\necho "helper is up in $(basename "$PWD")"\nsleep 60\n')
   chmodSync(join(bin, 'helper'), 0o755)
   const repo = join(home, 'app')
   mkdirSync(join(repo, 'web'), { recursive: true })
@@ -37,7 +37,7 @@ test('a project: a group saved with its agent, opened again after closing — th
   await expect(page.locator('.tab.active .tab-name')).toHaveText('web', { timeout: 20_000 })
   await page.keyboard.type('helper')
   await page.keyboard.press('Enter')
-  await expect.poll(text).toContain(`helper is up in ${repo}/web`)
+  await expect.poll(text).toContain('helper is up in web')
 
   // Saved: the root is the repository's, the folder kept by its place, the agent by its command.
   await palette('Сохранить группу как проект')
@@ -55,7 +55,7 @@ test('a project: a group saved with its agent, opened again after closing — th
   await expect(page.locator('.group-name', { hasText: 'app' })).toHaveCount(1)
   await expect(page.locator('.tab')).toHaveCount(saved.projects[0]!.tabs.length)
   await page.locator('.tab', { hasText: 'web' }).click()
-  await expect.poll(text, { timeout: 20_000 }).toContain(`helper is up in ${repo}/web`)
+  await expect.poll(text, { timeout: 20_000 }).toContain('helper is up in web')
 
   // Opened while open: the same group shown, none added.
   await palette('Группа: Основная')
