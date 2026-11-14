@@ -4,6 +4,7 @@ import '@dskripchenko/ui/styles/fonts.css'
 import './style.css'
 import { createApp } from 'vue'
 import { activeGroup, activeTab, allPanes, newWorkspace, setPaneCwd } from '../common/layout'
+import type { Settings } from '../common/ipc'
 import * as agents from './agents'
 import App from './App.vue'
 import { closePaneById, run } from './commands'
@@ -59,11 +60,14 @@ async function start(): Promise<void> {
   api.onApiRequest(handleRequest)
   api.onExit((paneId, code) => terminals.onExit(paneId, code, closePaneById))
   api.onCommand((command) => run(command))
+  // The panes' views made again only when what they draw with changed: a view made again loses its selection.
+  const drawnWith = (x: Settings | null | undefined) => JSON.stringify(x ? [x.config.font, x.config.theme, x.config.triggers, x.config.profiles, x.themes] : null)
   api.onSettings((settings) => {
+    const before = drawnWith(ui.settings)
     ui.settings = settings
     rebuild()
     applyChrome(currentTheme())
-    terminals.restyle()
+    if (drawnWith(settings) !== before) terminals.restyle()
   })
   // folio: looked for at start, after a change of settings and when the window comes back.
   void findFolio()
@@ -117,6 +121,7 @@ async function start(): Promise<void> {
     // What the tests read: every pane's whole buffer, hidden tabs too.
     ;(window as unknown as { shellTest: object }).shellTest = {
       text: () => (ws.value ? allPanes(ws.value).map((p) => terminals.bufferText(p.id)).join('\n') : ''),
+      selection: () => (ws.value ? (terminals.get(activeTab(activeGroup(ws.value)).focus)?.view.getSelection() ?? '') : ''),
     }
   }
   ui.update = await api.updateState()

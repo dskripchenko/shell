@@ -23,6 +23,7 @@ import { findFolio, folioRequest, launchFolio, presenceOf, projectsOf } from './
 import { addWorktree, gitStatus } from './git'
 import { lookOf } from '../common/themes'
 import { ProjectsStore } from './projects'
+import { PromptStore } from './prompts'
 import { SCHEME, ViewerFiles } from './viewer'
 import { remoteFetch, remoteGet, remoteHome, remoteList, remoteMkdir, remotePut, remoteRemove, remoteRename, sshHosts } from './remote'
 import { setClaudeHooks } from './claudeHooks'
@@ -308,6 +309,13 @@ app.on('did-resign-active', () => {
   if (settings) applySecureKeyboard(false)
 })
 ipcMain.on(IPC.openDataDir, () => void electronShell.openPath(DATA))
+const prompts = new PromptStore(DATA)
+ipcMain.handle(IPC.prompts, () => prompts.list())
+ipcMain.handle(IPC.addPrompt, (_e, name: unknown, text: unknown) => (typeof name === 'string' && typeof text === 'string' && text.length <= 64 * 1024 ? prompts.add(name, text) : ''))
+ipcMain.on(IPC.openPrompts, () => {
+  prompts.list()
+  void electronShell.openPath(prompts.dir)
+})
 
 // Agents' signals (shell-notify) ---------------------------------------------------------------
 

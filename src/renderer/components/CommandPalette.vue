@@ -9,6 +9,8 @@ import { shellQuote } from '../../common/commander'
 import type { SshHost } from '../../common/ssh'
 import { keysOf } from '../keyboard'
 import { openProject, recentProjects } from '../projects'
+import { usePrompt } from '../prompts'
+import type { Prompt } from '../../common/prompts'
 import { api, commit, newId, shortPath, ui, ws } from '../store'
 import { tabTitle } from '../titles'
 
@@ -29,6 +31,9 @@ const input = ref<HTMLInputElement | null>(null)
 const list = ref<HTMLElement | null>(null)
 
 const projectsOnly = computed(() => ui.palette === 'projects')
+const promptsOnly = computed(() => ui.palette === 'prompts')
+const prompts = ref<Prompt[]>([])
+const promptItems = (prefix: string): Item[] => prompts.value.map((p) => ({ id: `prompt:${p.name}`, title: prefix + p.name, section: p.text.replace(/\s+/g, ' ').slice(0, 60), keys: '', action: () => void usePrompt(p) }))
 
 /** The projects, most recent first; an open one says so. */
 function projectItems(prefix: string): Item[] {
@@ -58,6 +63,14 @@ function openFolder(name: string, path: string): void {
 const items = computed<Item[]>(() => {
   const w = ws.value!
   const out: Item[] = []
+  if (promptsOnly.value) {
+    out.push(...promptItems(''))
+    for (const id of ['prompts.saveSelection', 'prompts.folder']) {
+      const c = COMMANDS.get(id)!
+      out.push({ id: c.id, title: c.title, section: 'Промпты', keys: keysOf(c.id), action: () => run(c.id) })
+    }
+    return out
+  }
   if (projectsOnly.value) {
     out.push(...projectItems(''))
     const save = COMMANDS.get('project.save')!
@@ -65,6 +78,7 @@ const items = computed<Item[]>(() => {
     return out
   }
   out.push(...projectItems('Проект: '))
+  out.push(...promptItems('Промпт: '))
   for (const c of COMMANDS.values()) {
     if ((typeof c.hidden === 'function' ? c.hidden() : c.hidden) || c.id === 'palette.open') continue
     out.push({ id: c.id, title: c.title, section: c.group, keys: keysOf(c.id), action: () => run(c.id) })
@@ -105,6 +119,7 @@ onMounted(() => {
   input.value?.focus()
   void api.remote.hosts().then((list) => (hosts.value = list))
   void api.folioProjects().then((list) => (folioProjects.value = list))
+  void api.prompts().then((list) => (prompts.value = list))
 })
 
 function close(): void {
@@ -144,14 +159,14 @@ function parts(title: string, positions: number[]): { text: string; hit: boolean
 
 <template>
   <div class="overlay" @pointerdown.self="close">
-    <div class="palette" role="dialog" :aria-label="projectsOnly ? 'Проекты' : 'Палитра команд'">
+    <div class="palette" role="dialog" :aria-label="projectsOnly ? 'Проекты' : promptsOnly ? 'Промпты' : 'Палитра команд'">
       <div class="palette-input">
         <Search :size="16" aria-hidden="true" />
         <input
           ref="input"
           v-model="query"
           :aria-label="projectsOnly ? 'Проект' : 'Команда, группа или вкладка'"
-          :placeholder="projectsOnly ? 'Проект — можно в любой раскладке' : 'Команда, группа или вкладка — можно в любой раскладке'"
+          :placeholder="promptsOnly ? 'Промпт — вставится в панель без Enter' : projectsOnly ? 'Проект — можно в любой раскладке' : 'Команда, группа или вкладка — можно в любой раскладке'"
           role="combobox"
           aria-expanded="true"
           aria-controls="palette-list"

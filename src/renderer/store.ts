@@ -40,7 +40,7 @@ export const ui = reactive({
   settings: null as Settings | null,
   systemDark: matchMedia('(prefers-color-scheme: dark)').matches,
   /** The palette: everything, or only the projects (the switcher). */
-  palette: false as false | 'all' | 'projects',
+  palette: false as false | 'all' | 'projects' | 'prompts',
   projects: [] as Project[],
   settingsOpen: false,
   /** Panes a trigger marked (`action = "mark"`), until their tab is looked at. */

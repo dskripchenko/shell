@@ -206,6 +206,7 @@ export function defaultBindings(platform: Platform): Binding[] {
     [mac ? 'cmd+shift+p' : 'ctrl+shift+p', 'palette.open'],
     [mac ? 'cmd+shift+o' : 'ctrl+shift+o', 'project.switch'],
     [mac ? 'cmd+alt+i' : 'ctrl+shift+alt+i', 'input.broadcastTab'],
+    [mac ? 'cmd+shift+l' : 'ctrl+shift+l', 'prompts.insert'],
     [`${m}+t`, 'tab.new'],
     [mac ? 'cmd+alt+w' : 'ctrl+shift+alt+w', 'tab.close'],
     ['ctrl+tab', 'tab.next'],

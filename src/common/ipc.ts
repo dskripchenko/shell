@@ -8,6 +8,7 @@ import type { Platform } from './keys'
 import type { Workspace } from './layout'
 import type { Project } from './projects'
 import type { GitStatus } from './git'
+import type { Prompt } from './prompts'
 import type { ApiRequest } from '../main/api'
 import type { Theme } from './themes'
 import type { ShellEvent } from '@dskripchenko/shell-integration'
@@ -117,6 +118,10 @@ export interface ShellApi {
   paste(): Promise<string>
   openExternal(url: string): void
   openConfig(): void
+  /** The prompt library (`shell-data/prompts`). */
+  prompts(): Promise<Prompt[]>
+  addPrompt(name: string, text: string): Promise<string>
+  openPrompts(): void
   /** One setting written into config.toml (the rest of the file kept); the windows get it as from any edit. */
   setSetting(section: string, key: string, value: string | number | boolean | string[]): Promise<{ ok: true } | { error: string }>
   openDataDir(): void
@@ -213,6 +218,9 @@ export const IPC = {
   paste: 'clipboard:paste',
   openExternal: 'open:external',
   openConfig: 'open:config',
+  prompts: 'prompts:list',
+  addPrompt: 'prompts:add',
+  openPrompts: 'prompts:open',
   setSetting: 'settings:set',
   openDataDir: 'open:data',
   updateState: 'update:state',

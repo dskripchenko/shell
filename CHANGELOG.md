@@ -9,6 +9,12 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- A prompt library: texts for agents as files in `shell-data/prompts/*.md`
+  (three examples to start with). Cmd+Shift+L (Ctrl+Shift+L elsewhere) picks
+  one and pastes it into the focused pane without Enter, its places filled
+  in: `{selection}`, `{file}` (the viewer's), `{cwd}`, `{branch}`,
+  `{clipboard}`. The palette saves a selection as a new prompt and opens the
+  folder.
 - Triggers (`[[triggers]]` in config.toml): a pattern in the output and what
   a line with it does — highlighted in a colour, said (a notification when
   the pane is out of sight, the status bar when in it), a dot on the tab
@@ -36,6 +42,9 @@ Stage 3 closes: the rest shared with folio.
 
 ### Changed
 
+- A change of settings makes the panes' views again only when what they
+  draw with changed (font, theme, triggers, profiles): a selection is no
+  longer lost when the file is saved for something else.
 - Group and tab colours are the same nine as folio's tab groups (blue,
   green, orange, purple, pink, teal, red, yellow, grey); colours chosen
   before stay as they were.

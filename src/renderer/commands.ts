@@ -4,6 +4,7 @@
  */
 import { activeGroup, activeTab, addGroup, addTab, closeGroup, closePane, closeTab, cycleGroup, cycleTab, findPane, focusSide, newWorkspace, selectGroup, splitPane, tabAt, toggleZoom, updateActiveTab, updateTab, type Workspace } from '../common/layout'
 import { forgetProject, saveGroupAsProject } from './projects'
+import { saveSelection } from './prompts'
 import { api, baseName, commit, newId, say, toFolio, ui, ws } from './store'
 import * as agents from './agents'
 import * as terminals from './terminals'
@@ -90,6 +91,9 @@ const list: Command[] = [
   },
   { id: 'input.broadcastTab', group: 'Терминал', title: 'Ввод во все панели вкладки: включить или выключить', run: () => toggleBroadcast('tab') },
   { id: 'input.broadcastGroup', group: 'Терминал', title: 'Ввод во все панели группы: включить или выключить', run: () => toggleBroadcast('group') },
+  { id: 'prompts.insert', group: 'Агенты', title: 'Промпты: вставить в панель', run: () => (ui.palette = ui.palette === 'prompts' ? false : 'prompts') },
+  { id: 'prompts.saveSelection', group: 'Агенты', title: 'Промпты: сохранить выделенное как промпт', run: () => void saveSelection() },
+  { id: 'prompts.folder', group: 'Агенты', title: 'Промпты: открыть папку (файлы .md)', run: () => api.openPrompts() },
   { id: 'project.switch', group: 'Проекты', title: 'Проекты: открыть или перейти', run: () => (ui.palette = ui.palette === 'projects' ? false : 'projects') },
   { id: 'project.save', group: 'Проекты', title: 'Сохранить группу как проект (раскладка и агенты)', run: () => void saveGroupAsProject() },
   { id: 'project.forget', group: 'Проекты', title: 'Убрать проект группы из списка', hidden: () => !ui.projects.some((p) => p.id === activeGroup(w()).project), run: forgetProject },
