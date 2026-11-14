@@ -18,6 +18,12 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - git on the tabs: each tab of the group shows its folder's branch, with a
   mark when files are changed (ahead, behind and the count on hover); looked
   at with git's optional locks off, never in an agent's way.
+- A local API for folio (and other programs of the user): a tab opened in a
+  folder (in its project's or folder's group), a text pasted into the agent's
+  pane of a repository — without Enter, the person sends it — and a review
+  waiting in folio shown on the repository's tabs. On 127.0.0.1 under a
+  token of its own (not the panes'), found through `shell-presence.json` in
+  the user's runtime or temporary folder, removed on exit.
 - A new worktree in a group of its own (palette): a new or existing branch,
   the folder beside the repository (`app-feature-x`), an agent started there
   if chosen.

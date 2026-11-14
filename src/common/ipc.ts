@@ -8,6 +8,7 @@ import type { Platform } from './keys'
 import type { Workspace } from './layout'
 import type { Project } from './projects'
 import type { GitStatus } from './git'
+import type { ApiRequest } from '../main/api'
 import type { Theme } from './themes'
 import type { ShellEvent } from '@dskripchenko/shell-integration'
 import type { Baseline, ChangedFile } from '../main/changes'
@@ -60,6 +61,8 @@ export interface ShellApi {
   projects(): Promise<Project[]>
   saveProjects(projects: Project[]): void
   onProjects(listener: (projects: Project[]) => void): void
+  /** Another program's request (folio over the local API), answered with a status and a body. */
+  onApiRequest(listener: (request: ApiRequest) => Promise<ApiReply> | ApiReply): void
   onData(listener: (paneId: string, data: string) => void): void
   onExit(listener: (paneId: string, code: number) => void): void
   onEvents(listener: (paneId: string, events: ShellEvent[]) => void): void
@@ -191,6 +194,8 @@ export const IPC = {
   projects: 'projects:list',
   saveProjects: 'projects:save',
   projectsChanged: 'projects:changed',
+  apiRequest: 'api:request',
+  apiReply: 'api:reply',
   settings: 'settings:changed',
   command: 'window:command',
   copy: 'clipboard:copy',
@@ -209,4 +214,10 @@ export interface FolioRequest {
   file?: { path: string; line?: number }
   project?: string
   review?: string
+}
+
+export type { ApiRequest }
+export interface ApiReply {
+  status: number
+  body?: Record<string, unknown>
 }

@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type { ShellEvent } from '@dskripchenko/shell-integration'
-import { IPC, type AgentSignal, type Settings, type ShellApi, type UpdateInfo } from '../common/ipc'
+import { IPC, type AgentSignal, type ApiRequest, type Settings, type ShellApi, type UpdateInfo } from '../common/ipc'
 import type { Project } from '../common/projects'
 
 const api: ShellApi = {
@@ -17,6 +17,13 @@ const api: ShellApi = {
   projects: () => ipcRenderer.invoke(IPC.projects),
   saveProjects: (list) => ipcRenderer.send(IPC.saveProjects, list),
   onProjects: (listener) => void ipcRenderer.on(IPC.projectsChanged, (_e, list: Project[]) => listener(list)),
+  onApiRequest: (listener) =>
+    void ipcRenderer.on(IPC.apiRequest, (_e, id: number, request: ApiRequest) => {
+      void Promise.resolve(listener(request)).then(
+        (reply) => ipcRenderer.send(IPC.apiReply, id, reply),
+        () => ipcRenderer.send(IPC.apiReply, id, { status: 500 }),
+      )
+    }),
   onData: (listener) => void ipcRenderer.on(IPC.data, (_e, paneId: string, data: string) => listener(paneId, data)),
   onExit: (listener) => void ipcRenderer.on(IPC.exit, (_e, paneId: string, code: number) => listener(paneId, code)),
   onAgentSignal: (listener) => void ipcRenderer.on(IPC.agentSignal, (_e, s: AgentSignal) => listener(s)),

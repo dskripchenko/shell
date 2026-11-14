@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { Plus, X } from '@dskripchenko/ui/icons'
-import { activeGroup, closeTab, moveTab, selectTab, type Tab } from '../../common/layout'
+import { activeGroup, closeTab, moveTab, panes, selectTab, type Tab } from '../../common/layout'
 import { run } from '../commands'
 import { keysOf } from '../keyboard'
 import { commit, newId, ui, ws } from '../store'
 import { tabTitle } from '../titles'
 import { tabStatus } from '../agentStatus'
 import AgentMark from './AgentMark.vue'
+import { reviewOf } from '../requests'
 import type { GitStatus } from '../../common/git'
 
 const group = computed(() => activeGroup(ws.value!))
@@ -64,6 +65,7 @@ function drop(to: number): void {
       <span class="tab-name">{{ tabTitle(tab) }}</span>
       <span v-if="ui.git[tab.id]" class="tab-git mono" :title="gitTitle(ui.git[tab.id]!)">{{ ui.git[tab.id]!.branch }}<span v-if="ui.git[tab.id]!.changed" class="tab-git-changed">●</span></span>
       <AgentMark :status="tabStatus(tab)" />
+      <span v-if="reviewOf(panes(tab.root).map((p) => p.id))" class="tab-review" :title="`folio: ${reviewOf(panes(tab.root).map((p) => p.id))}`">ревью</span>
       <span v-if="tab.zoomed" class="tab-note" title="Панель развёрнута на всю вкладку">zoom</span>
       <button type="button" class="tab-close" :aria-label="`Закрыть вкладку ${tabTitle(tab)}`" @click.stop="close(tab)">
         <X :size="12" aria-hidden="true" />

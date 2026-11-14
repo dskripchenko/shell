@@ -6,7 +6,8 @@
  */
 import { randomBytes } from 'node:crypto'
 import { chmodSync, mkdirSync, writeFileSync } from 'node:fs'
-import { createServer, type Server } from 'node:http'
+import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http'
+import { readApiRequest, type ApiRequest } from './api'
 import { join } from 'node:path'
 
 export type SignalState = 'running' | 'waiting' | 'done'
@@ -78,6 +79,7 @@ export class NotifyServer {
     chmodSync(join(this.binDir, 'shell-notify'), 0o755)
     writeFileSync(join(this.binDir, 'shell-notify.cmd'), NOTIFY_CMD.replace(/\n/g, '\r\n'))
     this.server = createServer((req, res) => {
+      if ((req.url ?? '').startsWith('/api/')) return void this.serveApi(req, res)
       const s = readSignal(req.url ?? '', req.headers.authorization, this.token)
       if ('error' in s) {
         res.writeHead(s.error).end()
@@ -88,6 +90,37 @@ export class NotifyServer {
     await new Promise<void>((done) => this.server!.listen(0, '127.0.0.1', done))
     const address = this.server.address()
     this.url = typeof address === 'object' && address ? `http://127.0.0.1:${address.port}` : ''
+  }
+
+  /** Other programs' requests (api.ts), under the API's own token. */
+  api: { token: string; handle: (r: ApiRequest) => Promise<{ status: number; body?: object }> } | null = null
+
+  private serveApi(req: IncomingMessage, res: ServerResponse): void {
+    const api = this.api
+    if (!api) return void res.writeHead(404).end()
+    const chunks: Buffer[] = []
+    let size = 0
+    req.on('data', (c: Buffer) => {
+      size += c.length
+      if (size > 64 * 1024) {
+        res.writeHead(413).end()
+        req.destroy()
+        return
+      }
+      chunks.push(c)
+    })
+    req.on('end', () => {
+      if (res.headersSent) return
+      const r = readApiRequest(req.method ?? '', req.url ?? '', req.headers.authorization, api.token, Buffer.concat(chunks).toString('utf8'))
+      if ('error' in r) return void res.writeHead(r.error).end()
+      api.handle(r).then(
+        ({ status, body }) => {
+          if (body) res.writeHead(status, { 'content-type': 'application/json' }).end(JSON.stringify(body))
+          else res.writeHead(status).end()
+        },
+        () => res.writeHead(500).end(),
+      )
+    })
   }
 
   /** What every pane's shell is given. */

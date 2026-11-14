@@ -3,11 +3,12 @@ import '@dskripchenko/ui/styles/themes.css'
 import '@dskripchenko/ui/styles/fonts.css'
 import './style.css'
 import { createApp } from 'vue'
-import { activeGroup, activeTab, allPanes, findPane, focusPane, newWorkspace, selectTab, setPaneCwd, updateActiveTab } from '../common/layout'
+import { activeGroup, activeTab, allPanes, newWorkspace, setPaneCwd } from '../common/layout'
 import * as agents from './agents'
 import App from './App.vue'
 import { closePaneById, run } from './commands'
 import { install, rebuild } from './keyboard'
+import { handle as handleRequest, showPane } from './requests'
 import { api, commit, findFolio, newId, onCommit, ui, ws } from './store'
 import * as terminals from './terminals'
 import { applyChrome, currentTheme } from './theme'
@@ -46,13 +47,8 @@ async function start(): Promise<void> {
   api.onAgentSignal((s) => agents.onSignal(s))
   onCommit((next) => agents.prune(next))
   setInterval(agents.tick, 1000)
-  agents.setShowPane((paneId) => {
-    const w = ws.value
-    if (!w) return
-    const g = w.groups.find((x) => x.tabs.some((t) => findPane(t.root, paneId)))
-    const t = g?.tabs.find((x) => findPane(x.root, paneId))
-    if (g && t) commit(updateActiveTab(selectTab(w, t.id), (tab) => focusPane(tab, paneId)))
-  })
+  agents.setShowPane(showPane)
+  api.onApiRequest(handleRequest)
   api.onExit((paneId, code) => terminals.onExit(paneId, code, closePaneById))
   api.onCommand((command) => run(command))
   api.onSettings((settings) => {

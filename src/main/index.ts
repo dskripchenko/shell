@@ -14,7 +14,9 @@ import { Ptys } from './pty'
 import { SessionStore, type Bounds } from './session'
 import { SettingsStore } from './settings'
 import { Updater, type UpdateState } from './update'
+import { readFileSync } from 'node:fs'
 import { NotifyServer } from './notify'
+import { apiToken, presencePath, removePresence, writePresence } from './api'
 import { copyInto, listDir, makeDir, moveInto, moveTo, readHead, type OpResult } from './files'
 import { dirname, isAbsolute, resolve as resolvePath } from 'node:path'
 import { findFolio, folioRequest, launchFolio } from './folio'
@@ -302,6 +304,44 @@ const notify = new NotifyServer(join(DATA, 'bin'), (s) => {
   return false
 })
 
+// Other programs (folio) over the local API: asked of the main window, answered by it.
+const apiFile = presencePath(process.env)
+const pendingApi = new Map<number, (reply: { status: number; body?: object }) => void>()
+let apiSeq = 0
+notify.api = {
+  token: apiToken(),
+  handle: (request) =>
+    new Promise((resolve) => {
+      const host = mainHost
+      if (!host || host.window.isDestroyed()) return resolve({ status: 503 })
+      if (request.kind === 'open-tab' || request.kind === 'paste') {
+        if (host.window.isMinimized()) host.window.restore()
+        if (E2E) host.window.showInactive()
+        else {
+          host.window.show()
+          host.window.focus()
+        }
+      }
+      const id = ++apiSeq
+      const timer = setTimeout(() => {
+        pendingApi.delete(id)
+        resolve({ status: 504 })
+      }, 5000)
+      pendingApi.set(id, (reply) => {
+        clearTimeout(timer)
+        resolve(reply)
+      })
+      send(host, IPC.apiRequest, id, request)
+    }),
+}
+ipcMain.on(IPC.apiReply, (_e, id: unknown, reply: unknown) => {
+  const done = typeof id === 'number' ? pendingApi.get(id) : undefined
+  if (!done) return
+  pendingApi.delete(id as number)
+  const r = reply as { status?: unknown; body?: unknown }
+  done({ status: typeof r?.status === 'number' ? r.status : 500, ...(r?.body && typeof r.body === 'object' ? { body: r.body } : {}) })
+})
+
 // An agent's changes: the baseline the window holds is checked to be a repository's root before use.
 async function checkedBaseline(b: unknown): Promise<Baseline | null> {
   if (!b || typeof b !== 'object') return null
@@ -502,6 +542,8 @@ app.whenReady().then(async () => {
   protocol.handle(SCHEME, (req) => viewerFiles.handle(req.url))
   try {
     await notify.start()
+    // Found by folio while shell runs (under test only where a test says).
+    if (notify.url && notify.api && (!E2E || process.env.SHELL_PRESENCE)) writePresence(apiFile, { pid: process.pid, version: VERSION, url: notify.url, token: notify.api.token })
   } catch {
     // No local port: agents' signals do not reach shell; the rest works.
   }
@@ -543,6 +585,7 @@ app.on('window-all-closed', () => {
 })
 
 app.on('will-quit', () => {
+  removePresence(apiFile, process.pid, (p) => readFileSync(p, 'utf8'))
   notify.close()
   globalShortcut.unregisterAll()
   settings?.close()
