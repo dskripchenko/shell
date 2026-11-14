@@ -1,0 +1,14 @@
+node_modules/
+dist/
+release/
+.shell-data/
+test-results/
+playwright-report/
+*.log
+.DS_Store
+bench/terminal/node_modules/
+bench/terminal/out.js
+bench/terminal/data-real.js
+bench/terminal/real-*.txt
+bench/terminal/results.json
+bench/terminal/prof/

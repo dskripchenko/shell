@@ -1,0 +1,39 @@
+# Portable builds, as folio's: an archive to unpack and run — no installer, no
+# registry, no file associations. zip for macOS and Windows, AppImage for Linux.
+appId: space.dskripchenko.shell
+productName: shell
+copyright: Copyright © 2026 Denis Skripchenko
+artifactName: shell-${version}-${os}-${arch}.${ext}
+directories:
+  output: release
+  buildResources: build
+# The main process and the window are bundled; only node-pty (native) comes from node_modules.
+files:
+  - dist/**
+  - '!dist/**/*.map'
+  - package.json
+asarUnpack:
+  - node_modules/node-pty/**
+# node-pty is N-API, prebuilt for macOS and Windows and built at install on Linux.
+npmRebuild: false
+publish: null
+mac:
+  target:
+    - target: zip
+      arch: [arm64, x64]
+  category: public.app-category.developer-tools
+  # No publisher's certificate: signed ad hoc, as Apple Silicon needs to start an app at all.
+  identity: '-'
+  hardenedRuntime: false
+  gatekeeperAssess: false
+win:
+  target:
+    - target: zip
+      arch: [x64]
+linux:
+  artifactName: shell-${version}-linux-x64.${ext}
+  target:
+    - target: AppImage
+      arch: [x64]
+  category: System
+  synopsis: A terminal with groups, coloured tabs and splits, portable and offline

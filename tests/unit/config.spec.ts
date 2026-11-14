@@ -1,0 +1,31 @@
+import { describe, expect, it } from 'vitest'
+import { DEFAULT_TEXT, DEFAULTS, parseConfig } from '../../src/common/config'
+
+describe('config.toml', () => {
+  it('the file written at first start reads as the defaults, with no mistakes', () => {
+    expect(parseConfig(DEFAULT_TEXT)).toEqual({ config: DEFAULTS, errors: [] })
+  })
+
+  it('settings given take their place', () => {
+    const { config, errors } = parseConfig('[font]\nsize = 15\nline-height = 1.5\n[theme]\nname = "Tomorrow Night"\n[shell]\nprogram = "/bin/bash"\nargs = ["-l"]\n[keys]\n"cmd+k" = "palette.open"\n')
+    expect(errors).toEqual([])
+    expect(config.font).toMatchObject({ size: 15, lineHeight: 1.5 })
+    expect(config.theme.name).toBe('Tomorrow Night')
+    expect(config.shell).toEqual({ program: '/bin/bash', args: ['-l'] })
+    expect(config.keys).toEqual({ 'cmd+k': 'palette.open' })
+  })
+
+  it('a mistake keeps the default and is said; the rest still applies', () => {
+    const { config, errors } = parseConfig('[font]\nsize = "big"\nfamily = "Menlo"\n[window]\ndim-inactive = 0.1\n[colors]\nx = 1\n[quake]\nhieght = 0.5\n')
+    expect(config.font.size).toBe(DEFAULTS.font.size)
+    expect(config.font.family).toBe('Menlo')
+    expect(config.window.dimInactive).toBe(DEFAULTS.window.dimInactive)
+    expect(errors).toEqual(['[font] size: ожидается число', '[window] dim-inactive: от 0.5 до 1', 'неизвестный раздел [colors]', '[quake] неизвестная настройка «hieght»'])
+  })
+
+  it('a file that is not TOML: the defaults, and why', () => {
+    const { config, errors } = parseConfig('[font\nsize = ')
+    expect(config).toEqual(DEFAULTS)
+    expect(errors[0]).toMatch(/^config.toml не прочитан/)
+  })
+})

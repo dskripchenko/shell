@@ -1,0 +1,46 @@
+{
+  "name": "shell",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A terminal for macOS, Windows and Linux: groups, coloured tabs, splits, agents beside your code, files the Midnight Commander way — portable, offline, no account.",
+  "license": "MIT",
+  "author": "Denis Skripchenko",
+  "main": "dist/main.cjs",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "pnpm@10.28.0",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "start": "pnpm build && electron .",
+    "lint": "eslint src tests scripts",
+    "typecheck": "vue-tsc --noEmit",
+    "test": "vitest run",
+    "test:e2e": "pnpm build && playwright test",
+    "dist": "pnpm build && electron-builder --publish never"
+  },
+  "dependencies": {
+    "node-pty": "^1.1.0"
+  },
+  "devDependencies": {
+    "@dskripchenko/terminal": "^0.4.1",
+    "@dskripchenko/ui": "^1.59.0",
+    "@eslint/js": "10.0.1",
+    "@playwright/test": "1.64.1",
+    "@types/node": "^22.20.5",
+    "@vitejs/plugin-vue": "6.0.6",
+    "electron": "44.9.0",
+    "electron-builder": "26.17.0",
+    "esbuild": "0.28.2",
+    "eslint": "10.14.0",
+    "eslint-plugin-vue": "^10.9.0",
+    "smol-toml": "1.9.1",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.72.1",
+    "vite": "8.3.5",
+    "vitest": "5.0.5",
+    "vue": "3.5.33",
+    "vue-tsc": "3.2.7"
+  }
+}

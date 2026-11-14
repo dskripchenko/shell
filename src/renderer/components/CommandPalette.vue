@@ -1,0 +1,126 @@
+<script setup lang="ts">
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { Search } from '@dskripchenko/ui/icons'
+import { fuzzy } from '../../common/fuzzy'
+import { selectGroup, selectTab } from '../../common/layout'
+import { COMMANDS, run } from '../commands'
+import { keysOf } from '../keyboard'
+import { commit, ui, ws } from '../store'
+import { tabTitle } from '../titles'
+
+interface Item {
+  id: string
+  title: string
+  section: string
+  keys: string
+  swatch?: string
+  action: () => void
+}
+
+const query = ref('')
+const index = ref(0)
+const input = ref<HTMLInputElement | null>(null)
+const list = ref<HTMLElement | null>(null)
+
+const items = computed<Item[]>(() => {
+  const w = ws.value!
+  const out: Item[] = []
+  for (const c of COMMANDS.values()) {
+    if (c.hidden || c.id === 'palette.open') continue
+    out.push({ id: c.id, title: c.title, section: c.group, keys: keysOf(c.id), action: () => run(c.id) })
+  }
+  for (const g of w.groups) {
+    out.push({ id: `group:${g.id}`, title: `Группа: ${g.name}`, section: 'Перейти', keys: '', swatch: g.color, action: () => commit(selectGroup(ws.value!, g.id)) })
+    for (const t of g.tabs) out.push({ id: `tab:${t.id}`, title: `${g.name} · ${tabTitle(t)}`, section: 'Перейти', keys: '', swatch: t.color ?? g.color, action: () => commit(selectTab(ws.value!, t.id)) })
+  }
+  return out
+})
+
+const shown = computed(() => {
+  const q = query.value.trim()
+  if (!q) return items.value.map((item) => ({ item, positions: [] as number[] }))
+  return items.value
+    .map((item) => ({ item, m: fuzzy(q, item.title) ?? fuzzy(q, item.id) }))
+    .filter((x) => x.m)
+    .sort((a, b) => b.m!.score - a.m!.score)
+    .map((x) => ({ item: x.item, positions: fuzzy(q, x.item.title)?.positions ?? [] }))
+})
+
+watch(query, () => (index.value = 0))
+watch(index, () => void nextTick(() => list.value?.querySelector('[aria-selected="true"]')?.scrollIntoView({ block: 'nearest' })))
+
+onMounted(() => input.value?.focus())
+
+function close(): void {
+  ui.palette = false
+}
+
+function choose(i: number): void {
+  const x = shown.value[i]
+  if (!x) return
+  close()
+  x.item.action()
+}
+
+function key(e: KeyboardEvent): void {
+  const n = shown.value.length
+  if (e.key === 'ArrowDown') index.value = n ? (index.value + 1) % n : 0
+  else if (e.key === 'ArrowUp') index.value = n ? (index.value - 1 + n) % n : 0
+  else if (e.key === 'Enter') choose(index.value)
+  else if (e.key === 'Escape') close()
+  else return
+  e.preventDefault()
+}
+
+/** The title cut into runs, the matched letters marked. */
+function parts(title: string, positions: number[]): { text: string; hit: boolean }[] {
+  const set = new Set(positions)
+  const out: { text: string; hit: boolean }[] = []
+  for (let i = 0; i < title.length; i++) {
+    const hit = set.has(i)
+    const last = out.at(-1)
+    if (last && last.hit === hit) last.text += title[i]
+    else out.push({ text: title[i]!, hit })
+  }
+  return out
+}
+</script>
+
+<template>
+  <div class="overlay" @pointerdown.self="close">
+    <div class="palette" role="dialog" aria-label="Палитра команд">
+      <div class="palette-input">
+        <Search :size="16" aria-hidden="true" />
+        <input
+          ref="input"
+          v-model="query"
+          aria-label="Команда, группа или вкладка"
+          placeholder="Команда, группа или вкладка — можно в любой раскладке"
+          role="combobox"
+          aria-expanded="true"
+          aria-controls="palette-list"
+          @keydown="key"
+        />
+      </div>
+      <div id="palette-list" ref="list" class="palette-list" role="listbox">
+        <div
+          v-for="(x, i) in shown"
+          :key="x.item.id"
+          class="palette-item"
+          role="option"
+          :aria-selected="i === index"
+          @pointermove="index = i"
+          @click="choose(i)"
+        >
+          <span v-if="x.item.swatch" class="swatch" :style="{ background: x.item.swatch }" aria-hidden="true"></span>
+          <span class="palette-title">
+            <span v-for="(p, k) in parts(x.item.title, x.positions)" :key="k" :class="{ hit: p.hit }">{{ p.text }}</span>
+          </span>
+          <span class="palette-section">{{ x.item.section }}</span>
+          <kbd v-if="x.item.keys">{{ x.item.keys }}</kbd>
+        </div>
+        <div v-if="shown.length === 0" class="palette-empty">Ничего не найдено</div>
+      </div>
+    </div>
+  </div>
+</template>
