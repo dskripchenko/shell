@@ -9,6 +9,11 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- Archives as folders in the file panels: zip (and jar, docx, whl…), tar,
+  tar.gz — Enter goes in, `..` out to beside it; F3 and Enter show a file,
+  F5 copies files and folders out (nothing written over). Read only; read by
+  shell itself, no program needed; a name that would leave the folder it is
+  copied to is passed over.
 - Pictures in the terminal (`@dskripchenko/terminal` 0.8.0): sixel and the
   kitty graphics protocol — what chafa, timg, yazi, matplotlib's backends
   draw — shown over their cells, scrolled with the text, cleared with the

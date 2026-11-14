@@ -99,6 +99,12 @@ export interface ShellApi {
     remove(alias: string, items: { path: string; dir: boolean }[]): Promise<OpResult>
     fetch(alias: string, path: string): Promise<{ local: string } | { error: string }>
   }
+  /** Archives as folders, read only (zip, tar, tar.gz). */
+  archive: {
+    list(file: string, inner: string): Promise<Entry[] | { error: string }>
+    extract(file: string, inners: string[], target: string): Promise<OpResult>
+    fetch(file: string, inner: string): Promise<{ local: string } | { error: string }>
+  }
   /** The file panels' work on disk. */
   files: {
     list(dir: string): Promise<Entry[] | { error: string }>
@@ -218,6 +224,9 @@ export const IPC = {
   paste: 'clipboard:paste',
   openExternal: 'open:external',
   openConfig: 'open:config',
+  archiveList: 'archive:list',
+  archiveExtract: 'archive:extract',
+  archiveFetch: 'archive:fetch',
   prompts: 'prompts:list',
   addPrompt: 'prompts:add',
   openPrompts: 'prompts:open',

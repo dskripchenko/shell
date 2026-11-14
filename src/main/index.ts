@@ -24,6 +24,7 @@ import { addWorktree, gitStatus } from './git'
 import { lookOf } from '../common/themes'
 import { ProjectsStore } from './projects'
 import { PromptStore } from './prompts'
+import { extractArchive, fetchFromArchive, listArchive } from './archive'
 import { SCHEME, ViewerFiles } from './viewer'
 import { remoteFetch, remoteGet, remoteHome, remoteList, remoteMkdir, remotePut, remoteRemove, remoteRename, sshHosts } from './remote'
 import { setClaudeHooks } from './claudeHooks'
@@ -309,6 +310,27 @@ app.on('did-resign-active', () => {
   if (settings) applySecureKeyboard(false)
 })
 ipcMain.on(IPC.openDataDir, () => void electronShell.openPath(DATA))
+// Archives as folders: a file named absolute, paths inside as lists of strings.
+const archiveFile = (f: unknown): f is string => typeof f === 'string' && isAbsolute(f)
+ipcMain.handle(IPC.archiveList, async (_e, file: unknown, inner: unknown) => {
+  if (!archiveFile(file) || typeof inner !== 'string') return { error: 'не путь' }
+  try {
+    return await listArchive(file, inner)
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : String(e) }
+  }
+})
+ipcMain.handle(IPC.archiveExtract, async (_e, file: unknown, inners: unknown, target: unknown) => {
+  const list = Array.isArray(inners) && inners.every((x) => typeof x === 'string') ? (inners as string[]) : null
+  if (!archiveFile(file) || !list || typeof target !== 'string' || !isAbsolute(target)) return { done: [], failed: [] }
+  try {
+    return await extractArchive(file, list, target)
+  } catch (e) {
+    return { done: [], failed: [{ path: file, error: e instanceof Error ? e.message : String(e) }] }
+  }
+})
+ipcMain.handle(IPC.archiveFetch, (_e, file: unknown, inner: unknown) => (archiveFile(file) && typeof inner === 'string' ? fetchFromArchive(file, inner) : { error: 'не путь' }))
+
 const prompts = new PromptStore(DATA)
 ipcMain.handle(IPC.prompts, () => prompts.list())
 ipcMain.handle(IPC.addPrompt, (_e, name: unknown, text: unknown) => (typeof name === 'string' && typeof text === 'string' && text.length <= 64 * 1024 ? prompts.add(name, text) : ''))

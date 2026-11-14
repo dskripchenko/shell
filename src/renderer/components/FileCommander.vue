@@ -2,6 +2,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { joinPath, maskTest, parentOf, shellQuote, sortEntries, type Entry, type PanelState } from '../../common/commander'
 import { parseRemote, remoteDir } from '../../common/ssh'
+import { archiveJoin, archiveKind, archivePath, archiveUp, parseArchive } from '../../common/archive'
 import { activeGroup, activeTab } from '../../common/layout'
 import { focusedPane, newNamedTab } from '../commands'
 import { typeWhenReady } from '../agents'
@@ -33,14 +34,25 @@ const other = () => (active.value === 'left' ? right : left)
 
 /** The folder above, on this computer or on a host (`sftp://host/path`); the top stays itself. */
 function up(dir: string): string {
+  if (parseArchive(dir)) return archiveUp(dir, parentOf)
   const r = parseRemote(dir)
   return r ? remoteDir(r.alias, parentOf(r.path)) : parentOf(dir)
 }
-const lastName = (dir: string) => dir.split(/[\\/]/).filter(Boolean).pop()
+/** The name of a folder (an archive's folder: its own, or the archive's at its top). */
+function lastName(dir: string): string | undefined {
+  const a = parseArchive(dir)
+  if (a) return (a.inner || a.file).split(/[\\/]/).filter(Boolean).pop()
+  return dir.split(/[\\/]/).filter(Boolean).pop()
+}
+/** An entry of a panel's folder as a path: on disk, on a host, or inside an archive. */
+const child = (dir: string, name: string) => (parseArchive(dir) ? archiveJoin(dir, name) : joinPath(dir, name))
+/** Archives are read only: what would change one is said so. */
+const readOnly = (dir: string) => (parseArchive(dir) ? (say('Архив открыт только для чтения: файлы из него копируются (F5)'), true) : false)
 
 async function load(p: PanelState, keepName?: string): Promise<void> {
   const remote = parseRemote(p.dir)
-  const r = remote ? await api.remote.list(remote.alias, remote.path) : await api.files.list(p.dir)
+  const arc = parseArchive(p.dir)
+  const r = arc ? await api.archive.list(arc.file, arc.inner) : remote ? await api.remote.list(remote.alias, remote.path) : await api.files.list(p.dir)
   if ('error' in r) {
     p.error = r.error
     p.entries = []
@@ -67,14 +79,25 @@ async function open(p: PanelState, i: number): Promise<void> {
   const e = p.entries[i]
   if (!e) return
   if (e.name === '..') return go(p, up(p.dir), lastName(p.dir))
-  if (e.kind === 'dir' || e.linkToDir) return go(p, joinPath(p.dir, e.name))
+  if (e.kind === 'dir' || e.linkToDir) return go(p, child(p.dir, e.name))
+  // An archive on this computer: entered as a folder.
+  if (!parseRemote(p.dir) && !parseArchive(p.dir) && archiveKind(e.name)) return go(p, archivePath(joinPath(p.dir, e.name)))
   // A file: in the viewer beside the panels (F3 shows its start in the other panel); a host's, brought here first.
-  const local = await localCopy(joinPath(p.dir, e.name))
+  const local = await localCopy(child(p.dir, e.name))
   if (local) ui.viewer = { path: local }
 }
 
 /** A file to read here: itself, or a host's brought into a temporary folder. */
 async function localCopy(full: string): Promise<string | null> {
+  const a = parseArchive(full)
+  if (a) {
+    const f = await api.archive.fetch(a.file, a.inner)
+    if ('error' in f) {
+      say(`Не извлечён: ${f.error}`)
+      return null
+    }
+    return f.local
+  }
   const r = parseRemote(full)
   if (!r) return full
   const f = await api.remote.fetch(r.alias, r.path)
@@ -87,9 +110,9 @@ async function localCopy(full: string): Promise<string | null> {
 
 /** The items F5, F6, F8 act on: the marked ones, else the one under the cursor. */
 function items(p: PanelState): string[] {
-  if (p.marked.length) return p.marked.map((n) => joinPath(p.dir, n))
+  if (p.marked.length) return p.marked.map((n) => child(p.dir, n))
   const e = p.entries[p.cursor]
-  return e && e.name !== '..' ? [joinPath(p.dir, e.name)] : []
+  return e && e.name !== '..' ? [child(p.dir, e.name)] : []
 }
 
 async function showQuick(): Promise<void> {
@@ -99,7 +122,7 @@ async function showQuick(): Promise<void> {
     view.value = e && quick.value ? { name: e.name, text: e.name === '..' ? '' : 'Папка' } : null
     return
   }
-  const local = await localCopy(joinPath(p.dir, e.name))
+  const local = await localCopy(child(p.dir, e.name))
   if (!local) return
   const r = await api.files.head(local)
   view.value = { name: e.name, text: 'error' in r ? r.error : 'binary' in r ? `Двоичный файл, ${r.size} байт` : r.text + (r.truncated ? '\n…' : '') }
@@ -131,6 +154,13 @@ async function confirm(): Promise<void> {
 
 /** Items copied (and, for a move, then removed) between this computer and a host, in either direction. */
 async function transfer(itemsIn: string[], target: string, move: boolean): Promise<void> {
+  // Out of an archive: taken out, here; into one, or moved out of one: it is read only.
+  const arc = parseArchive(itemsIn[0] ?? '')
+  if (parseArchive(target) || (arc && move)) return void readOnly(parseArchive(target) ? target : itemsIn[0]!)
+  if (arc) {
+    if (parseRemote(target)) return say('Из архива на хост — через этот компьютер: скопируйте сюда, потом туда')
+    return report(await api.archive.extract(arc.file, itemsIn.map((i) => parseArchive(i)!.inner), target), 'Извлечено')
+  }
   const from = parseRemote(itemsIn[0] ?? '')
   const to = parseRemote(target)
   if (from && to) return say('Между двумя хостами — через этот компьютер: скопируйте сюда, потом туда')
@@ -155,6 +185,7 @@ async function run(d: Dialog): Promise<void> {
   const remote = parseRemote(p.dir)
   if (d.kind === 'copy') await transfer(d.items, d.value, false)
   else if (d.kind === 'move') await transfer(d.items, d.value, true)
+  else if ((d.kind === 'rename' || d.kind === 'mkdir' || d.kind === 'delete') && readOnly(p.dir)) return
   else if (d.kind === 'rename') {
     const err = remote
       ? await api.remote.rename(remote.alias, parseRemote(d.items[0]!)!.path, d.value.startsWith('/') ? d.value : `${remote.path.replace(/\/$/, '')}/${d.value}`)
@@ -180,6 +211,8 @@ async function run(d: Dialog): Promise<void> {
 }
 
 function ask(kind: Dialog['kind'], value: string, list: string[] = []): void {
+  // In an archive nothing changes: said before asking.
+  if (['rename', 'mkdir', 'delete', 'move'].includes(kind) && readOnly(cur().dir)) return
   dialog.value = { kind, value, items: list }
   void nextTick(() => {
     // A dialog with nothing to type (delete): Enter on its button.
@@ -194,7 +227,7 @@ function close(): void {
   ui.commander = false
   const dir = cur().dir
   const shellAt = terminals.paneCwd(paneId)
-  if (dir && !parseRemote(dir) && dir !== shellAt && ui.busy[paneId] === false) {
+  if (dir && !parseRemote(dir) && !parseArchive(dir) && dir !== shellAt && ui.busy[paneId] === false) {
     api.write(paneId, windows ? `Set-Location -LiteralPath ${shellQuote(dir, true)}\r` : ` cd -- ${shellQuote(dir, false)}\r`)
   }
 }
@@ -246,6 +279,7 @@ async function key(e: KeyboardEvent): Promise<void> {
     case 'F4': {
       const entry = p.entries[p.cursor]
       if (parseRemote(p.dir)) say('Файлы хоста правятся на нём: откройте SSH во вкладке')
+      else if (readOnly(p.dir)) break
       else if (entry && entry.kind === 'file') editInTab(joinPath(p.dir, entry.name))
       break
     }
