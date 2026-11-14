@@ -124,7 +124,7 @@ folio уже умеет: md с живыми блоками и их редакт�
 | Палитра команд | ⌘⇧P | ⌘K — в shell ⌘K очищает экран, как в Terminal.app и iTerm2; в folio ⌘⇧P — экспорт в PDF |
 | Консоль / выпадающее окно | Ctrl+Alt+\` (глобально) | Ctrl+\` (в окне, как в VS Code) |
 
-**Общий код (вынести в пакеты):** shell-integration скрипты (`folio/src/main/shell/*`), разбор OSC-событий консоли (`consoleEvents.ts`), установка хуков Claude Code (`review/hooks.ts`).
+**Общий код:** скрипты интеграции с оболочками, разбор OSC-событий и журнал правок агентов — в пакете `@dskripchenko/shell-integration` (npm), им пользуются оба приложения. Установка хуков Claude Code пока своя в каждом (`claudeHooks.ts` в shell — пользовательские настройки, `review/hooks.ts` в folio — настройки репозитория).
 
 ---
 
