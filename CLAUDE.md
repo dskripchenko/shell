@@ -4,6 +4,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Статус
 
+Репозиторий: https://github.com/dskripchenko/shell (MIT, открытый); CI — `.github/workflows/tests.yml` на трёх ОС, релиз по тегу `v<версия>` — `release.yml`.
+
 Этап 1, каркас: окно, группы, вкладки, сплиты, палитра, хоткеи, конфиг, темы, выпадающее окно, восстановление сессии со scrollback. Карту этапов см. в `FEATURES.md`.
 
 ## Команды
