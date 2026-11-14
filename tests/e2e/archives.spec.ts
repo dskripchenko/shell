@@ -45,8 +45,9 @@ test('an archive as a folder in the file panels: entered, a folder in it, a file
   await left.locator('.fpanel-row', { hasText: 'lib/' }).click()
   await page.keyboard.press('F5')
   await page.keyboard.press('Enter')
-  await expect.poll(() => existsSync(join(work, 'out', 'lib', 'util.js'))).toBe(true)
-  expect(readFileSync(join(work, 'out', 'lib', 'util.js'), 'utf8')).toBe('export const util = 1\n')
+  // Its content, not only its name (the file is made before it is written).
+  const util = join(work, 'out', 'lib', 'util.js')
+  await expect.poll(() => (existsSync(util) ? readFileSync(util, 'utf8') : '')).toBe('export const util = 1\n')
 
   // Nothing made in it.
   await page.keyboard.press('F7')
