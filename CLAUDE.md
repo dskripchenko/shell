@@ -19,6 +19,7 @@ pnpm lint && pnpm typecheck                 # eslint; vue-tsc
 pnpm test:e2e                               # сборка + Playwright с настоящим Electron, tests/e2e
 pnpm exec playwright test -g "restart"      # один e2e-тест (после pnpm build)
 pnpm dist                                   # переносные архивы в release/
+pnpm build && pnpm readme:shots             # скриншоты docs/images (tests/readme, ImageMagick; без личных данных — проверять глазами)
 TERMINAL_DIST=../terminal/dist pnpm build   # собрать против локальной сборки @dskripchenko/terminal
 ```
 
@@ -56,6 +57,8 @@ TERMINAL_DIST=../terminal/dist pnpm build   # собрать против лок
 - Релиз: версия в `package.json` и раздел в `CHANGELOG.md`, затем тег `v<версия>` — `release.yml` собирает архивы на трёх ОС и публикует релиз с текстом из CHANGELOG.
 
 Замер эмулятора: `bench/terminal/run.sh` (один раз `npm install` в этой папке; нужен собранный `../terminal/dist` и установленный `../folio`, оттуда берутся electron и esbuild). Движки: `terminal` (`@dskripchenko/terminal`), `xterm-dom`, `xterm-webgl`. Фильтры: `ENGINES=terminal SCENARIOS=bulk,agent REPS=1 ./run.sh`. Результаты пишутся в `results.json`, эталон до правок — `baseline-0.3.0.json`.
+
+Документация пользователя — `docs/{en,ru,de,zh}/` (README, guide, development), менять во всех четырёх языках сразу; скриншоты — `docs/images`.
 
 Карта возможностей и этапы (1, 2, 3, «позже», «не берём») лежат в `FEATURES.md`, это главный источник требований. Дизайн экранов — на холсте https://claude.ai/artifact/413BymkoqPF1BhfTUmevCR (UID Design System).
 

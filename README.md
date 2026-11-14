@@ -1,4 +1,10 @@
+![shell](build/icons/png/128.png)
+
 # shell
+
+[![tests](https://img.shields.io/github/actions/workflow/status/dskripchenko/shell/tests.yml?branch=main&label=tests)](https://github.com/dskripchenko/shell/actions/workflows/tests.yml)
+[![release](https://img.shields.io/github/v/release/dskripchenko/shell?label=release)](https://github.com/dskripchenko/shell/releases/latest)
+[![license](https://img.shields.io/github/license/dskripchenko/shell?label=license)](https://github.com/dskripchenko/shell/blob/main/LICENSE)
 
 A terminal for macOS, Windows and Linux, made to replace the system one:
 groups of tabs, tabs named and coloured, panes split every way, every action
@@ -24,6 +30,48 @@ installer, no account, no telemetry.
 > files, the project's tree, HTML and PDF previews. The plan is in
 > [FEATURES.md](FEATURES.md) (in Russian).
 
+Documentation: [English](docs/en/) · [Русский](docs/ru/) · [Deutsch](docs/de/) ·
+[中文](docs/zh/)
+
+## A look
+
+**An agent at work.** Claude Code in one pane waits for an answer — its tab and
+group say so — beside git's history and the project's files; each tab shows its
+branch.
+
+![An agent waiting for an answer, git's history and the project's files beside it](docs/images/main.png)
+
+**What the agent changed.** The files since it started, whose edit each one is,
+a diff, and a comment on a line that goes into the agent's pane.
+
+![The agent's changes: whose edit each file is, a diff, a comment for the agent](docs/images/changes.png)
+
+**Documents beside the panes.** A path in the output opens in the viewer:
+Markdown with a live diagram, a table, a task list.
+
+![The viewer with a sequence diagram](docs/images/viewer.png)
+
+**Files the Midnight Commander way.** Two panels over the terminal (Ctrl+O), a
+quick view, archives as folders, SSH hosts over sftp.
+
+![The file panels with a quick view](docs/images/commander.png)
+
+**Projects.** A group's layout and agents saved, opened again from the
+switcher; folio's projects listed too.
+
+![The project switcher](docs/images/projects.png)
+
+**Pictures and blocks.** sixel and kitty pictures in the output; a command's
+menu — copy its output, run it again.
+
+![A picture in the output and a command's menu](docs/images/blocks.png)
+
+**Light, with the project's tree.**
+
+![The light theme with the project's tree](docs/images/light.png)
+
+The interface is in Russian for now.
+
 ## Download
 
 From the [latest release](https://github.com/dskripchenko/shell/releases/latest):
@@ -47,8 +95,9 @@ anyway. Linux: an AppImage needs FUSE 2 (`libfuse2`), or run it with
 
 ## Settings
 
-`shell-data/config.toml`, written with comments at the first start and read
-again whenever it is saved (Cmd/Ctrl+, opens it). Profiles say how to start a
+Cmd/Ctrl+, opens the settings; everything is kept in `shell-data/config.toml`,
+written with comments at the first start and read again whenever it is saved.
+The [guide](docs/en/guide.md) has all of it, and the keys. Profiles say how to start a
 shell; give one to a group (double-click the group) or open it from the palette:
 
 ```toml
@@ -79,6 +128,7 @@ pnpm start          # build and run
 pnpm test           # unit tests
 pnpm test:e2e       # build, start the app and drive it
 pnpm dist           # portable archives into release/
+pnpm readme:shots   # the screenshots in docs/images (ImageMagick)
 node scripts/icons.mjs   # the icons from build/icons/shell.svg (on a Mac)
 ```
 
