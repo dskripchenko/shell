@@ -7,6 +7,7 @@ import type { ShellEvent } from '@dskripchenko/shell-integration'
 import { nextAgent, type AgentInput, type AgentState } from '../common/agents'
 import { activeGroup, activeTab, allPanes, findPane, type Workspace } from '../common/layout'
 import { api, ui, ws } from './store'
+import { paneCwd } from './terminals'
 
 function agentsList(): string[] {
   return ui.settings?.config.agents.commands ?? []
@@ -54,9 +55,18 @@ function apply(paneId: string, input: AgentInput): void {
   const before = ui.agents[paneId]
   const after = nextAgent(before ?? null, input, Date.now(), agentsList())
   if (after === (before ?? null)) return
+  // An agent starting: its repository as it is now, to count its changes from.
+  if (after && !after.ended && (!before || before.ended || input.kind === 'command')) void takeBaseline(paneId)
   if (after) ui.agents[paneId] = after
   else delete ui.agents[paneId]
   tell(paneId, before, after)
+}
+
+async function takeBaseline(paneId: string): Promise<void> {
+  const cwd = paneCwd(paneId)
+  if (!cwd) return
+  const b = await api.changesBaseline(cwd, 'agent')
+  if (b) ui.baselines[paneId] = b
 }
 
 export function onEvents(paneId: string, events: ShellEvent[]): void {

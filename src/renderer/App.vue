@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { activeGroup, activeTab, findPane } from '../common/layout'
 import { Settings2, Search } from '@dskripchenko/ui/icons'
+import ChangesPanel from './components/ChangesPanel.vue'
 import FindBar from './components/FindBar.vue'
 import GroupsSidebar from './components/GroupsSidebar.vue'
 import NameDialog from './components/NameDialog.vue'
@@ -47,6 +48,7 @@ const dim = computed(() => String(ui.settings?.config.window.dimInactive ?? 0.8)
         <PaneTree :key="tab.id" :node="root" :tab="tab" :path="[]" />
         <FindBar v-if="ui.find" />
       </main>
+      <ChangesPanel v-if="ui.changesOpen && !ui.quake" />
     </div>
     <StatusBar />
     <CommandPalette v-if="ui.palette" />

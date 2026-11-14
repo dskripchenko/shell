@@ -8,6 +8,8 @@ import type { Platform } from './keys'
 import type { Workspace } from './layout'
 import type { Theme } from './themes'
 import type { ShellEvent } from '@dskripchenko/shell-integration'
+import type { Baseline, ChangedFile } from '../main/changes'
+export type { Baseline, ChangedFile }
 
 export interface Startup {
   platform: Platform
@@ -47,6 +49,10 @@ export interface ShellApi {
   onEvents(listener: (paneId: string, events: ShellEvent[]) => void): void
   /** An agent said what it is doing (shell-notify). */
   onAgentSignal(listener: (signal: AgentSignal) => void): void
+  /** A baseline to count an agent's changes from: the working tree now ('agent'), or HEAD ('head'). */
+  changesBaseline(cwd: string, kind: 'agent' | 'head'): Promise<Baseline | null>
+  changesList(baseline: Baseline): Promise<ChangedFile[] | { error: string }>
+  changesDiff(baseline: Baseline, path: string, untracked: boolean): Promise<{ diff: string } | { text: string } | { error: string }>
   /** Claude Code's hooks for shell put in or taken out of ~/.claude/settings.json; what happened, in words. */
   claudeHooks(on: boolean): Promise<string>
   onSettings(listener: (settings: Settings) => void): void
@@ -101,6 +107,9 @@ export const IPC = {
   events: 'pty:events',
   agentSignal: 'agent:signal',
   claudeHooks: 'claude:hooks',
+  changesBaseline: 'changes:baseline',
+  changesList: 'changes:list',
+  changesDiff: 'changes:diff',
   saveWorkspace: 'session:save',
   settings: 'settings:changed',
   command: 'window:command',

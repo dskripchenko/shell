@@ -223,6 +223,7 @@ export function defaultBindings(platform: Platform): Binding[] {
     ['ctrl+alt+right', 'group.next'],
     ['ctrl+alt+left', 'group.prev'],
     [mac ? 'cmd+b' : 'ctrl+shift+b', 'sidebar.toggle'],
+    [mac ? 'cmd+shift+g' : 'ctrl+shift+g', 'changes.toggle'],
     [mac ? 'cmd+k' : 'ctrl+shift+k', 'terminal.clear'],
     [mac ? 'cmd+f' : 'ctrl+shift+f', 'terminal.find'],
     [mac ? 'cmd+c' : 'ctrl+shift+c', 'terminal.copy'],

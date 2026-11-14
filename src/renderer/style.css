@@ -141,3 +141,38 @@ kbd:empty { display: none; }
 .rail-mark { position: absolute; right: -3px; bottom: -3px; width: 14px; height: 14px; display: flex; align-items: center; justify-content: center; border-radius: 9999px; background: var(--uid-surface-raised); }
 .status-agents { color: var(--uid-text-primary); }
 .status-message { color: var(--uid-accent-text); overflow: hidden; text-overflow: ellipsis; }
+
+/* The changes panel: files on top, the diff below, beside the panes. */
+.changes { width: min(560px, 46vw); flex: none; display: flex; flex-direction: column; min-height: 0; background: var(--uid-surface-base); border-left: 1px solid var(--uid-border-subtle); }
+.changes-head { height: 38px; flex: none; display: flex; align-items: center; gap: 8px; padding: 0 8px 0 14px; border-bottom: 1px solid var(--uid-border-subtle); }
+.changes-title { font-weight: 600; }
+.changes-sub, .changes-count { font-size: 12px; color: var(--uid-text-secondary); white-space: nowrap; }
+.changes-fill { flex: 1; }
+.changes-root { padding: 6px 14px; font-size: 12px; color: var(--uid-text-secondary); border-bottom: 1px solid var(--uid-border-subtle); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.changes-empty { padding: 20px 14px; color: var(--uid-text-secondary); }
+.changes-body { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.changes-files { flex: none; max-height: 35%; overflow-y: auto; margin: 0; padding: 4px 0; list-style: none; border-bottom: 1px solid var(--uid-border-subtle); }
+.changes-file { display: flex; align-items: center; gap: 8px; height: 28px; padding: 0 12px 0 14px; cursor: default; }
+.changes-file:hover { background: color-mix(in srgb, var(--uid-text-primary) 5%, transparent); }
+.changes-file.active { background: color-mix(in srgb, var(--uid-text-primary) 9%, transparent); box-shadow: inset 2px 0 0 var(--uid-accent); }
+.file-status { width: 14px; font-family: var(--uid-font-family-mono); font-size: 12px; font-weight: 600; }
+.file-status.added { color: var(--uid-success, #34d399); }
+.file-status.modified { color: var(--uid-warning, #fbbf24); }
+.file-status.deleted { color: var(--uid-danger, #fb7185); }
+.file-path { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
+.plus { color: var(--uid-success, #34d399); font-size: 12px; }
+.minus { color: var(--uid-danger, #fb7185); font-size: 12px; }
+.file-viewed { margin: 0; accent-color: var(--uid-accent); }
+.changes-diff { flex: 1; min-height: 0; overflow: auto; padding: 6px 0; font-family: var(--uid-font-family-mono); font-size: 12px; line-height: 20px; user-select: text; }
+.diff-line { display: flex; white-space: pre; cursor: pointer; }
+.diff-line.hunk { color: var(--uid-text-secondary); cursor: default; padding-left: 8px; margin-top: 6px; }
+.diff-line.add { background: color-mix(in srgb, #34d399 14%, transparent); }
+.diff-line.del { background: color-mix(in srgb, #fb7185 14%, transparent); }
+.diff-line:not(.hunk):hover { outline: 1px solid var(--uid-border-default); outline-offset: -1px; }
+.diff-no { width: 40px; flex: none; text-align: right; padding-right: 6px; color: var(--uid-text-secondary); }
+.diff-sign { width: 16px; flex: none; text-align: center; color: var(--uid-text-secondary); }
+.diff-text { flex: 1; }
+.diff-comment { margin: 6px 12px 8px 102px; padding: 10px; display: flex; flex-direction: column; gap: 8px; background: var(--uid-surface-raised); border: 1px solid var(--uid-border-default); border-radius: var(--uid-radius-lg); font-family: var(--uid-font-family-sans); font-size: 13px; }
+.diff-comment label { font-size: 12px; color: var(--uid-text-secondary); }
+.diff-comment textarea { resize: vertical; padding: 6px 8px; border: 1px solid var(--uid-border-default); border-radius: var(--uid-radius-md); background: var(--uid-surface-base); color: var(--uid-text-primary); font: inherit; user-select: text; }
+.diff-comment-actions { display: flex; justify-content: flex-end; gap: 8px; }

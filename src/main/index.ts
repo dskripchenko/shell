@@ -16,6 +16,7 @@ import { SettingsStore } from './settings'
 import { Updater, type UpdateState } from './update'
 import { NotifyServer } from './notify'
 import { setClaudeHooks } from './claudeHooks'
+import { changedFiles, fileDiff, headBaseline, repoRoot, takeBaseline, type Baseline } from './changes'
 import type { UpdateInfo } from '../common/ipc'
 
 const DATA = dataDir({ env: process.env, platform: process.platform, execPath: process.execPath, packaged: app.isPackaged, cwd: process.cwd() })
@@ -273,6 +274,34 @@ const notify = new NotifyServer(join(DATA, 'bin'), (s) => {
     return true
   }
   return false
+})
+
+// An agent's changes: the baseline the window holds is checked to be a repository's root before use.
+async function checkedBaseline(b: unknown): Promise<Baseline | null> {
+  if (!b || typeof b !== 'object') return null
+  const o = b as Partial<Baseline>
+  if (typeof o.root !== 'string' || (o.base !== null && typeof o.base !== 'string') || !Array.isArray(o.untracked)) return null
+  if (o.base && !/^[0-9a-f]{7,64}$/.test(o.base)) return null
+  return (await repoRoot(o.root)) === o.root ? { root: o.root, base: o.base ?? null, untracked: o.untracked.filter((x): x is string => typeof x === 'string') } : null
+}
+ipcMain.handle(IPC.changesBaseline, (_e, cwd: unknown, kind: unknown) => (typeof cwd === 'string' && cwd ? (kind === 'head' ? headBaseline(cwd) : takeBaseline(cwd)) : null))
+ipcMain.handle(IPC.changesList, async (_e, b: unknown) => {
+  const base = await checkedBaseline(b)
+  if (!base) return { error: 'не репозиторий git' }
+  try {
+    return await changedFiles(base)
+  } catch (e) {
+    return { error: e instanceof Error && /ENOENT/.test(e.message) ? 'нужна программа git' : String(e instanceof Error ? e.message : e).split('\n')[0] }
+  }
+})
+ipcMain.handle(IPC.changesDiff, async (_e, b: unknown, path: unknown, untracked: unknown) => {
+  const base = await checkedBaseline(b)
+  if (!base || typeof path !== 'string') return { error: 'не репозиторий git' }
+  try {
+    return await fileDiff(base, path, untracked === true)
+  } catch (e) {
+    return { error: String(e instanceof Error ? e.message : e).split('\n')[0] }
+  }
 })
 
 ipcMain.handle(IPC.claudeHooks, (_e, on: unknown) => setClaudeHooks(join(homedir(), '.claude', 'settings.json'), on === true))

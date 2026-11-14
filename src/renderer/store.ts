@@ -52,6 +52,10 @@ export const ui = reactive({
   update: null as UpdateInfo | null,
   /** A short message in the status bar, gone after a while. */
   message: '',
+  /** The changes panel: shown or not; the baselines agents started from, by pane; files marked viewed. */
+  changesOpen: false,
+  baselines: {} as Record<string, import('../common/ipc').Baseline>,
+  viewed: {} as Record<string, string>,
   /** The agent in each pane that runs one. */
   agents: {} as Record<string, AgentState>,
   /** A tab being dragged, to be dropped on a group. */

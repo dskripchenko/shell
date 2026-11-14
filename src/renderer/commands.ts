@@ -66,6 +66,7 @@ const list: Command[] = [
   { id: 'sidebar.toggle', group: 'Окно', title: 'Свернуть или развернуть панель групп', run: () => commit({ ...w(), sidebarCollapsed: !w().sidebarCollapsed }) },
   { id: 'config.open', group: 'Окно', title: 'Открыть config.toml', run: () => api.openConfig() },
   { id: 'data.open', group: 'Окно', title: 'Открыть папку данных shell-data', run: () => api.openDataDir() },
+  { id: 'changes.toggle', group: 'Агенты', title: 'Изменения агента: показать или скрыть', run: () => (ui.changesOpen = !ui.changesOpen) },
   { id: 'claude.hooksOn', group: 'Агенты', title: 'Claude Code: точные статусы через хуки (~/.claude/settings.json)', run: () => void api.claudeHooks(true).then(say) },
   { id: 'claude.hooksOff', group: 'Агенты', title: 'Claude Code: убрать хуки shell', run: () => void api.claudeHooks(false).then(say) },
   { id: 'update.check', group: 'Окно', title: 'Проверить обновления', run: () => api.checkUpdate() },
@@ -157,7 +158,10 @@ export function newAgentTab(agent: string): void {
 
 /** A new tab in the active group, started with a profile. */
 export function newTabWithProfile(profile: string): void {
-  commit(addTab(w(), newId, { profile }))
+  // The profile's own folder wins over the group's; none: the group's, as for any new tab.
+  const own = ui.settings?.config.profiles[profile]?.cwd
+  const cwd = own ? own.replace(/^~(?=$|[\\/])/, ui.home) : undefined
+  commit(addTab(w(), newId, { profile, ...(cwd ? { cwd } : {}) }))
 }
 
 export function run(id: string): boolean {
