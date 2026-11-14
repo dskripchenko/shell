@@ -61,6 +61,7 @@ shell-notify running
 sleep 1
 shell-notify waiting "Codex needs approval" --agent codex
 read answer
+sleep 2
 shell-notify done
 sleep 30
 `

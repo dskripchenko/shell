@@ -117,6 +117,8 @@ async function confirm(): Promise<void> {
   const reactiveDialog = dialog.value
   if (!reactiveDialog) return
   dialog.value = null
+  // The keys back on the panels at once, not when the work is done (over sftp it takes seconds).
+  root.value?.focus()
   // Plain values for IPC: a reactive array cannot be cloned across.
   const d: Dialog = { kind: reactiveDialog.kind, value: reactiveDialog.value, items: [...reactiveDialog.items] }
   try {
