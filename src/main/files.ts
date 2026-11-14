@@ -5,7 +5,7 @@
  */
 import { cp, lstat, mkdir, open, readdir, rename, rm, stat } from 'node:fs/promises'
 import { basename, join } from 'node:path'
-import type { Entry } from '../common/commander'
+import { maskTest, type Entry } from '../common/commander'
 
 export async function listDir(dir: string): Promise<Entry[]> {
   const names = await readdir(dir)
@@ -110,4 +110,68 @@ export async function readHead(path: string, limit = 64 * 1024): Promise<{ text:
   } finally {
     await f.close()
   }
+}
+
+export interface Found {
+  path: string
+  size: number
+  mtime: number
+  /** The first line with the text (1-based), when a text was looked for. */
+  line?: number
+}
+
+/**
+ * Files under a folder whose names fit a mask (`*.ts;*.vue`) and, when a text
+ * is given, that have it (case aside; binary files and big ones passed over).
+ * `.git` and `node_modules` are passed over unless asked. Stops at `limit`
+ * results or after `ms`: `partial` says so.
+ */
+export async function findFiles(root: string, mask: string, text: string, o: { all?: boolean; limit?: number; ms?: number } = {}): Promise<{ items: Found[]; partial: boolean }> {
+  const fits = maskTest(mask.trim() || '*')
+  const needle = text.toLowerCase()
+  const limit = o.limit ?? 2000
+  const until = Date.now() + (o.ms ?? 15_000)
+  const items: Found[] = []
+  const queue = [root]
+  while (queue.length) {
+    if (items.length >= limit || Date.now() > until) return { items, partial: true }
+    const dir = queue.shift()!
+    let names: import('node:fs').Dirent[]
+    try {
+      names = await readdir(dir, { withFileTypes: true })
+    } catch {
+      continue
+    }
+    for (const d of names.sort((a, b) => a.name.localeCompare(b.name))) {
+      const full = join(dir, d.name)
+      if (d.isDirectory()) {
+        if (!o.all && (d.name === '.git' || d.name === 'node_modules')) continue
+        queue.push(full)
+        continue
+      }
+      if (!d.isFile() || !fits(d.name)) continue
+      try {
+        const st = await stat(full)
+        if (!needle) {
+          items.push({ path: full, size: st.size, mtime: st.mtimeMs })
+        } else if (st.size <= 4 << 20) {
+          const fh = await open(full, 'r')
+          try {
+            const buf = Buffer.alloc(st.size)
+            await fh.read(buf, 0, st.size, 0)
+            if (buf.subarray(0, 8192).includes(0)) continue
+            const lines = buf.toString('utf8').split('\n')
+            const at = lines.findIndex((l) => l.toLowerCase().includes(needle))
+            if (at >= 0) items.push({ path: full, size: st.size, mtime: st.mtimeMs, line: at + 1 })
+          } finally {
+            await fh.close()
+          }
+        }
+      } catch {
+        // Unreadable: passed over.
+      }
+      if (items.length >= limit) return { items, partial: true }
+    }
+  }
+  return { items, partial: false }
 }

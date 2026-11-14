@@ -42,6 +42,7 @@ const api: ShellApi = {
     remove: (alias, items) => ipcRenderer.invoke(IPC.remoteRemove, alias, items),
     fetch: (alias, path) => ipcRenderer.invoke(IPC.remoteFetch, alias, path),
   },
+  findFiles: (root, mask, text) => ipcRenderer.invoke(IPC.findFiles, root, mask, text),
   archive: {
     list: (file, inner) => ipcRenderer.invoke(IPC.archiveList, file, inner),
     extract: (file, inners, target) => ipcRenderer.invoke(IPC.archiveExtract, file, inners, target),

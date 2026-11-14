@@ -13,10 +13,10 @@ import type { ApiRequest } from '../main/api'
 import type { Theme } from './themes'
 import type { ShellEvent } from '@dskripchenko/shell-integration'
 import type { Baseline, ChangedFile, RepoEdit } from '../main/changes'
-import type { OpResult } from '../main/files'
+import type { Found, OpResult } from '../main/files'
 import type { Entry } from './commander'
 import type { SshHost } from './ssh'
-export type { OpResult }
+export type { Found, OpResult }
 export type { Baseline, ChangedFile, RepoEdit }
 
 export interface Startup {
@@ -99,6 +99,8 @@ export interface ShellApi {
     remove(alias: string, items: { path: string; dir: boolean }[]): Promise<OpResult>
     fetch(alias: string, path: string): Promise<{ local: string } | { error: string }>
   }
+  /** Files under a folder by a name mask and, if given, a text in them. */
+  findFiles(root: string, mask: string, text: string): Promise<{ items: Found[]; partial: boolean } | { error: string }>
   /** Archives as folders, read only (zip, tar, tar.gz). */
   archive: {
     list(file: string, inner: string): Promise<Entry[] | { error: string }>
@@ -225,6 +227,7 @@ export const IPC = {
   openExternal: 'open:external',
   openConfig: 'open:config',
   archiveList: 'archive:list',
+  findFiles: 'files:find',
   archiveExtract: 'archive:extract',
   archiveFetch: 'archive:fetch',
   prompts: 'prompts:list',

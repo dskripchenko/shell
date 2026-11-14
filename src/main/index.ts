@@ -17,7 +17,7 @@ import { Updater, type UpdateState } from './update'
 import { readFileSync, realpathSync } from 'node:fs'
 import { NotifyServer } from './notify'
 import { apiToken, presencePath, removePresence, writePresence } from './api'
-import { copyInto, listDir, makeDir, moveInto, moveTo, readHead, type OpResult } from './files'
+import { copyInto, findFiles, listDir, makeDir, moveInto, moveTo, readHead, type OpResult } from './files'
 import { dirname, isAbsolute, resolve as resolvePath } from 'node:path'
 import { findFolio, folioRequest, launchFolio, presenceOf, projectsOf } from './folio'
 import { addWorktree, gitStatus } from './git'
@@ -310,6 +310,14 @@ app.on('did-resign-active', () => {
   if (settings) applySecureKeyboard(false)
 })
 ipcMain.on(IPC.openDataDir, () => void electronShell.openPath(DATA))
+ipcMain.handle(IPC.findFiles, async (_e, root: unknown, mask: unknown, text: unknown) => {
+  if (typeof root !== 'string' || !isAbsolute(root) || typeof mask !== 'string' || typeof text !== 'string') return { error: 'не путь' }
+  try {
+    return await findFiles(root, mask.slice(0, 500), text.slice(0, 500))
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : String(e) }
+  }
+})
 // Archives as folders: a file named absolute, paths inside as lists of strings.
 const archiveFile = (f: unknown): f is string => typeof f === 'string' && isAbsolute(f)
 ipcMain.handle(IPC.archiveList, async (_e, file: unknown, inner: unknown) => {

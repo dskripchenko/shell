@@ -76,3 +76,19 @@ export function joinPath(dir: string, name: string): string {
 export function shellQuote(path: string, windows: boolean): string {
   return `'${path.replace(/'/g, windows ? "''" : `'\\''`)}'`
 }
+
+/**
+ * Two folders compared as MC does it (quickly, by size and time): in each, the
+ * files the other lacks, or that differ in size, or are newer there (a second
+ * of slack for file systems that keep time coarsely). Folders are not compared.
+ */
+export function compareDirs(left: Entry[], right: Entry[]): { left: string[]; right: string[] } {
+  const files = (list: Entry[]) => new Map(list.filter((e) => e.kind === 'file' && e.name !== '..').map((e) => [e.name, e]))
+  const l = files(left)
+  const r = files(right)
+  const differs = (a: Entry, b: Entry | undefined) => !b || a.size !== b.size || a.mtime > b.mtime + 1000
+  return {
+    left: [...l.values()].filter((e) => differs(e, r.get(e.name))).map((e) => e.name),
+    right: [...r.values()].filter((e) => differs(e, l.get(e.name))).map((e) => e.name),
+  }
+}

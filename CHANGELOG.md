@@ -9,6 +9,11 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- Finding files in the file panels (Alt+F7, as in MC): a name mask
+  (`*.ts;*.vue`) and a text inside if wanted, from the panel's folder down
+  (`.git` and `node_modules` passed over); Enter on a result takes the panel
+  to it. Two folders compared (Ctrl+X D): in each panel, the files the other
+  lacks, differs in size, or has older — marked, ready for F5.
 - Archives as folders in the file panels: zip (and jar, docx, whl…), tar,
   tar.gz — Enter goes in, `..` out to beside it; F3 and Enter show a file,
   F5 copies files and folders out (nothing written over). Read only; read by

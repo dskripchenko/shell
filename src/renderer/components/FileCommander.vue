@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
-import { joinPath, maskTest, parentOf, shellQuote, sortEntries, type Entry, type PanelState } from '../../common/commander'
+import { compareDirs, joinPath, maskTest, parentOf, shellQuote, sortEntries, type Entry, type PanelState } from '../../common/commander'
 import { parseRemote, remoteDir } from '../../common/ssh'
 import { archiveJoin, archiveKind, archivePath, archiveUp, parseArchive } from '../../common/archive'
 import { activeGroup, activeTab } from '../../common/layout'
@@ -9,6 +9,7 @@ import { typeWhenReady } from '../agents'
 import { api, say, ui, ws } from '../store'
 import * as terminals from '../terminals'
 import FilePanel from './FilePanel.vue'
+import FindFiles from './FindFiles.vue'
 
 /** The other panel's folder and the hidden files' showing are kept while shell runs. */
 const memory = (window as unknown as { __commander?: { right: string; hidden: boolean } }).__commander ?? { right: '', hidden: false }
@@ -239,8 +240,40 @@ function editInTab(path: string): void {
   ui.commander = false
 }
 
+/** Find files (Alt+F7): from the active panel's folder, on this computer. */
+const finding = ref<string | null>(null)
+function openFind(): void {
+  const dir = cur().dir
+  if (parseRemote(dir) || parseArchive(dir)) return say('Поиск — в папках этого компьютера')
+  finding.value = dir
+}
+/** A found file: its folder in the panel, the cursor on it. */
+async function goFound(path: string): Promise<void> {
+  finding.value = null
+  root.value?.focus()
+  await go(cur(), parentOf(path), path.split(/[\\/]/).pop())
+}
+
+/** The two panels compared (Ctrl+X D, as MC's): in each, the files the other lacks, differs in, or has older — marked. */
+function compare(): void {
+  const r = compareDirs(left.entries, right.entries)
+  left.marked = r.left
+  right.marked = r.right
+  say(r.left.length || r.right.length ? `Отличаются: слева ${r.left.length}, справа ${r.right.length} — выделены` : 'Папки одинаковы (по именам, размерам и времени)')
+}
+/** Ctrl+X pressed: the next key says what (MC's chords). */
+let chord = false
+
 async function key(e: KeyboardEvent): Promise<void> {
-  if (dialog.value || places.value) return
+  if (dialog.value || places.value || finding.value) return
+  if (chord) {
+    chord = false
+    if (e.code === 'KeyD') {
+      compare()
+      e.preventDefault()
+    }
+    return
+  }
   const p = cur()
   const n = p.entries.length
   const move = (to: number) => {
@@ -290,7 +323,10 @@ async function key(e: KeyboardEvent): Promise<void> {
       else if (list.length) ask('move', other().dir, list)
       break
     }
-    case 'F7': ask('mkdir', ''); break
+    case 'F7':
+      if (e.altKey) openFind()
+      else ask('mkdir', '')
+      break
     case 'F8': if (items(p).length) ask('delete', '', items(p)); break
     case 'F10':
     case 'Escape': close(); break
@@ -303,6 +339,10 @@ async function key(e: KeyboardEvent): Promise<void> {
       // Ctrl+\\, as MC's hotlist: the places to go — home, the groups' folders, the SSH hosts.
       if (e.ctrlKey && e.code === 'Backslash') {
         await openPlaces()
+        break
+      }
+      if (e.ctrlKey && e.code === 'KeyX') {
+        chord = true
         break
       }
       if ((e.ctrlKey || e.metaKey) && e.code === 'KeyR') {
@@ -322,6 +362,8 @@ const KEYS: [string, string, () => void][] = [
   ['F7', 'Папка', () => void key(new KeyboardEvent('keydown', { key: 'F7' }))],
   ['F8', 'Удалить', () => void key(new KeyboardEvent('keydown', { key: 'F8' }))],
   ['F10', 'Выход', () => close()],
+  ['Alt+F7', 'Поиск', () => openFind()],
+  ['Ctrl+X D', 'Сравнить', () => compare()],
 ]
 
 /** Places: where a panel can go in one step. */
@@ -384,7 +426,7 @@ const dialogNote = computed(() => {
 /** The keys stay with the panels: focus that leaves them for nowhere (a panel redrawn) comes back. */
 function keepFocus(e: FocusEvent): void {
   const to = e.relatedTarget as Node | null
-  if (dialog.value || places.value || (to && root.value?.contains(to))) return
+  if (dialog.value || places.value || finding.value || (to && root.value?.contains(to))) return
   void nextTick(() => {
     if (ui.commander && !dialog.value && (!document.activeElement || document.activeElement === document.body)) root.value?.focus()
   })
@@ -413,6 +455,7 @@ onBeforeUnmount(() => {
     <nav class="commander-keys" aria-label="Функциональные клавиши">
       <button v-for="[k, label, act] in KEYS" :key="k" type="button" class="fkey" @click="act()"><kbd>{{ k }}</kbd>{{ label }}</button>
     </nav>
+    <FindFiles v-if="finding" :root="finding" @go="goFound" @close="finding = null; root?.focus()" />
     <div v-if="places" class="overlay commander-overlay" @pointerdown.self="places = null; root?.focus()">
       <div class="palette places" role="dialog" aria-label="Места">
         <div class="palette-input"><span>Места</span><span class="palette-section">Ctrl+\\ · Enter — перейти</span></div>

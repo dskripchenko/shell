@@ -2,8 +2,8 @@ import { mkdirSync, mkdtempSync, readFileSync, writeFileSync, existsSync } from 
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { formatSize, joinPath, maskTest, parentOf, sortEntries, type Entry } from '../../src/common/commander'
-import { copyInto, listDir, makeDir, moveInto, moveTo, readHead } from '../../src/main/files'
+import { compareDirs, formatSize, joinPath, maskTest, parentOf, sortEntries, type Entry } from '../../src/common/commander'
+import { copyInto, findFiles, listDir, makeDir, moveInto, moveTo, readHead } from '../../src/main/files'
 
 const e = (name: string, kind: Entry['kind'] = 'file', hidden = name.startsWith('.')): Entry => ({ name, kind, size: 0, mtime: 0, hidden })
 
@@ -70,5 +70,33 @@ describe('a path for the shell', () => {
     const { shellQuote } = await import('../../src/common/commander')
     expect(shellQuote("/tmp/it's here", false)).toBe("'/tmp/it'\\''s here'")
     expect(shellQuote("C:\\it's", true)).toBe("'C:\\it''s'")
+  })
+})
+
+describe('two folders compared and files found', () => {
+  it('compared by size and time: what the other lacks, differs in, or has older', () => {
+    const e = (name: string, size: number, mtime: number, kind: 'file' | 'dir' = 'file') => ({ name, kind, size, mtime, hidden: false })
+    const r = compareDirs(
+      [e('..', 0, 0, 'dir'), e('same.txt', 5, 1000), e('only-left.txt', 1, 0), e('bigger.txt', 9, 0), e('newer.txt', 3, 10_000), e('dir', 0, 0, 'dir')],
+      [e('same.txt', 5, 1500), e('only-right.txt', 1, 0), e('bigger.txt', 8, 0), e('newer.txt', 3, 1000), e('dir', 0, 99, 'dir')],
+    )
+    expect(r).toEqual({ left: ['only-left.txt', 'bigger.txt', 'newer.txt'], right: ['only-right.txt', 'bigger.txt'] })
+  })
+
+  it('found by a mask and a text; .git and node_modules passed over; binary files too', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'shell-find-'))
+    mkdirSync(join(root, 'src', 'deep'), { recursive: true })
+    mkdirSync(join(root, 'node_modules', 'x'), { recursive: true })
+    writeFileSync(join(root, 'src', 'a.ts'), 'one\nThe Needle here\n')
+    writeFileSync(join(root, 'src', 'deep', 'b.ts'), 'nothing\n')
+    writeFileSync(join(root, 'src', 'c.js'), 'needle\n')
+    writeFileSync(join(root, 'node_modules', 'x', 'd.ts'), 'needle\n')
+    writeFileSync(join(root, 'src', 'bin.ts'), Buffer.from([0, 1, 2, 110, 101, 101, 100, 108, 101]))
+    const byName = await findFiles(root, '*.ts', '')
+    expect(byName.items.map((f) => f.path.slice(root.length + 1).replace(/\\/g, '/')).sort()).toEqual(['src/a.ts', 'src/bin.ts', 'src/deep/b.ts'])
+    const byText = await findFiles(root, '*.ts;*.js', 'needle')
+    expect(byText.items.map((f) => [f.path.slice(root.length + 1).replace(/\\/g, '/'), f.line])).toEqual([['src/a.ts', 2], ['src/c.js', 1]])
+    expect((await findFiles(root, '*', '', { all: true })).items.some((f) => f.path.includes('node_modules'))).toBe(true)
+    expect((await findFiles(root, '*', '', { limit: 2 })).partial).toBe(true)
   })
 })

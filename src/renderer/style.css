@@ -139,6 +139,11 @@ kbd:empty { display: none; }
 .block-menu button { text-align: left; padding: 6px 10px; border: 0; border-radius: var(--uid-radius-sm); background: transparent; color: var(--uid-text-primary); font: inherit; font-size: 13px; cursor: pointer; }
 .block-menu button:hover:not(:disabled), .block-menu button:focus-visible { background: color-mix(in srgb, var(--uid-text-primary) 8%, transparent); outline: none; }
 .block-menu button:disabled { color: var(--uid-text-tertiary); cursor: default; }
+.find-files { width: min(720px, 94vw); }
+.find-form { display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: end; padding: 12px; border-bottom: 1px solid var(--uid-border-subtle); }
+.find-form label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--uid-text-secondary); }
+.find-where { grid-column: 1 / -1; font-size: 12px; color: var(--uid-text-secondary); }
+.find-foot { padding: 6px 12px; font-size: 12px; color: var(--uid-text-secondary); border-top: 1px solid var(--uid-border-subtle); }
 .dialog-error { font-size: 12px; color: var(--uid-color-danger-text); }
 .dialog-hint { font-size: 12px; color: var(--uid-text-secondary); }
 .dialog fieldset { border: 0; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
