@@ -14,11 +14,12 @@ installer, no account, no telemetry.
 > and Claude Code's hooks); an agent's changes with their diffs; file panels as
 > in Midnight Commander (Ctrl+O); a viewer of markdown with live diagrams; SSH
 > hosts and their files over sftp; work handed to
-> [folio](https://github.com/dskripchenko/folio) when it is there. Stage 3 — projects (a group's layout and agents saved, a switcher), git on the
-> tabs and worktrees in groups of their own, folio both ways, settings with
-> fields, Secure Keyboard Entry, the kitty keyboard protocol, a journal of agents'
-> edits shared with folio. The plan is in
-> [FEATURES.md](FEATURES.md) (in Russian).
+> [folio](https://github.com/dskripchenko/folio) when it is there. Stage 3 —
+> projects (a group's layout and agents saved, a switcher), git on the tabs
+> and worktrees in groups of their own, folio both ways (documents edited
+> there, a journal of agents' edits, console colours, projects), settings
+> with fields, Secure Keyboard Entry, the kitty keyboard protocol. The plan is
+> in [FEATURES.md](FEATURES.md) (in Russian).
 
 ## Download
 
