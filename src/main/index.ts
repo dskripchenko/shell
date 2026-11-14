@@ -11,7 +11,7 @@ import { IPC, type Settings, type Startup } from '../common/ipc'
 import { dataDir } from './dataDir'
 import { gitBranch, processCwd } from './probe'
 import { Ptys } from './pty'
-import { SessionStore, type Bounds } from './session'
+import { SessionStore, writeAtomic, type Bounds } from './session'
 import { SettingsStore } from './settings'
 import { Updater, type UpdateState } from './update'
 import { readFileSync, realpathSync } from 'node:fs'
@@ -19,8 +19,9 @@ import { NotifyServer } from './notify'
 import { apiToken, presencePath, removePresence, writePresence } from './api'
 import { copyInto, listDir, makeDir, moveInto, moveTo, readHead, type OpResult } from './files'
 import { dirname, isAbsolute, resolve as resolvePath } from 'node:path'
-import { findFolio, folioRequest, launchFolio } from './folio'
+import { findFolio, folioRequest, launchFolio, presenceOf, projectsOf } from './folio'
 import { addWorktree, gitStatus } from './git'
+import { lookOf } from '../common/themes'
 import { ProjectsStore } from './projects'
 import { SCHEME, ViewerFiles } from './viewer'
 import { remoteFetch, remoteGet, remoteHome, remoteList, remoteMkdir, remotePut, remoteRemove, remoteRename, sshHosts } from './remote'
@@ -327,6 +328,12 @@ notify.api = {
   token: apiToken(),
   handle: (request) =>
     new Promise((resolve) => {
+      // Answered here, from the settings and the projects: no window needed.
+      if (request.kind === 'look') {
+        const c = settings.get()
+        return resolve({ status: 200, body: { ...lookOf(c.config.theme, c.themes), font: { family: c.config.font.family, size: c.config.font.size } } })
+      }
+      if (request.kind === 'projects') return resolve({ status: 200, body: { projects: projects.all().map((p) => ({ name: p.name, root: p.root, color: p.color })) } })
       const host = mainHost
       if (!host || host.window.isDestroyed()) return resolve({ status: 503 })
       if (request.kind === 'open-tab' || request.kind === 'paste') {
@@ -495,6 +502,25 @@ const folioOf = () => {
   return findFolio({ configured: c.path, env: process.env, platform: process.platform, execPath: process.execPath, uid: process.getuid?.() })
 }
 ipcMain.handle(IPC.folioFind, () => folioOf() !== null)
+// folio's projects: a running folio's, kept for when it is closed.
+const folioProjectsFile = join(DATA, 'folio-projects.json')
+ipcMain.handle(IPC.folioProjects, () => {
+  if (!settings.get().config.folio.enabled) return []
+  const running = presenceOf({ configured: '', env: process.env, platform: process.platform, execPath: process.execPath, uid: process.getuid?.() })
+  if (running?.projects) {
+    try {
+      writeAtomic(folioProjectsFile, JSON.stringify(running.projects))
+    } catch {
+      // Not kept: shown while folio runs.
+    }
+    return running.projects
+  }
+  try {
+    return projectsOf(JSON.parse(readFileSync(folioProjectsFile, 'utf8')))
+  } catch {
+    return []
+  }
+})
 ipcMain.handle(IPC.folioOpen, (_e, r: unknown) => {
   const request = folioRequest(r)
   if (!request) return { error: 'не путь' }

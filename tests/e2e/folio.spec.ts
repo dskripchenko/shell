@@ -28,7 +28,12 @@ test('folio, when found: a file from the viewer at its line, a review of the rep
 
   const data = mkdtempSync(join(tmpdir(), 'shell-e2e-'))
   writeFileSync(join(data, 'config.toml'), `[shell]\nprogram = "/bin/bash"\nargs = []\n[quake]\nenabled = false\n[folio]\npath = "${folio}"\n[profiles.project]\ncwd = "${repo}"\n`)
-  const app = await electron.launch({ args: ['.'], env: { ...process.env, SHELL_DATA: data, SHELL_E2E: '1', HOME: home } })
+  // A running folio's presence: its projects, for shell's switcher.
+  const notes = join(home, 'notes')
+  mkdirSync(notes)
+  const presence = join(home, 'folio-presence.json')
+  writeFileSync(presence, JSON.stringify({ pid: process.pid, version: '1.17.0', launch: [folio], capabilities: ['open', 'line', 'project', 'review'], projects: [{ name: 'notes', path: notes }] }))
+  const app = await electron.launch({ args: ['.'], env: { ...process.env, SHELL_DATA: data, SHELL_E2E: '1', HOME: home, FOLIO_PRESENCE: presence } })
   const page = await app.firstWindow()
   await page.waitForSelector('.term-host .dsk-term')
   const palette = async (text: string) => {
@@ -74,5 +79,12 @@ test('folio, when found: a file from the viewer at its line, a review of the rep
   // The palette: the pane's folder as a project.
   await palette('folio: открыть папку')
   await expect.poll(said).toContain(`--project\n${repo}\n`)
+
+  // folio's projects in the switcher: opened as a group in that folder.
+  await page.keyboard.press(mac ? 'Meta+Shift+o' : 'Control+Shift+o')
+  await expect(page.locator('.palette-item', { hasText: 'notes' })).toContainText('folio')
+  await page.keyboard.type('notes')
+  await page.keyboard.press('Enter')
+  await expect(page.locator('.group-row.active .group-name')).toHaveText('notes')
   await app.close()
 })

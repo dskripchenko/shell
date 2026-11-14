@@ -41,7 +41,7 @@ export const DEFAULTS: Config = {
   shell: { program: '', args: [] },
   scrollback: { lines: 10000, restore: true, restoreKb: 512 },
   window: { dimInactive: 0.8 },
-  quake: { enabled: true, hotkey: 'ctrl+`', height: 0.45 },
+  quake: { enabled: true, hotkey: 'ctrl+alt+`', height: 0.45 },
   updates: { auto: true },
   agents: { commands: [...DEFAULT_AGENTS], notify: true },
   folio: { path: '', enabled: true },
@@ -83,9 +83,9 @@ export const DEFAULT_TEXT = `# Настройки shell. Файл перечит
 # dim-inactive = 0.8
 
 [quake]
-# Выпадающее окно по глобальному хоткею.
+# Выпадающее окно по глобальному хоткею (Ctrl+\` оставлен консолям folio и VS Code).
 # enabled = true
-# hotkey = "ctrl+\`"
+# hotkey = "ctrl+alt+\`"
 # Доля высоты экрана.
 # height = 0.45
 

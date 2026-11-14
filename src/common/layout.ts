@@ -59,8 +59,12 @@ export interface Workspace {
 
 export type NewId = () => string
 
-/** Colours for new groups and tabs, in order (UID Design System, dark theme). */
-export const COLORS = ['#2dd4bf', '#60a5fa', '#fbbf24', '#fb7185', '#34d399', '#c4b5fd', '#a1a1aa']
+/**
+ * Colours for new groups and tabs, in order — the same as folio's tab groups
+ * (blue, green, orange, purple, pink, teal, red, yellow, grey), so a project
+ * looks the same in both. A colour saved before stays as it was.
+ */
+export const COLORS = ['#3b82f6', '#22a05b', '#e8822f', '#8b5cf6', '#db4f98', '#14a39a', '#e04848', '#d4a017', '#8b949e']
 
 export function freeColor(taken: string[]): string {
   return COLORS.find((c) => !taken.includes(c)) ?? COLORS[taken.length % COLORS.length]!

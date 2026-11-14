@@ -108,7 +108,21 @@ folio уже умеет: md с живыми блоками и их редакт�
 | «Открыть терминал здесь» в folio | folio → shell | 3 | API shell готов: `shell-presence.json`, `POST /api/open-tab {cwd, name?}` |
 | Агент ждёт ответа по MCP `show_changes` → бейдж в shell | folio → shell | 3 | API shell готов: `POST /api/review {repo, state: waiting или none, message?}` |
 | Кто из агентов что правил | общий | 3 | сделано: журнал `.git/agent-edits.jsonl`, один хук PostToolUse (`editsHookCommand` в `@dskripchenko/shell-integration`) |
-| Общие темы, цвета групп, список проектов, хоткеи | общий | 3 | общий формат или импорт |
+| Темы консолей | shell → folio | 3 | сделано: `POST /api/look` — темы терминала shell (день и ночь) и шрифт; folio берёт их для своих консолей и помнит |
+| Цвета групп | общий | 3 | сделано: одна палитра из 9 цветов (как группы вкладок folio) |
+| Список проектов | общий | 3 | сделано: проекты folio — в его файле присутствия, shell показывает их в переключателе (и помнит); проекты shell — `POST /api/projects`, folio показывает их в палитре |
+| Хоткеи | общий | 3 | сделано: одинаковые действия на одинаковых клавишах (таблица ниже), конфликт Ctrl+\` снят; файлы клавиш свои (`[keys]` shell, `keybindings.json` folio) |
+
+**Общие хоткеи** (macOS; на Windows и Linux у shell — Ctrl+Shift, у folio — Ctrl):
+| Действие | shell | folio |
+|---|---|---|
+| Настройки | ⌘, | ⌘, |
+| Боковая панель | ⌘B | ⌘B |
+| Найти | ⌘F | ⌘F |
+| Новая вкладка | ⌘T | ⌘T |
+| Закрыть (панель / вкладку) | ⌘W | ⌘W |
+| Палитра команд | ⌘⇧P | ⌘K — в shell ⌘K очищает экран, как в Terminal.app и iTerm2; в folio ⌘⇧P — экспорт в PDF |
+| Консоль / выпадающее окно | Ctrl+Alt+\` (глобально) | Ctrl+\` (в окне, как в VS Code) |
 
 **Общий код (вынести в пакеты):** shell-integration скрипты (`folio/src/main/shell/*`), разбор OSC-событий консоли (`consoleEvents.ts`), установка хуков Claude Code (`review/hooks.ts`).
 

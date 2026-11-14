@@ -109,6 +109,9 @@ export function handle(request: ApiRequest): ApiReply | Promise<ApiReply> {
       return paste(request.repo, request.text)
     case 'review':
       return review(request.repo, request.state, request.message)
+    default:
+      // The look and the projects are answered by the main process.
+      return { status: 404 }
   }
 }
 

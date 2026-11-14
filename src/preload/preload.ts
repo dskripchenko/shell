@@ -52,6 +52,7 @@ const api: ShellApi = {
     head: (path) => ipcRenderer.invoke(IPC.filesHead, path),
   },
   folioFind: () => ipcRenderer.invoke(IPC.folioFind),
+  folioProjects: () => ipcRenderer.invoke(IPC.folioProjects),
   folioOpen: (request) => ipcRenderer.invoke(IPC.folioOpen, request),
   changesBaseline: (cwd, kind) => ipcRenderer.invoke(IPC.changesBaseline, cwd, kind),
   changesList: (b) => ipcRenderer.invoke(IPC.changesList, b),

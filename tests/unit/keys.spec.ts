@@ -104,6 +104,7 @@ describe('global shortcuts', () => {
   it('written as Electron writes them; a chain is not one', async () => {
     const { toAccelerator } = await import('../../src/common/keys')
     expect(toAccelerator('ctrl+`', 'mac')).toBe('Control+`')
+    expect(toAccelerator('ctrl+alt+`', 'mac')).toBe('Control+Alt+`')
     expect(toAccelerator('cmd+shift+space', 'mac')).toBe('Shift+Command+Space')
     expect(toAccelerator('alt+f12', 'other')).toBe('Alt+F12')
     expect(toAccelerator('ctrl+a>c', 'mac')).toBeNull()

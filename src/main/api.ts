@@ -13,12 +13,16 @@ import { rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { isAbsolute, join } from 'node:path'
 
-export const API_CAPABILITIES = ['open-tab', 'paste', 'review'] as const
+export const API_CAPABILITIES = ['open-tab', 'paste', 'review', 'look', 'projects'] as const
 
 export type ApiRequest =
   | { kind: 'open-tab'; cwd: string; name?: string }
   | { kind: 'paste'; repo: string; text: string }
   | { kind: 'review'; repo: string; state: 'waiting' | 'none'; message?: string }
+  /** The terminal's themes (by day and by night) and font, for another app's consoles to look the same. */
+  | { kind: 'look' }
+  /** shell's projects: name, folder, colour. */
+  | { kind: 'projects' }
 
 const MAX_TEXT = 32 * 1024
 
@@ -52,6 +56,10 @@ export function readApiRequest(method: string, url: string, auth: string | undef
     case '/api/review':
       if (!dir(v.repo) || (v.state !== 'waiting' && v.state !== 'none')) return { error: 400 }
       return { kind: 'review', repo: v.repo, state: v.state, ...(typeof v.message === 'string' && v.message ? { message: v.message.slice(0, 300) } : {}) }
+    case '/api/look':
+      return { kind: 'look' }
+    case '/api/projects':
+      return { kind: 'projects' }
     default:
       return { error: 404 }
   }

@@ -26,7 +26,7 @@ test('folio’s requests: a tab in a folder, a comment pasted into the agent’s
 
   await expect.poll(() => existsSync(presence)).toBe(true)
   const p = JSON.parse(readFileSync(presence, 'utf8')) as { url: string; token: string; capabilities: string[] }
-  expect(p.capabilities).toEqual(['open-tab', 'paste', 'review'])
+  expect(p.capabilities).toEqual(['open-tab', 'paste', 'review', 'look', 'projects'])
   const post = (path: string, body: object, token = p.token) => fetch(p.url + path, { method: 'POST', headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' }, body: JSON.stringify(body) })
 
   // A tab in the repository's folder, named as asked.
@@ -55,6 +55,13 @@ test('folio’s requests: a tab in a folder, a comment pasted into the agent’s
   await expect(page.locator('.tab.active .tab-review')).toHaveAttribute('title', 'folio: Changes to look at')
   expect((await post('/api/review', { repo, state: 'none' })).status).toBe(204)
   await expect(page.locator('.tab-review')).toHaveCount(0)
+
+  // The terminal's look, for folio's consoles; shell's projects.
+  const look = (await (await post('/api/look', {})).json()) as { light: { background: string; ansi: string[] }; dark: { kind: string }; font: { size: number } }
+  expect(look.light.ansi).toHaveLength(16)
+  expect(look.dark.kind).toBe('dark')
+  expect(look.font.size).toBe(13)
+  expect(await (await post('/api/projects', {})).json()).toEqual({ projects: [] })
 
   // Not with the panes' token, nor with none.
   expect((await post('/api/open-tab', { cwd: repo }, paneToken)).status).toBe(401)

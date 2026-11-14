@@ -36,7 +36,10 @@ describe.skipIf(process.platform === 'win32')('folio, found', () => {
 
   it('as the running folio, by its presence file — of this user, of a live process', () => {
     const presence = { pid: 42, launch: ['/dev/electron', '/dev/folio'], capabilities: ['open'] }
-    expect(findFolio(machine(['/dev/electron'], {}, presence))).toEqual({ launch: ['/dev/electron', '/dev/folio'], running: true })
+    expect(findFolio(machine(['/dev/electron'], {}, presence))).toEqual({ launch: ['/dev/electron', '/dev/folio'], running: true, projects: [] })
+    // Its projects, the well-formed ones.
+    const listed = findFolio(machine(['/dev/electron'], {}, { ...presence, projects: [{ name: 'notes', path: '/w/notes' }, { name: 'rel', path: 'w' }, null] }))
+    expect(listed?.projects).toEqual([{ name: 'notes', path: '/w/notes' }])
     expect(findFolio(machine(['/dev/electron'], {}, { ...presence, pid: 7 }))).toBeNull()
     expect(findFolio(machine(['/dev/electron'], { owner: () => 0 }, presence))).toBeNull()
     expect(findFolio(machine([], {}, presence))).toBeNull()

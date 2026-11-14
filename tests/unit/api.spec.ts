@@ -21,6 +21,8 @@ describe('the local API', () => {
     expect(ask('/api/paste', { repo: abs, text: '  ' })).toEqual({ error: 400 })
     expect(ask('/api/review', { repo: abs, state: 'waiting', message: 'Changes to look at' })).toEqual({ kind: 'review', repo: abs, state: 'waiting', message: 'Changes to look at' })
     expect(ask('/api/review', { repo: abs, state: 'maybe' })).toEqual({ error: 400 })
+    expect(ask('/api/look', {})).toEqual({ kind: 'look' })
+    expect(ask('/api/projects', {})).toEqual({ kind: 'projects' })
   })
 
   it('lets no text press keys of its own', () => {

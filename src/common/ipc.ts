@@ -79,6 +79,8 @@ export interface ShellApi {
   /** Whether folio is on the machine (the config's path, a running folio, the usual places). */
   folioFind(): Promise<boolean>
   /** folio handed a file at a line, a folder as a project, a repository's review. */
+  /** folio's projects: a running folio's, else the last ones seen. */
+  folioProjects(): Promise<{ name: string; path: string }[]>
   folioOpen(request: FolioRequest): Promise<{ ok: true } | { error: string }>
   /** A file opened for the viewer (a path absolute, or relative to `cwd`). */
   viewerOpen(path: string, cwd?: string): Promise<ViewerDoc | { error: string }>
@@ -178,6 +180,7 @@ export const IPC = {
   viewerOpen: 'viewer:open',
   folioFind: 'folio:find',
   folioOpen: 'folio:open',
+  folioProjects: 'folio:projects',
   openPath: 'open:path',
   remoteHosts: 'remote:hosts',
   remoteHome: 'remote:home',

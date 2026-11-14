@@ -7,6 +7,24 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added
+
+- folio's projects in the project switcher (Cmd/Ctrl+Shift+O), after shell's
+  own: a running folio lists them in its presence file, shell keeps the last
+  list for when folio is closed; one opens as a group in its folder.
+- The local API says the terminal's look (`/api/look`: the themes by day and
+  by night, the font) and shell's projects (`/api/projects`): folio's
+  consoles take the same colours, its palette lists shell's projects.
+
+### Changed
+
+- Group and tab colours are the same nine as folio's tab groups (blue,
+  green, orange, purple, pink, teal, red, yellow, grey); colours chosen
+  before stay as they were.
+- The drop-down window's key by default is Ctrl+Alt+\`: Ctrl+\`, taken by it
+  system-wide, is the console's in folio and VS Code. A key set in
+  `config.toml` stays as set.
+
 ## [0.5.0] - 2026-11-14
 
 Agents' edits told apart; documents edited in folio.

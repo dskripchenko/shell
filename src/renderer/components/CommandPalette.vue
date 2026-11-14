@@ -2,14 +2,14 @@
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { Search } from '@dskripchenko/ui/icons'
 import { fuzzy } from '../../common/fuzzy'
-import { selectGroup, selectTab } from '../../common/layout'
+import { addGroup, selectGroup, selectTab } from '../../common/layout'
 import { COMMANDS, newAgentTab, newNamedTab, newTabWithProfile, run } from '../commands'
 import { typeWhenReady } from '../agents'
 import { shellQuote } from '../../common/commander'
 import type { SshHost } from '../../common/ssh'
 import { keysOf } from '../keyboard'
 import { openProject, recentProjects } from '../projects'
-import { api, commit, shortPath, ui, ws } from '../store'
+import { api, commit, newId, shortPath, ui, ws } from '../store'
 import { tabTitle } from '../titles'
 
 interface Item {
@@ -22,6 +22,7 @@ interface Item {
 }
 
 const hosts = ref<SshHost[]>([])
+const folioProjects = ref<{ name: string; path: string }[]>([])
 const query = ref('')
 const index = ref(0)
 const input = ref<HTMLInputElement | null>(null)
@@ -32,14 +33,26 @@ const projectsOnly = computed(() => ui.palette === 'projects')
 /** The projects, most recent first; an open one says so. */
 function projectItems(prefix: string): Item[] {
   const open = new Set(ws.value!.groups.map((g) => g.project))
-  return recentProjects().map((p) => ({
+  const own = new Set(ui.projects.map((p) => p.root))
+  // folio's projects after shell's own (the same folder once): opened as a group in that folder.
+  const fromFolio = folioProjects.value
+    .filter((p) => !own.has(p.path))
+    .map((p) => ({ id: `folio:${p.path}`, title: prefix + p.name, section: `folio · ${shortPath(p.path)}`, keys: '', action: () => openFolder(p.name, p.path) }))
+  return [...recentProjects().map((p) => ({
     id: `project:${p.id}`,
     title: prefix + p.name,
     section: open.has(p.id) ? `открыт · ${shortPath(p.root)}` : shortPath(p.root),
     keys: '',
     swatch: p.color,
     action: () => openProject(p.id),
-  }))
+  })), ...fromFolio]
+}
+
+/** A folder's group shown, or a new one made there. */
+function openFolder(name: string, path: string): void {
+  const w = ws.value!
+  const there = w.groups.find((g) => g.cwd === path)
+  commit(there ? selectGroup(w, there.id) : addGroup(w, newId, { name, cwd: path }))
 }
 
 const items = computed<Item[]>(() => {
@@ -91,6 +104,7 @@ watch(index, () => void nextTick(() => list.value?.querySelector('[aria-selected
 onMounted(() => {
   input.value?.focus()
   void api.remote.hosts().then((list) => (hosts.value = list))
+  void api.folioProjects().then((list) => (folioProjects.value = list))
 })
 
 function close(): void {

@@ -176,3 +176,14 @@ export function importThemes(fileName: string, text: string): Theme[] {
   const t = parseGhostty(text, base)
   return t ? [t] : []
 }
+
+/** The themes shell shows by day and by night: the chosen one both times, or the system's pair (`name = "system"`). */
+export function lookOf(theme: { name: string; light: string; dark: string }, imported: Theme[]): { light: Theme; dark: Theme } {
+  const all = [...BUILT_IN, ...imported]
+  const find = (name: string, fallback: Theme) => all.find((t) => t.name === name) ?? fallback
+  if (theme.name !== 'system') {
+    const one = find(theme.name, UID_DARK)
+    return { light: one, dark: one }
+  }
+  return { light: find(theme.light, UID_LIGHT), dark: find(theme.dark, UID_DARK) }
+}

@@ -22,12 +22,30 @@ export interface Folio {
   launch: string[]
   /** Found as a running folio. */
   running: boolean
+  /** A running folio's projects (its presence file says them). */
+  projects?: FolioProject[]
 }
 
 interface Presence {
   pid: number
   launch: string[]
   capabilities?: string[]
+  projects?: unknown
+}
+
+/** A project of folio's, as its presence file lists them. */
+export interface FolioProject {
+  name: string
+  path: string
+}
+
+/** folio's projects in its presence file (only well-formed ones, absolute folders). */
+export function projectsOf(value: unknown): FolioProject[] {
+  if (!Array.isArray(value)) return []
+  return value
+    .filter((p): p is FolioProject => !!p && typeof p === 'object' && typeof (p as FolioProject).name === 'string' && typeof (p as FolioProject).path === 'string' && isAbsolute((p as FolioProject).path))
+    .slice(0, 500)
+    .map((p) => ({ name: p.name.slice(0, 120), path: p.path }))
 }
 
 export interface FindInput {
@@ -93,7 +111,7 @@ export function presenceOf(input: FindInput): Folio | null {
     if (!Number.isInteger(p.pid) || !Array.isArray(p.launch) || p.launch.length === 0 || !p.launch.every((a) => typeof a === 'string')) return null
     if (!(input.alive ?? aliveDefault)(p.pid)) return null
     if (!(input.isFile ?? isFileDefault)(p.launch[0]!)) return null
-    return { launch: p.launch, running: true }
+    return { launch: p.launch, running: true, projects: projectsOf(p.projects) }
   } catch {
     return null
   }
