@@ -1,7 +1,7 @@
 import { execFileSync } from 'node:child_process'
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { join, resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { addedFile, commentFor, parseDiff } from '../../src/common/diff'
 import { changedFiles, fileDiff, headBaseline, inside, takeBaseline } from '../../src/main/changes'
@@ -61,8 +61,9 @@ describe('what an agent changed since it started', () => {
 
   it('no repository: no baseline; paths outside refused', async () => {
     expect(await takeBaseline(mkdtempSync(join(tmpdir(), 'shell-nogit-')))).toBeNull()
-    expect(inside('/r', 'a/b.ts')).toBe(join('/r', 'a', 'b.ts'))
-    expect(inside('/r', '../x')).toBeNull()
-    expect(inside('/r', '/etc/passwd')).toBeNull()
+    const root = resolve('/r')
+    expect(inside(root, 'a/b.ts')).toBe(resolve(root, 'a', 'b.ts'))
+    expect(inside(root, '../x')).toBeNull()
+    expect(inside(root, '/etc/passwd')).toBeNull()
   })
 })
