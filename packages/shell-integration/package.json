@@ -1,12 +1,40 @@
 {
   "name": "@dskripchenko/shell-integration",
   "version": "0.1.0",
-  "private": true,
-  "description": "Shell integration for terminal apps: zsh, bash and PowerShell mark their commands (OSC 133, 633;E) and say their folder (OSC 7) after the user's own startup files; and a reader of those marks, notifications and bells from a shell's output.",
+  "description": "Shell integration for terminal apps: zsh, bash and PowerShell mark their commands (OSC 133, 633;E) and say their folder (OSC 7) after the user's own startup files; a reader of those marks, notifications and bells from a shell's output; and the journal of AI agents' edits shared by the apps that watch them.",
   "license": "MIT",
   "author": "Denis Skripchenko",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dskripchenko/shell.git",
+    "directory": "packages/shell-integration"
+  },
+  "homepage": "https://github.com/dskripchenko/shell/tree/main/packages/shell-integration#readme",
+  "keywords": ["terminal", "shell-integration", "osc-133", "osc-7", "zsh", "bash", "powershell", "node-pty", "claude-code"],
   "type": "module",
   "exports": {
     ".": "./src/index.ts"
+  },
+  "publishConfig": {
+    "access": "public",
+    "main": "./dist/index.cjs",
+    "module": "./dist/index.mjs",
+    "types": "./dist/index.d.ts",
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "import": "./dist/index.mjs",
+        "require": "./dist/index.cjs"
+      }
+    }
+  },
+  "sideEffects": false,
+  "files": ["dist", "README.md", "LICENSE"],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "prepublishOnly": "node scripts/build.mjs"
   }
 }

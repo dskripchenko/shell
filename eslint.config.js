@@ -3,7 +3,7 @@ import tseslint from 'typescript-eslint'
 import vue from 'eslint-plugin-vue'
 
 export default tseslint.config(
-  { ignores: ['dist', 'release', 'node_modules', 'test-results', 'playwright-report', 'bench'] },
+  { ignores: ['dist', '**/dist', 'release', 'node_modules', 'test-results', 'playwright-report', 'bench'] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   ...vue.configs['flat/recommended'],
@@ -14,7 +14,7 @@ export default tseslint.config(
     rules: { 'no-undef': 'off', 'vue/max-attributes-per-line': 'off', 'vue/singleline-html-element-content-newline': 'off', 'vue/html-self-closing': 'off' },
   },
   {
-    files: ['scripts/**/*.mjs', 'tests/**/*.mjs'],
+    files: ['scripts/**/*.mjs', 'tests/**/*.mjs', 'packages/*/scripts/**/*.mjs'],
     languageOptions: { globals: { console: 'readonly', process: 'readonly' } },
   },
 )
