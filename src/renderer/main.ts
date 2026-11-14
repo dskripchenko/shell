@@ -15,6 +15,7 @@ import { applyChrome, currentTheme } from './theme'
 async function start(): Promise<void> {
   const s = await api.startup()
   ui.platform = s.platform
+  ui.os = s.os
   ui.quake = s.quake
   ui.home = s.home
   ui.version = s.version
@@ -37,6 +38,10 @@ async function start(): Promise<void> {
   api.onEvents((paneId, events) => {
     agents.onEvents(paneId, events)
     if (events.some((e) => e.kind === 'prompt')) agents.onPrompt(paneId)
+    for (const e of events) {
+      if (e.kind === 'start') ui.busy[paneId] = true
+      else if (e.kind === 'prompt') ui.busy[paneId] = false
+    }
   })
   api.onAgentSignal((s) => agents.onSignal(s))
   onCommit((next) => agents.prune(next))

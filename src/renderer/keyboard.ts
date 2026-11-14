@@ -52,6 +52,7 @@ export function install(): void {
         return
       }
       if (r.kind === 'run' && field && EDITING.has(r.command)) return
+      if (r.kind === 'run' && COMMANDS.get(r.command)?.when?.() === false) return
       e.preventDefault()
       e.stopPropagation()
       window.clearTimeout(chainTimer)

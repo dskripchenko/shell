@@ -14,6 +14,8 @@ export interface Command {
   run: () => void
   /** Not offered in the palette (the numbered ones). */
   hidden?: boolean
+  /** Whether the keys run it now; when not, they go on to the program in the pane. */
+  when?: () => boolean
 }
 
 function w(): Workspace {
@@ -66,6 +68,12 @@ const list: Command[] = [
   { id: 'sidebar.toggle', group: 'Окно', title: 'Свернуть или развернуть панель групп', run: () => commit({ ...w(), sidebarCollapsed: !w().sidebarCollapsed }) },
   { id: 'config.open', group: 'Окно', title: 'Открыть config.toml', run: () => api.openConfig() },
   { id: 'data.open', group: 'Окно', title: 'Открыть папку данных shell-data', run: () => api.openDataDir() },
+  {
+    id: 'commander.toggle', group: 'Файлы', title: 'Файловые панели (как в Midnight Commander)',
+    // A full-screen program (vim, less, mc itself) keeps the keys.
+    when: () => ui.commander || terminals.get(focusedPane())?.term.buffer !== terminals.get(focusedPane())?.term.alt,
+    run: () => (ui.commander = !ui.commander),
+  },
   { id: 'changes.toggle', group: 'Агенты', title: 'Изменения агента: показать или скрыть', run: () => (ui.changesOpen = !ui.changesOpen) },
   { id: 'claude.hooksOn', group: 'Агенты', title: 'Claude Code: точные статусы через хуки (~/.claude/settings.json)', run: () => void api.claudeHooks(true).then(say) },
   { id: 'claude.hooksOff', group: 'Агенты', title: 'Claude Code: убрать хуки shell', run: () => void api.claudeHooks(false).then(say) },
@@ -148,12 +156,17 @@ for (let i = 1; i <= 9; i++) {
 
 export const COMMANDS = new Map(list.map((c) => [c.id, c]))
 
+/** A new tab with a name, in a folder (the focused pane's by default); its pane's id. */
+export function newNamedTab(name: string, cwd?: string): string {
+  const next = addTab(w(), newId, { cwd: cwd ?? terminals.paneCwd(focusedPane()) })
+  const tab = activeTab(activeGroup(next))
+  commit(updateTab(next, tab.id, { name }))
+  return tab.focus
+}
+
 /** A new tab named after an agent, the agent's command typed once its shell is ready. */
 export function newAgentTab(agent: string): void {
-  const next = addTab(w(), newId, { cwd: terminals.paneCwd(focusedPane()) })
-  const tab = activeTab(activeGroup(next))
-  commit(updateTab(next, tab.id, { name: agent }))
-  agents.typeWhenReady(tab.focus, agent)
+  agents.typeWhenReady(newNamedTab(agent), agent)
 }
 
 /** A new tab in the active group, started with a profile. */

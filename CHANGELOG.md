@@ -7,6 +7,29 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added
+
+- Shell integration for zsh, bash and PowerShell (`packages/shell-integration`,
+  taken from folio to be shared): commands marked with their text and exit
+  code, the folder said after each one; going between commands works in all
+  three.
+- Agents in panes (`[agents] commands`: claude, codex, grok, gemini…): working,
+  waiting for you, done or failed — on their tab, group and the status bar,
+  with a system notification when one is out of sight; started from the
+  palette in a tab of their own.
+- `shell-notify` in every pane's PATH for agents and their hooks; the palette
+  puts Claude Code's hooks in `~/.claude/settings.json` (and takes them out).
+- An agent's changes (Cmd/Ctrl+Shift+G): the files changed since it started,
+  their diffs, a comment on a line pasted into its pane.
+- File panels as in Midnight Commander (Ctrl+O): two folders side by side,
+  F3 quick view, F4 edit in a new tab, F5 copy, F6 move or rename, F7 new
+  folder, F8 to the trash, marks by mask; closed, the shell goes to the
+  active panel's folder. A full-screen program keeps Ctrl+O for itself.
+
+### Fixed
+
+- A tab opened with a profile starts in the profile's folder.
+
 ## [0.1.0] - 2026-11-14
 
 The first release: stage 1 of the plan — a terminal to use instead of the

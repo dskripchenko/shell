@@ -31,6 +31,7 @@ export interface Dialog {
 
 export const ui = reactive({
   platform: 'mac' as Platform,
+  os: '',
   quake: false,
   home: '',
   version: '',
@@ -52,6 +53,9 @@ export const ui = reactive({
   update: null as UpdateInfo | null,
   /** A short message in the status bar, gone after a while. */
   message: '',
+  /** The file panels over the terminal; panes whose shell runs a command now (its marks say). */
+  commander: false,
+  busy: {} as Record<string, boolean>,
   /** The changes panel: shown or not; the baselines agents started from, by pane; files marked viewed. */
   changesOpen: false,
   baselines: {} as Record<string, import('../common/ipc').Baseline>,

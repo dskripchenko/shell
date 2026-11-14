@@ -9,10 +9,15 @@ import type { Workspace } from './layout'
 import type { Theme } from './themes'
 import type { ShellEvent } from '@dskripchenko/shell-integration'
 import type { Baseline, ChangedFile } from '../main/changes'
+import type { OpResult } from '../main/files'
+import type { Entry } from './commander'
+export type { OpResult }
 export type { Baseline, ChangedFile }
 
 export interface Startup {
   platform: Platform
+  /** The system itself (Windows matters for paths and quoting). */
+  os: string
   /** This window is the drop-down one (its own workspace). */
   quake: boolean
   home: string
@@ -53,6 +58,16 @@ export interface ShellApi {
   changesBaseline(cwd: string, kind: 'agent' | 'head'): Promise<Baseline | null>
   changesList(baseline: Baseline): Promise<ChangedFile[] | { error: string }>
   changesDiff(baseline: Baseline, path: string, untracked: boolean): Promise<{ diff: string } | { text: string } | { error: string }>
+  /** The file panels' work on disk. */
+  files: {
+    list(dir: string): Promise<Entry[] | { error: string }>
+    copy(items: string[], target: string): Promise<OpResult>
+    move(items: string[], target: string): Promise<OpResult>
+    rename(item: string, to: string): Promise<string | null>
+    mkdir(path: string): Promise<string | null>
+    trash(items: string[]): Promise<OpResult>
+    head(path: string): Promise<{ text: string; truncated: boolean } | { binary: true; size: number } | { error: string }>
+  }
   /** Claude Code's hooks for shell put in or taken out of ~/.claude/settings.json; what happened, in words. */
   claudeHooks(on: boolean): Promise<string>
   onSettings(listener: (settings: Settings) => void): void
@@ -110,6 +125,13 @@ export const IPC = {
   changesBaseline: 'changes:baseline',
   changesList: 'changes:list',
   changesDiff: 'changes:diff',
+  filesList: 'files:list',
+  filesCopy: 'files:copy',
+  filesMove: 'files:move',
+  filesRename: 'files:rename',
+  filesMkdir: 'files:mkdir',
+  filesTrash: 'files:trash',
+  filesHead: 'files:head',
   saveWorkspace: 'session:save',
   settings: 'settings:changed',
   command: 'window:command',

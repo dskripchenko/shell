@@ -176,3 +176,32 @@ kbd:empty { display: none; }
 .diff-comment label { font-size: 12px; color: var(--uid-text-secondary); }
 .diff-comment textarea { resize: vertical; padding: 6px 8px; border: 1px solid var(--uid-border-default); border-radius: var(--uid-radius-md); background: var(--uid-surface-base); color: var(--uid-text-primary); font: inherit; user-select: text; }
 .diff-comment-actions { display: flex; justify-content: flex-end; gap: 8px; }
+
+/* File panels over the terminal, as in Midnight Commander. */
+.commander { position: absolute; inset: 0; z-index: 250; display: flex; flex-direction: column; background: var(--uid-surface-base); outline: none; }
+.commander-panels { flex: 1; min-height: 0; display: flex; gap: 1px; background: var(--uid-border-subtle); }
+.fpanel { flex: 1; min-width: 0; display: flex; flex-direction: column; background: var(--uid-surface-base); }
+.fpanel:not(.active) { opacity: var(--dim, 0.8); }
+.fpanel.quick { opacity: 1; }
+.fpanel-head { height: 30px; flex: none; display: flex; align-items: center; padding: 0 12px; background: var(--uid-surface-raised); border-bottom: 1px solid var(--uid-border-subtle); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fpanel.active .fpanel-head { color: var(--uid-text-primary); font-weight: 500; }
+.fpanel-cols { display: grid; grid-template-columns: minmax(0, 1fr) 90px 110px; gap: 12px; padding: 4px 12px; font-size: 11px; color: var(--uid-text-secondary); border-bottom: 1px solid var(--uid-border-subtle); }
+.fpanel-cols span:not(:first-child) { text-align: right; }
+.fpanel-list { flex: 1; min-height: 0; overflow-y: auto; font-size: 12.5px; }
+.fpanel-row { display: grid; grid-template-columns: minmax(0, 1fr) 90px 110px; gap: 12px; align-items: center; height: 24px; padding: 0 12px; cursor: default; }
+.fpanel-row span:not(:first-child) { text-align: right; color: var(--uid-text-secondary); }
+.fpanel-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fpanel-row.dir .fpanel-name { font-weight: 600; }
+.fpanel-row.marked .fpanel-name { color: #fbbf24; }
+.fpanel-row.cursor { background: color-mix(in srgb, var(--uid-accent) 22%, transparent); box-shadow: inset 2px 0 0 var(--uid-accent); }
+.fpanel-row.cursorIdle { background: color-mix(in srgb, var(--uid-text-primary) 7%, transparent); }
+.fpanel-error { padding: 12px; color: var(--uid-danger-text, #fb7185); }
+.fpanel-foot { height: 26px; flex: none; display: flex; align-items: center; gap: 12px; padding: 0 12px; border-top: 1px solid var(--uid-border-subtle); font-size: 12px; color: var(--uid-text-secondary); white-space: nowrap; overflow: hidden; }
+.fpanel-fill { flex: 1; }
+.fpanel-marked { color: #fbbf24; }
+.quick-text { flex: 1; min-height: 0; margin: 0; padding: 10px 12px; overflow: auto; font-family: var(--uid-font-family-mono); font-size: 12px; line-height: 18px; white-space: pre-wrap; word-break: break-word; user-select: text; }
+.commander-keys { flex: none; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 1px; background: var(--uid-border-subtle); border-top: 1px solid var(--uid-border-subtle); }
+.fkey { height: 28px; display: flex; align-items: center; gap: 6px; padding: 0 10px; border: 0; background: var(--uid-surface-raised); color: var(--uid-text-primary); font-size: 12px; cursor: pointer; text-align: left; }
+.fkey kbd { color: var(--uid-accent-text); min-width: 22px; }
+.fkey:hover { background: color-mix(in srgb, var(--uid-text-primary) 8%, var(--uid-surface-raised)); }
+.commander-overlay { position: absolute; }

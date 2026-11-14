@@ -89,7 +89,8 @@ describe('bindings', () => {
       expect(conflicts(list)).toEqual([])
     }
     const other = defaultBindings('other').map((b) => b.keys)
-    expect(other.filter((k) => /^ctrl\+[a-z]$/.test(k))).toEqual([])
+    // One on purpose, as Midnight Commander has it: Ctrl+O for the file panels (a full-screen program keeps it).
+    expect(other.filter((k) => /^ctrl\+[a-z]$/.test(k))).toEqual(['ctrl+o'])
   })
 
   it('shown the way each system writes keys', () => {

@@ -15,6 +15,8 @@ import { SessionStore, type Bounds } from './session'
 import { SettingsStore } from './settings'
 import { Updater, type UpdateState } from './update'
 import { NotifyServer } from './notify'
+import { copyInto, listDir, makeDir, moveInto, moveTo, readHead, type OpResult } from './files'
+import { isAbsolute } from 'node:path'
 import { setClaudeHooks } from './claudeHooks'
 import { changedFiles, fileDiff, headBaseline, repoRoot, takeBaseline, type Baseline } from './changes'
 import type { UpdateInfo } from '../common/ipc'
@@ -201,7 +203,7 @@ let quakeErrors: string[] = []
 ipcMain.handle(IPC.startup, (e): Startup | null => {
   const host = hostOf(e.sender)
   if (!host) return null
-  return { platform: PLATFORM, quake: host.kind === 'quake', home: homedir(), workspace: host.workspace, replay: host.replay, settings: settingsWithShortcuts(), version: VERSION, e2e: E2E }
+  return { platform: PLATFORM, os: process.platform, quake: host.kind === 'quake', home: homedir(), workspace: host.workspace, replay: host.replay, settings: settingsWithShortcuts(), version: VERSION, e2e: E2E }
 })
 
 ipcMain.handle(IPC.spawn, (e, paneId: unknown, opts: unknown) => {
@@ -301,6 +303,64 @@ ipcMain.handle(IPC.changesDiff, async (_e, b: unknown, path: unknown, untracked:
     return await fileDiff(base, path, untracked === true)
   } catch (e) {
     return { error: String(e instanceof Error ? e.message : e).split('\n')[0] }
+  }
+})
+
+// The file panels: absolute paths only; errors said in words.
+const paths = (v: unknown): string[] | null => (Array.isArray(v) && v.every((x) => typeof x === 'string' && isAbsolute(x)) ? (v as string[]) : null)
+const said = (e: unknown) => (e instanceof Error ? e.message.replace(/^\w+: /, '') : String(e))
+ipcMain.handle(IPC.filesList, async (_e, dir: unknown) => {
+  if (typeof dir !== 'string' || !isAbsolute(dir)) return { error: 'не путь' }
+  try {
+    return await listDir(dir)
+  } catch (e) {
+    return { error: said(e) }
+  }
+})
+ipcMain.handle(IPC.filesCopy, (_e, items: unknown, target: unknown) => {
+  const list = paths(items)
+  return list && typeof target === 'string' && isAbsolute(target) ? copyInto(list, target) : { done: [], failed: [] }
+})
+ipcMain.handle(IPC.filesMove, (_e, items: unknown, target: unknown) => {
+  const list = paths(items)
+  return list && typeof target === 'string' && isAbsolute(target) ? moveInto(list, target) : { done: [], failed: [] }
+})
+ipcMain.handle(IPC.filesRename, async (_e, item: unknown, to: unknown) => {
+  if (typeof item !== 'string' || typeof to !== 'string' || !isAbsolute(item) || !isAbsolute(to)) return 'не путь'
+  try {
+    await moveTo(item, to)
+    return null
+  } catch (e) {
+    return said(e)
+  }
+})
+ipcMain.handle(IPC.filesMkdir, async (_e, path: unknown) => {
+  if (typeof path !== 'string' || !isAbsolute(path)) return 'не путь'
+  try {
+    await makeDir(path)
+    return null
+  } catch (e) {
+    return said(e)
+  }
+})
+ipcMain.handle(IPC.filesTrash, async (_e, items: unknown): Promise<OpResult> => {
+  const r: OpResult = { done: [], failed: [] }
+  for (const item of paths(items) ?? []) {
+    try {
+      await electronShell.trashItem(item)
+      r.done.push(item)
+    } catch (e) {
+      r.failed.push({ path: item, error: said(e) })
+    }
+  }
+  return r
+})
+ipcMain.handle(IPC.filesHead, async (_e, path: unknown) => {
+  if (typeof path !== 'string' || !isAbsolute(path)) return { error: 'не путь' }
+  try {
+    return await readHead(path)
+  } catch (e) {
+    return { error: said(e) }
   }
 })
 
