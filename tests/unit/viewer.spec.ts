@@ -30,3 +30,13 @@ describe('what a file is shown as', () => {
     expect(splitPathLine('README.md')).toEqual({ path: 'README.md' })
   })
 })
+
+describe('paths in output, fast on any line', () => {
+  it('a long word with no extension, a long path with no dot: no backtracking', () => {
+    for (const line of ['x'.repeat(4000) + '!', '/private/var/folders/5ffp13211fd6cxxydqm770dr0000gn/T/shell-home-AbCdEf'.repeat(50)]) {
+      const t = performance.now()
+      ;[...line.matchAll(PATH_IN_OUTPUT)]
+      expect(performance.now() - t).toBeLessThan(50)
+    }
+  })
+})

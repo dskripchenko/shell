@@ -55,7 +55,9 @@ export function codeAsMarkdown(text: string, lang: string): string {
  * Paths in a line of output that point at files: `src/a.ts:42`, `./notes.md`,
  * `/abs/file.yaml:3:7`. Found by the terminal's link provider.
  */
-export const PATH_IN_OUTPUT = /(?:~|\.{1,2})?(?:[\\/]?[\w.@-]+)*[\\/]?[\w@-][\w.@-]*\.[A-Za-z][A-Za-z0-9]{0,9}(?::\d+(?::\d+)?)?/g
+// Folders end at a slash, so there is one way to cut a path into them: linear on any line (nested
+// repeats over the same characters backtrack exponentially on a long word, and hang the window).
+export const PATH_IN_OUTPUT = /(?:~|\.{1,2})?[\\/]?(?:[\w.@-]+[\\/])*[\w@-][\w.@-]*\.[A-Za-z][A-Za-z0-9]{0,9}(?::\d+(?::\d+)?)?/g
 
 /** A path link's file and line. */
 export function splitPathLine(text: string): { path: string; line?: number } {
