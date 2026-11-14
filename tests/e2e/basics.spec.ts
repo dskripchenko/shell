@@ -1,13 +1,17 @@
 import { expect, test } from '@playwright/test'
 import { dataFolder, launch, MOD, screen, type } from './app'
 
+// Arithmetic the shell does, so the output is not the typed text: POSIX sh, or PowerShell on Windows.
+const SUM = process.platform === 'win32' ? 'echo "hello-$(40+2)"' : 'echo hello-$((40+2))'
+
 test('a shell runs; panes split and close; tabs and groups; the palette in any layout; all of it back after a restart', async () => {
   const data = dataFolder()
   let { app, page } = await launch(data)
 
   // A command and its output.
-  await type(page, 'echo hello-$((40+2))')
-  await expect.poll(() => screen(page)).toContain('hello-42')
+  await type(page, SUM)
+  // The first start of a shell can be slow (PowerShell on a CI runner).
+  await expect.poll(() => screen(page), { timeout: 30_000 }).toContain('hello-42')
 
   // Split right, then down: three panes, the newest focused.
   await page.keyboard.press(`${MOD}+d`)
@@ -16,7 +20,7 @@ test('a shell runs; panes split and close; tabs and groups; the palette in any l
   await expect(page.locator('.pane')).toHaveCount(3)
   await expect(page.locator('.pane.dimmed')).toHaveCount(2)
   await type(page, 'echo in-the-third')
-  await expect.poll(() => screen(page)).toContain('in-the-third')
+  await expect.poll(() => screen(page), { timeout: 30_000 }).toContain('in-the-third')
 
   // Closing a pane gives its room back.
   await page.keyboard.press(`${MOD}+w`)
