@@ -3,6 +3,7 @@
  * keyboard events by the key's place, not its letter — so `cmd+t` is the same
  * key on a Russian layout — and matched against the bindings.
  */
+import { msg } from './i18n'
 
 export type Platform = 'mac' | 'other'
 
@@ -130,7 +131,7 @@ export function mergeBindings(defaults: Binding[], user: Record<string, string>)
   for (const [raw, command] of Object.entries(user)) {
     const keys = normalizeKeys(raw)
     if (!keys) {
-      errors.push(`не сочетание клавиш: «${raw}»`)
+      errors.push(msg().config.notChord(raw))
       continue
     }
     if (command === 'none' || command === '') byKeys.delete(keys)

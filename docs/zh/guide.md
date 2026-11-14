@@ -4,8 +4,6 @@
 Ctrl+字母属于 shell 程序本身）。命令面板会按你的系统显示每个命令的快捷键。所有快捷键都可以
 修改（见[快捷键](#快捷键)）。
 
-shell 的界面目前是俄语，因此截图中的命令名称是俄语。
-
 ## 分组、标签、窗格
 
 - **分组**在左侧一栏：每个项目或任务一个，各有名称、颜色、文件夹，也可以指定配置（profile）。
@@ -90,16 +88,19 @@ shell 的界面目前是俄语，因此截图中的命令名称是俄语。
 
 ## 设置
 
-⌘, 打开设置：字体、主题、回滚行数、下拉窗口、通知、folio、更新——每项修改都会立即写入
+⌘, 打开设置：界面语言、字体、主题、回滚行数、下拉窗口、通知、folio、更新——每项修改都会立即写入
 `shell-data/config.toml`，并保留文件中的注释。其余内容在文件本身中（设置里有按钮打开）：
 
 ```toml
+[ui]
+language = "auto"            # en | ru | de | zh；auto 跟随系统
+
 [profiles.python]            # 如何启动 shell；可指定给分组
 program = "/bin/zsh"
 args = ["-l"]
 env = { VIRTUAL_ENV_DISABLE_PROMPT = "1" }
 cwd = "~/projects"
-theme = "UID светлая"
+theme = "UID Light"
 
 [[triggers]]                 # 输出中的模式，以及要做什么
 pattern = "error|failed"

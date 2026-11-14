@@ -11,6 +11,8 @@
  * prompt, which would otherwise answer itself.
  */
 
+import { msg } from './i18n'
+
 export type TriggerAction = 'highlight' | 'notify' | 'mark' | 'send'
 
 export interface Trigger {
@@ -29,25 +31,26 @@ export const HIGHLIGHT = 'rgba(212, 160, 23, 0.35)'
 /** `[[triggers]]` read; a broken one left out with what is wrong said. */
 export function parseTriggers(value: unknown, errors: string[]): Trigger[] {
   if (!Array.isArray(value)) {
-    errors.push('[[triggers]]: ожидается список таблиц')
+    errors.push(msg().config.triggers.list)
     return []
   }
   const out: Trigger[] = []
   value.forEach((v, i) => {
-    const at = `[[triggers]] №${i + 1}`
-    if (!v || typeof v !== 'object' || Array.isArray(v)) return errors.push(`${at}: ожидается таблица`)
+    const tr = msg().config.triggers
+    const at = tr.at(i + 1)
+    if (!v || typeof v !== 'object' || Array.isArray(v)) return errors.push(`${at}: ${tr.table}`)
     const t = v as Record<string, unknown>
-    for (const k of Object.keys(t)) if (!['pattern', 'action', 'color', 'text', 'ignore-case'].includes(k)) errors.push(`${at}: неизвестная настройка «${k}»`)
-    if (typeof t.pattern !== 'string' || !t.pattern) return errors.push(`${at}: нужен pattern — регулярное выражение`)
+    for (const k of Object.keys(t)) if (!['pattern', 'action', 'color', 'text', 'ignore-case'].includes(k)) errors.push(`${at}: ${tr.unknown(k)}`)
+    if (typeof t.pattern !== 'string' || !t.pattern) return errors.push(`${at}: ${tr.pattern}`)
     const action = (t.action ?? 'highlight') as TriggerAction
-    if (!ACTIONS.includes(action)) return errors.push(`${at}: action — ${ACTIONS.join(', ')}`)
+    if (!ACTIONS.includes(action)) return errors.push(`${at}: ${tr.action(ACTIONS.join(', '))}`)
     const ignoreCase = t['ignore-case'] === true
     try {
       new RegExp(t.pattern, ignoreCase ? 'i' : '')
     } catch (e) {
-      return errors.push(`${at}: pattern не читается: ${e instanceof Error ? e.message : String(e)}`)
+      return errors.push(`${at}: ${tr.badPattern(e instanceof Error ? e.message : String(e))}`)
     }
-    if (action === 'send' && (typeof t.text !== 'string' || !t.text)) return errors.push(`${at}: для action = "send" нужен text`)
+    if (action === 'send' && (typeof t.text !== 'string' || !t.text)) return errors.push(`${at}: ${tr.text}`)
     out.push({
       pattern: t.pattern,
       action,

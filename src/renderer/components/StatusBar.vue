@@ -5,6 +5,7 @@ import { activeGroup, activeTab } from '../../common/layout'
 import { keyErrors } from '../keyboard'
 import { api, shortPath, ui, ws } from '../store'
 import * as terminals from '../terminals'
+import { m } from '../i18n'
 
 const group = computed(() => activeGroup(ws.value!))
 const paneId = computed(() => activeTab(group.value).focus)
@@ -22,17 +23,17 @@ const update = computed(() => {
   const u = ui.update
   if (!u || !u.available) return null
   const s = u.state
-  if (s.status === 'ready') return { text: `Обновление ${s.version} готово — перезапустить`, action: true }
-  if (s.status === 'downloading') return { text: `Загрузка ${s.version}${s.total && s.received ? ` · ${Math.round((s.received / s.total) * 100)}%` : ''}`, action: false }
+  if (s.status === 'ready') return { text: m().status.updateReady(s.version), action: true }
+  if (s.status === 'downloading') return { text: `${m().status.downloading(s.version)}${s.total && s.received ? ` · ${Math.round((s.received / s.total) * 100)}%` : ''}`, action: false }
   return null
 })
 /** The agents that need the person, said in words: «claude ждёт ввода». */
 const agentsNote = computed(() => {
-  const words: Record<string, string> = { waiting: 'ждёт ввода', done: 'закончил', failed: 'с ошибкой', running: 'работает' }
+  const words = m().agent.status
   const all = Object.values(ui.agents).filter((a) => a.status !== 'idle')
   const need = all.filter((a) => a.status === 'waiting' || a.status === 'failed')
   const show = (need.length ? need : all).slice(0, 2)
-  return show.map((a) => `${a.name} ${words[a.status]}`).join(' · ') + (all.length > show.length ? ` · ещё ${all.length - show.length}` : '')
+  return show.map((a) => `${a.name} ${words[a.status]}`).join(' · ') + (all.length > show.length ? ` · ${m().agent.more(all.length - show.length)}` : '')
 })
 const problems = computed(() => [...(ui.settings?.errors ?? []), ...(ui.settings?.themeErrors ?? []), ...keyErrors])
 </script>
@@ -45,12 +46,12 @@ const problems = computed(() => [...(ui.settings?.errors ?? []), ...(ui.settings
     <span v-if="ui.chain" class="status-chain" aria-live="polite">{{ ui.chain }} …</span>
     <span v-if="agentsNote" class="status-agents" aria-live="polite">{{ agentsNote }}</span>
     <span v-if="ui.message" class="status-message" role="status">{{ ui.message }}</span>
-    <button v-if="ui.broadcast" type="button" class="status-broadcast" title="Выключить" @click="ui.broadcast = null">Ввод во все панели {{ ui.broadcast === 'tab' ? 'вкладки' : 'группы' }}</button>
+    <button v-if="ui.broadcast" type="button" class="status-broadcast" :title="m().status.turnOff" @click="ui.broadcast = null">{{ m().status.broadcast(ui.broadcast) }}</button>
     <span class="status-fill"></span>
-    <span v-if="ui.os === 'darwin' && ui.settings?.config.security.secureKeyboard" class="status-secure" title="Защищённый ввод: другие программы не видят набираемые клавиши">Защищённый ввод</span>
+    <span v-if="ui.os === 'darwin' && ui.settings?.config.security.secureKeyboard" class="status-secure" :title="m().status.secureTip">{{ m().status.secure }}</span>
     <button v-if="problems.length" type="button" class="status-problem" :title="problems.join('\n')" @click="api.openConfig()">
       <TriangleAlert :size="12" aria-hidden="true" />
-      {{ problems.length === 1 ? problems[0] : `${problems.length} ошибки в настройках` }}
+      {{ problems.length === 1 ? problems[0] : m().status.problems(problems.length) }}
     </button>
     <button v-if="update?.action" type="button" class="status-update" @click="api.restartToUpdate()">{{ update.text }}</button>
     <span v-else-if="update">{{ update.text }}</span>

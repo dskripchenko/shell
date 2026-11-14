@@ -24,6 +24,7 @@ pnpm readme:shots          # 生成 docs/images 中的截图（需要 ImageMagic
 - `src/main/` —— 窗口与 IPC、shell（`pty.ts`）、会话、设置、git、文件、压缩包、SSH 和
   SFTP、查看器的协议、给 folio 用的本地 API、更新。
 - `src/renderer/` —— 窗口：窗格、命令面板、文件面板、查看器。
+- `src/locales/` —— 界面文字：英语、俄语、德语、中文；新增文字要同时写入四个文件（由单元测试检查）。
 - `packages/shell-integration` —— npm 上的
   [`@dskripchenko/shell-integration`](https://www.npmjs.com/package/@dskripchenko/shell-integration)：
   shell 的标记、标记解析、智能体修改日志；通过标签 `shell-integration-v<版本>` 发布。

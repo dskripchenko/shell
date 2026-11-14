@@ -6,6 +6,7 @@
 import { parse } from 'smol-toml'
 import { DEFAULT_AGENTS } from './agents'
 import { parseTriggers, type Trigger } from './triggers'
+import { messagesOf, msg, type Lang } from './i18n'
 
 /** A way to start a shell: its program, arguments, environment, folder and theme. */
 export interface Profile {
@@ -20,6 +21,8 @@ export interface Config {
   font: { family: string; size: number; lineHeight: number }
   /** `system` follows the system's light or dark; or a theme by name, built in or imported. */
   theme: { name: string; light: string; dark: string }
+  /** The interface's language: "auto" (the system's), en, ru, de, zh. */
+  ui: { language: string }
   shell: { program: string; args: string[] }
   scrollback: { lines: number; restore: boolean; restoreKb: number }
   window: { dimInactive: number }
@@ -40,7 +43,8 @@ export interface Config {
 
 export const DEFAULTS: Config = {
   font: { family: "'IBM Plex Mono', 'SF Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace", size: 13, lineHeight: 1.3 },
-  theme: { name: 'system', light: 'UID светлая', dark: 'UID тёмная' },
+  theme: { name: 'system', light: 'UID Light', dark: 'UID Dark' },
+  ui: { language: 'auto' },
   shell: { program: '', args: [] },
   scrollback: { lines: 10000, restore: true, restoreKb: 512 },
   window: { dimInactive: 0.8 },
@@ -54,8 +58,10 @@ export const DEFAULTS: Config = {
   profiles: {},
 }
 
-export const DEFAULT_TEXT = `# Настройки shell. Файл перечитывается при сохранении — перезапуск не нужен.
-# Закомментированные строки показывают значения по умолчанию.
+/** config.toml as it is written at the first start, its comments in a language. */
+export function defaultText(lang: Lang = 'en'): string {
+  const c = messagesOf(lang).configFile
+  return `${c.head}
 
 [font]
 # family = "'IBM Plex Mono', 'SF Mono', Menlo, Consolas, monospace"
@@ -63,65 +69,63 @@ export const DEFAULT_TEXT = `# Настройки shell. Файл перечит
 # line-height = 1.3
 
 [theme]
-# "system" — светлая днём, тёмная вечером, как в системе; или имя темы.
-# Свои темы — файлы в папке themes/ рядом с этим файлом:
-# .itermcolors (iTerm2), темы Ghostty, .json (Windows Terminal), .yaml (base16).
+${c.theme}
 # name = "system"
-# light = "UID светлая"
-# dark = "UID тёмная"
+# light = "UID Light"
+# dark = "UID Dark"
+
+[ui]
+${c.ui}
+# language = "auto"
 
 [shell]
-# Пусто — оболочка пользователя ($SHELL; на Windows — PowerShell).
+${c.shell}
 # program = ""
 # args = []
 
 [scrollback]
 # lines = 10000
-# Возвращать вывод вкладок после перезапуска.
+${c.restore}
 # restore = true
-# Сколько последнего вывода каждой панели хранить, в килобайтах.
+${c.restoreKb}
 # restore-kb = 512
 
 [window]
-# Яркость неактивных панелей, от 0.5 до 1.
+${c.dim}
 # dim-inactive = 0.8
 
 [quake]
-# Выпадающее окно по глобальному хоткею (Ctrl+\` оставлен консолям folio и VS Code).
+${c.quake}
 # enabled = true
 # hotkey = "ctrl+alt+\`"
-# Доля высоты экрана.
+${c.height}
 # height = 0.45
 
 [updates]
-# Раз в сутки при запуске проверять релизы на GitHub; обновление ставится при выходе.
+${c.updates}
 # auto = true
 
 [agents]
-# Команды, которые запускают ИИ-агента: вкладка показывает, работает он, ждёт или закончил.
+${c.agents}
 # commands = ["claude", "codex", "grok", "gemini", "aider", "opencode", "cursor-agent", "amp", "qwen", "goose"]
-# Уведомление системы, когда агент ждёт ввода или закончил, а его вкладка не на виду.
+${c.notify}
 # notify = true
 
 [folio]
-# folio (https://github.com/dskripchenko/folio): открыть файл на строке, папку
-# как проект, ревью изменений. Запущенный folio находится сам, иначе — в PATH,
-# /Applications, ~/Applications или рядом с shell. Здесь — свой путь к программе.
+${c.folio}
 # path = ""
 # enabled = true
 
 [security]
-# macOS: защищённый ввод (Secure Keyboard Entry) — другие программы не видят набираемые клавиши.
+${c.security}
 # secure-keyboard = false
 
 [keys]
-# Свои сочетания: команда на клавиши, "none" — снять.
+${c.keys}
 # "cmd+k" = "palette.open"
 # "ctrl+a>c" = "tab.new"
 
-# Триггеры: шаблон в выводе и что сделать со строкой, где он есть —
-# highlight (подсветить, color — фон), notify (уведомление), mark (точка на
-# вкладке), send (ввести text в панель; "\\r" — Enter).
+${c.triggers}
 # [[triggers]]
 # pattern = "error|failed"
 # action = "highlight"
@@ -130,15 +134,18 @@ export const DEFAULT_TEXT = `# Настройки shell. Файл перечит
 # pattern = "tests passed"
 # action = "notify"
 
-# Профили: как запускать оболочку. Профиль назначается группе (двойной щелчок
-# по группе) или открывается из палитры: «Новая вкладка: имя».
+${c.profiles}
 # [profiles.python]
 # program = "/bin/zsh"
 # args = ["-l"]
 # env = { VIRTUAL_ENV_DISABLE_PROMPT = "1" }
 # cwd = "~/projects"
-# theme = "UID светлая"
+# theme = "UID Light"
 `
+}
+
+/** The file in English (tests, a first start before the language is known). */
+export const DEFAULT_TEXT = defaultText('en')
 
 export interface ConfigResult {
   config: Config
@@ -158,36 +165,37 @@ export const FIELDS: Record<string, Record<string, { key: string; kind: Kind; mi
   agents: { commands: { key: 'commands', kind: 'strings' }, notify: { key: 'notify', kind: 'boolean' } },
   folio: { path: { key: 'path', kind: 'string' }, enabled: { key: 'enabled', kind: 'boolean' } },
   security: { 'secure-keyboard': { key: 'secureKeyboard', kind: 'boolean' } },
+  ui: { language: { key: 'language', kind: 'string' } },
 }
 
 const PROFILE_FIELDS: Record<string, Kind | 'table'> = { program: 'string', args: 'strings', env: 'table', cwd: 'string', theme: 'string' }
 
 function parseProfile(name: string, value: unknown, errors: string[]): Profile | null {
   if (!/^[\w.-]{1,40}$/.test(name)) {
-    errors.push(`[profiles.${name}]: имя — буквы, цифры, «.», «_», «-»`)
+    errors.push(msg().config.profileName(name))
     return null
   }
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    errors.push(`[profiles.${name}]: ожидается таблица`)
+    errors.push(msg().config.profileTable(name))
     return null
   }
   const out: Profile = {}
   for (const [k, v] of Object.entries(value)) {
     const kind = PROFILE_FIELDS[k]
     if (!kind) {
-      errors.push(`[profiles.${name}] неизвестная настройка «${k}»`)
+      errors.push(msg().config.profileUnknown(name, k))
       continue
     }
     if (kind === 'table') {
       if (!v || typeof v !== 'object' || Array.isArray(v) || !Object.values(v).every((x) => typeof x === 'string')) {
-        errors.push(`[profiles.${name}] ${k}: ожидается таблица строк`)
+        errors.push(msg().config.profileEnv(name, k))
         continue
       }
       out.env = { ...(v as Record<string, string>) }
       continue
     }
     if (!fits(v, kind)) {
-      errors.push(`[profiles.${name}] ${k}: ожидается ${kind === 'strings' ? 'список строк' : 'строка'}`)
+      errors.push(msg().config.profileKind(name, k, kind === 'strings'))
       continue
     }
     ;(out as Record<string, unknown>)[k] = v
@@ -208,7 +216,7 @@ export function parseConfig(text: string): ConfigResult {
     data = parse(text) as Record<string, unknown>
   } catch (e) {
     const message = e instanceof Error ? e.message.split('\n')[0]! : String(e)
-    return { config, errors: [`config.toml не прочитан: ${message}`] }
+    return { config, errors: [msg().config.notRead(message)] }
   }
   for (const [section, value] of Object.entries(data)) {
     if (section === 'profiles') {
@@ -217,7 +225,7 @@ export function parseConfig(text: string): ConfigResult {
           const profile = parseProfile(name, p, errors)
           if (profile) config.profiles[name] = profile
         }
-      } else errors.push('[profiles]: ожидается таблица')
+      } else errors.push(msg().config.profilesTable)
       continue
     }
     if (section === 'triggers') {
@@ -228,28 +236,28 @@ export function parseConfig(text: string): ConfigResult {
       if (value && typeof value === 'object' && !Array.isArray(value)) {
         for (const [k, v] of Object.entries(value)) {
           if (typeof v === 'string') config.keys[k] = v
-          else errors.push(`[keys] "${k}": ожидается имя команды строкой`)
+          else errors.push(msg().config.keyName(k))
         }
-      } else errors.push('[keys]: ожидается таблица')
+      } else errors.push(msg().config.keysTable)
       continue
     }
     const fields = FIELDS[section]
     if (!fields || !value || typeof value !== 'object' || Array.isArray(value)) {
-      errors.push(`неизвестный раздел [${section}]`)
+      errors.push(msg().config.unknownSection(section))
       continue
     }
     for (const [name, v] of Object.entries(value)) {
       const f = fields[name]
       if (!f) {
-        errors.push(`[${section}] неизвестная настройка «${name}»`)
+        errors.push(msg().config.unknownSetting(section, name))
         continue
       }
       if (!fits(v, f.kind)) {
-        errors.push(`[${section}] ${name}: ожидается ${{ string: 'строка', number: 'число', boolean: 'true или false', strings: 'список строк' }[f.kind]}`)
+        errors.push(msg().config.expected(section, name, f.kind))
         continue
       }
       if (f.kind === 'number' && ((f.min !== undefined && (v as number) < f.min) || (f.max !== undefined && (v as number) > f.max))) {
-        errors.push(`[${section}] ${name}: от ${f.min} до ${f.max}`)
+        errors.push(msg().config.range(section, name, f.min, f.max))
         continue
       }
       ;(config as unknown as Record<string, Record<string, unknown>>)[section]![f.key] = v

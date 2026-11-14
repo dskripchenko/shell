@@ -3,6 +3,7 @@ import { computed, nextTick, ref, watch } from 'vue'
 import { formatSize, formatTime, type PanelState } from '../../common/commander'
 import { shortPath } from '../store'
 import { parseArchive } from '../../common/archive'
+import { m } from '../i18n'
 
 const props = defineProps<{ panel: PanelState; active: boolean; label: string }>()
 defineEmits<{ (e: 'pick', index: number): void; (e: 'open', index: number): void }>()
@@ -26,8 +27,8 @@ const where = computed(() => {
 <template>
   <section class="fpanel" :class="{ active }" :aria-label="label">
     <header class="fpanel-head mono" :title="panel.dir">{{ where }}</header>
-    <div class="fpanel-cols" aria-hidden="true"><span>Имя</span><span>Размер</span><span>Изменён</span></div>
-    <div ref="list" class="fpanel-list mono" role="listbox" :aria-label="`Файлы: ${panel.dir}`" :aria-activedescendant="`${label}-${panel.cursor}`">
+    <div class="fpanel-cols" aria-hidden="true"><span>{{ m().files.name }}</span><span>{{ m().files.size }}</span><span>{{ m().files.modified }}</span></div>
+    <div ref="list" class="fpanel-list mono" role="listbox" :aria-label="m().files.filesOf(panel.dir)" :aria-activedescendant="`${label}-${panel.cursor}`">
       <div v-if="panel.error" class="fpanel-error">{{ panel.error }}</div>
       <div
         v-for="(e, i) in rows"
@@ -41,15 +42,15 @@ const where = computed(() => {
         @dblclick="$emit('open', i)"
       >
         <span class="fpanel-name">{{ e.kind === 'dir' || e.linkToDir ? `${e.name}/` : e.name }}</span>
-        <span class="fpanel-size">{{ e.name === '..' ? '' : e.kind === 'dir' || e.linkToDir ? 'папка' : formatSize(e.size) }}</span>
+        <span class="fpanel-size">{{ e.name === '..' ? '' : e.kind === 'dir' || e.linkToDir ? m().files.folder : formatSize(e.size) }}</span>
         <span class="fpanel-time">{{ e.name === '..' ? '' : formatTime(e.mtime) }}</span>
       </div>
     </div>
     <footer class="fpanel-foot">
-      <span v-if="panel.marked.length" class="fpanel-marked">{{ panel.marked.length }} выбрано · {{ formatSize(markedSize) }}</span>
+      <span v-if="panel.marked.length" class="fpanel-marked">{{ m().files.marked(panel.marked.length) }} · {{ formatSize(markedSize) }}</span>
       <span v-else class="mono">{{ current && current.name !== '..' ? current.name : '' }}</span>
       <span class="fpanel-fill"></span>
-      <span>{{ Math.max(0, rows.length - 1) }} объектов</span>
+      <span>{{ m().files.objects(Math.max(0, rows.length - 1)) }}</span>
     </footer>
   </section>
 </template>

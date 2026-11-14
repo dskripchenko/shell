@@ -17,6 +17,8 @@ offline: kein Installer, kein Konto, keine Telemetrie.
 
 ## Neben dem System
 
+- Die Oberfläche auf Deutsch, Englisch, Russisch oder Chinesisch —
+  standardmäßig in der Sprache des Systems.
 - Kein Installer, keine Administratorrechte: ein zip unter Windows und macOS,
   ein AppImage unter Linux.
 - Einstellungen, Themes, die letzte Sitzung und Prompts liegen in

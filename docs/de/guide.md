@@ -119,18 +119,21 @@ wenn es offen ist. Die Projekte von folio stehen dort auch.
 
 ## Einstellungen
 
-⌘, öffnet die Einstellungen: Schrift, Theme, Scrollback, das Drop-down-Fenster,
+⌘, öffnet die Einstellungen: Sprache, Schrift, Theme, Scrollback, das Drop-down-Fenster,
 Benachrichtigungen, folio, Updates — jede Änderung wird sofort in
 `shell-data/config.toml` geschrieben, die Kommentare der Datei bleiben. In der
 Datei selbst (Schaltfläche in den Einstellungen) steht der Rest:
 
 ```toml
+[ui]
+language = "auto"            # en | ru | de | zh; auto folgt dem System
+
 [profiles.python]            # wie eine Shell startet; einer Gruppe zuweisen
 program = "/bin/zsh"
 args = ["-l"]
 env = { VIRTUAL_ENV_DISABLE_PROMPT = "1" }
 cwd = "~/projects"
-theme = "UID светлая"
+theme = "UID Light"
 
 [[triggers]]                 # ein Muster in der Ausgabe und was geschieht
 pattern = "error|failed"
@@ -172,6 +175,3 @@ Tasten werden nach ihrer Lage auf der Tastatur gelesen und funktionieren daher
 in jedem Layout. In `[keys]`: `"cmd+shift+t" = "tab.new"`, eine Kette
 `"ctrl+a>c"`, `"cmd+k" = "none"` zum Freigeben; die Palette zeigt die ID jedes
 Befehls.
-
-Die Oberfläche von shell ist derzeit russisch; die Befehlsnamen in den
-Screenshots sind daher russisch.

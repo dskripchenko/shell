@@ -96,7 +96,7 @@ test('the README screenshots', async () => {
 
   // shell's data: the settings, a session of three groups, saved projects.
   const data = mkdtempSync(join(tmpdir(), 'shell-shots-data-'))
-  writeFileSync(join(data, 'config.toml'), '[shell]\nprogram = "/bin/bash"\nargs = ["-l"]\n[quake]\nenabled = false\n[folio]\nenabled = false\n[font]\nsize = 13\n[theme]\nname = "UID тёмная"\n[[triggers]]\npattern = "hmr update"\naction = "highlight"\ncolor = "rgba(59, 130, 246, 0.28)"\n')
+  writeFileSync(join(data, 'config.toml'), '[shell]\nprogram = "/bin/bash"\nargs = ["-l"]\n[quake]\nenabled = false\n[folio]\nenabled = false\n[ui]\nlanguage = "en"\n[font]\nsize = 13\n[theme]\nname = "UID Dark"\n[[triggers]]\npattern = "hmr update"\naction = "highlight"\ncolor = "rgba(59, 130, 246, 0.28)"\n')
   const pane = (id: string, cwd: string) => ({ kind: 'pane', id, cwd })
   const workspace = {
     groups: [
@@ -165,7 +165,7 @@ test('the README screenshots', async () => {
   await changes.locator('.diff-line.add').first().click()
   await changes.locator('.diff-comment textarea').fill('Keep count as the field name: the API sends it.')
   await shot('changes')
-  await changes.locator('.diff-comment').getByRole('button', { name: 'Отмена' }).click()
+  await changes.locator('.diff-comment').getByRole('button', { name: 'Cancel' }).click()
   await page.keyboard.press(`${MOD}+Shift+g`)
 
   // The viewer: a document with a live diagram, beside the panes.
@@ -176,7 +176,7 @@ test('the README screenshots', async () => {
   const doc = page.frameLocator('.viewer-frame[src="shell-doc://app/viewer.html"]')
   await expect(doc.locator('svg').first()).toBeVisible({ timeout: 30_000 })
   await shot('viewer')
-  await page.locator('.viewer').getByRole('button', { name: 'Закрыть просмотр' }).click()
+  await page.locator('.viewer').getByRole('button', { name: 'Close the viewer' }).click()
 
   // The file panels over the terminal, a file's start in the quick view.
   await page.locator('.term-host[data-pane="p3"]').click({ position: { x: 60, y: 40 } })
@@ -193,7 +193,7 @@ test('the README screenshots', async () => {
 
   // Projects: the switcher.
   await page.keyboard.press(`${MOD}+Shift+o`)
-  await expect(page.getByRole('dialog', { name: 'Проекты' })).toBeVisible()
+  await expect(page.getByRole('dialog', { name: 'Projects' })).toBeVisible()
   await shot('projects')
   await page.keyboard.press('Escape')
 
@@ -213,7 +213,7 @@ test('the README screenshots', async () => {
 
   // Light, with the project's tree.
   await page.locator('.tab', { hasText: 'claude' }).click()
-  await page.evaluate(() => (window as unknown as { shell: { setSetting(s: string, k: string, v: string): Promise<unknown> } }).shell.setSetting('theme', 'name', 'UID светлая'))
+  await page.evaluate(() => (window as unknown as { shell: { setSetting(s: string, k: string, v: string): Promise<unknown> } }).shell.setSetting('theme', 'name', 'UID Light'))
   await page.waitForTimeout(800)
   await page.keyboard.press(mac ? 'Meta+Shift+e' : 'Control+Shift+x')
   await expect(page.locator('.project-tree .tree-row').first()).toBeVisible()

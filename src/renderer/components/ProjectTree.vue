@@ -6,6 +6,7 @@ import { activeGroup, activeTab } from '../../common/layout'
 import { keysOf } from '../keyboard'
 import { api, say, shortPath, ui, ws } from '../store'
 import * as terminals from '../terminals'
+import { m } from '../i18n'
 
 /**
  * The project's tree beside the panes: the focused pane's repository (or its
@@ -95,7 +96,7 @@ async function toggle(r: Row): Promise<void> {
 
 async function activate(r: Row, cd = false): Promise<void> {
   if (r.dir && cd) {
-    if (ui.busy[paneId.value]) return say('Команда ещё идёт — перейти можно, когда оболочка на промпте')
+    if (ui.busy[paneId.value]) return say(m().common.busyRetry)
     api.write(paneId.value, ui.os === 'win32' ? `Set-Location -LiteralPath '${r.path.replace(/'/g, "''")}'\r` : ` cd -- '${r.path.replace(/'/g, `'\\''`)}'\r`)
     return
   }
@@ -133,15 +134,15 @@ watch(() => ui.cwds[paneId.value], () => void locate())
 </script>
 
 <template>
-  <aside class="project-tree" aria-label="Дерево проекта">
+  <aside class="project-tree" :aria-label="m().tree.label">
     <header class="changes-head">
-      <span class="changes-title">Проект</span>
+      <span class="changes-title">{{ m().tree.title }}</span>
       <span class="changes-sub mono" :title="root ?? ''">{{ root ? shortPath(root) : '' }}</span>
       <span class="changes-fill"></span>
-      <button type="button" class="icon-button" aria-label="Обновить" title="Обновить" @click="refresh()"><RefreshCw :size="14" aria-hidden="true" /></button>
-      <button type="button" class="icon-button" :aria-label="`Скрыть ${keysOf('tree.toggle')}`" :title="`Скрыть ${keysOf('tree.toggle')}`" @click="ui.treeOpen = false"><X :size="14" aria-hidden="true" /></button>
+      <button type="button" class="icon-button" :aria-label="m().common.refresh" :title="m().common.refresh" @click="refresh()"><RefreshCw :size="14" aria-hidden="true" /></button>
+      <button type="button" class="icon-button" :aria-label="m().common.hide(keysOf('tree.toggle'))" :title="m().common.hide(keysOf('tree.toggle'))" @click="ui.treeOpen = false"><X :size="14" aria-hidden="true" /></button>
     </header>
-    <div ref="list" class="tree-list mono" role="tree" tabindex="0" aria-label="Файлы проекта" @keydown="key">
+    <div ref="list" class="tree-list mono" role="tree" tabindex="0" :aria-label="m().tree.files" @keydown="key">
       <div
         v-for="(r, i) in rows"
         :key="r.path"
@@ -151,7 +152,7 @@ watch(() => ui.cwds[paneId.value], () => void locate())
         :aria-expanded="r.dir ? open.has(r.path) : undefined"
         :class="{ current: i === at, hiddenFile: r.hidden, changed: changed.has(rel(r.path)) }"
         :style="{ paddingLeft: `${8 + r.depth * 14}px` }"
-        :title="r.dir ? `${r.name} — Cmd/Ctrl+Enter: перейти сюда в панели` : `${r.name} — Enter: просмотр`"
+        :title="r.dir ? m().tree.dirTip(r.name) : m().tree.fileTip(r.name)"
         @click="at = i; r.dir && toggle(r)"
         @dblclick="!r.dir && activate(r)"
       >

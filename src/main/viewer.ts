@@ -9,6 +9,7 @@ import { randomBytes } from 'node:crypto'
 import { open as openFile, readFile, stat } from 'node:fs/promises'
 import { dirname, extname, join, relative, resolve, sep } from 'node:path'
 import { inside } from './changes'
+import { msg } from '../common/i18n'
 
 export const SCHEME = 'shell-doc'
 
@@ -89,10 +90,10 @@ export class ViewerFiles {
     let size: number
     try {
       const s = await stat(file)
-      if (!s.isFile()) return { error: 'не файл' }
+      if (!s.isFile()) return { error: msg().main.notFile }
       size = s.size
     } catch {
-      return { error: 'файл не найден' }
+      return { error: msg().main.fileNotFound }
     }
     const top = root && resolve(file).startsWith(resolve(root) + sep) ? root : dirname(file)
     const id = this.rootFor(top)

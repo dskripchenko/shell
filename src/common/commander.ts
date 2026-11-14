@@ -1,5 +1,7 @@
 /** The file panels' own logic: entries sorted as MC sorts them, masks, sizes, the marked files. */
 
+import { lang, msg } from './i18n'
+
 export interface Entry {
   name: string
   kind: 'dir' | 'file' | 'link' | 'other'
@@ -37,22 +39,35 @@ export function maskTest(mask: string): (name: string) => boolean {
 }
 
 export function formatSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} Б`
-  const units = ['КБ', 'МБ', 'ГБ', 'ТБ']
+  const u = msg().units
+  if (bytes < 1024) return `${bytes} ${u.b}`
+  const units = [u.kb, u.mb, u.gb, u.tb]
   let v = bytes / 1024
   let i = 0
   while (v >= 1024 && i < units.length - 1) {
     v /= 1024
     i++
   }
-  return `${v < 10 ? v.toFixed(1).replace('.', ',') : Math.round(v)} ${units[i]}`
+  // The decimal mark as the language writes it.
+  const comma = lang() === 'ru' || lang() === 'de'
+  return `${v < 10 ? (comma ? v.toFixed(1).replace('.', ',') : v.toFixed(1)) : Math.round(v)} ${units[i]}`
 }
 
 export function formatTime(ms: number, now = Date.now()): string {
   const d = new Date(ms)
   const two = (n: number) => String(n).padStart(2, '0')
   const sameYear = d.getFullYear() === new Date(now).getFullYear()
-  return sameYear ? `${two(d.getDate())}.${two(d.getMonth() + 1)} ${two(d.getHours())}:${two(d.getMinutes())}` : `${two(d.getDate())}.${two(d.getMonth() + 1)}.${d.getFullYear()}`
+  const [day, month, year, time] = [two(d.getDate()), two(d.getMonth() + 1), d.getFullYear(), `${two(d.getHours())}:${two(d.getMinutes())}`]
+  switch (lang()) {
+    case 'en':
+      return sameYear ? `${month}/${day} ${time}` : `${month}/${day}/${year}`
+    case 'zh':
+      return sameYear ? `${month}-${day} ${time}` : `${year}-${month}-${day}`
+    case 'de':
+      return sameYear ? `${day}.${month}. ${time}` : `${day}.${month}.${year}`
+    default:
+      return sameYear ? `${day}.${month} ${time}` : `${day}.${month}.${year}`
+  }
 }
 
 /** The parent of a path, in its own separators; the root stays itself. */

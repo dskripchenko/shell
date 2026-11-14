@@ -6,6 +6,7 @@
 import { chordOf, defaultBindings, displayKeys, KeyMatcher, mergeBindings, type Binding } from '../common/keys'
 import { COMMANDS, run } from './commands'
 import { ui } from './store'
+import { msg } from '../common/i18n'
 
 let bindings: Binding[] = []
 let matcher = new KeyMatcher([])
@@ -16,7 +17,7 @@ export let keyErrors: string[] = []
 
 export function rebuild(): void {
   const merged = mergeBindings(defaultBindings(ui.platform), ui.settings?.config.keys ?? {})
-  keyErrors = [...merged.errors, ...merged.bindings.filter((b) => !COMMANDS.has(b.command)).map((b) => `[keys] "${b.keys}": нет команды «${b.command}»`)]
+  keyErrors = [...merged.errors, ...merged.bindings.filter((b) => !COMMANDS.has(b.command)).map((b) => msg().config.noCommand(b.keys, b.command))]
   bindings = merged.bindings.filter((b) => COMMANDS.has(b.command))
   matcher = new KeyMatcher(bindings)
 }

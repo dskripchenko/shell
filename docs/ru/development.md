@@ -29,6 +29,8 @@ pnpm readme:shots          # скриншоты в docs/images (нужен Image
 - `src/main/` — окна и IPC, оболочки (`pty.ts`), сеанс, настройки, git, файлы,
   архивы, SSH и SFTP, схема просмотрщика, локальный API для folio, обновления.
 - `src/renderer/` — окно: панели, палитра, файловые панели, просмотрщик.
+- `src/locales/` — слова интерфейса на английском, русском, немецком и
+  китайском; новая строка — во все четыре (проверяет unit-тест).
 - `packages/shell-integration` — [`@dskripchenko/shell-integration`](https://www.npmjs.com/package/@dskripchenko/shell-integration)
   на npm: метки оболочек, их разбор, журнал правок агентов; публикуется по
   тегу `shell-integration-v<версия>`.

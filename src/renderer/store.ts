@@ -7,8 +7,10 @@ import type { AgentState } from '../common/agents'
 import type { FolioRequest, Settings, ShellApi, UpdateInfo } from '../common/ipc'
 import type { Project } from '../common/projects'
 import type { GitStatus } from '../common/git'
+import type { Lang } from '../common/i18n'
 import type { Platform } from '../common/keys'
 import type { Workspace } from '../common/layout'
+import { msg } from '../common/i18n'
 
 declare global {
   interface Window {
@@ -43,6 +45,8 @@ export const ui = reactive({
   palette: false as false | 'all' | 'projects' | 'prompts',
   projects: [] as Project[],
   settingsOpen: false,
+  /** The interface's language (the settings say it). */
+  lang: 'en' as Lang,
   /** The project's tree beside the panes. */
   treeOpen: false,
   /** A command's block asked for (its mark, a right click in its output): what can be done with it. */
@@ -130,7 +134,7 @@ export function baseName(path: string): string {
 export function toFolio(request: FolioRequest): void {
   void api.folioOpen(JSON.parse(JSON.stringify(request)) as FolioRequest).then((r) => {
     if ('error' in r) say(`folio: ${r.error}`)
-    else say('Отправлено в folio')
+    else say(msg().say.sentToFolio)
   })
 }
 

@@ -10,6 +10,8 @@ import * as agents from './agents'
 import { allThemes, currentTheme } from './theme'
 import { PATH_IN_OUTPUT, splitPathLine } from '../common/viewer'
 import { HIGHLIGHT, regexOf } from '../common/triggers'
+import { themeNamed } from '../common/themes'
+import { m } from './i18n'
 
 interface Entry {
   id: string
@@ -30,13 +32,13 @@ const entries = new Map<string, Entry>()
  * as it starts (ConPTY on Windows does) cannot wipe it.
  */
 function restored(rows: number): string {
-  return '\x1b[0m\x1b[?1049l\x1b[?25h\r\n\x1b[2m── вывод до перезапуска ──\x1b[0m' + '\r\n'.repeat(Math.max(1, rows))
+  return `\x1b[0m\x1b[?1049l\x1b[?25h\r\n\x1b[2m── ${m().pane.restored} ──\x1b[0m` + '\r\n'.repeat(Math.max(1, rows))
 }
 
 /** A pane's theme: its profile's, if it names one that exists; else the window's. */
 function themeOf(profile?: string) {
   const name = profile ? ui.settings?.config.profiles[profile]?.theme : undefined
-  return (name && allThemes().find((t) => t.name === name)) || currentTheme()
+  return (name && themeNamed(allThemes(), name)) || currentTheme()
 }
 
 function options(id: string, profile?: string): TerminalViewOptions {
@@ -75,7 +77,7 @@ function spawn(entry: Entry, cwd?: string): void {
   delete ui.exited[entry.id]
   void api.spawn(entry.id, { cwd, cols: entry.term.cols, rows: entry.term.rows, profile: entry.profile }).then((r) => {
     if (!r.ok) {
-      entry.term.write(`\r\n\x1b[31mОболочка не запустилась: ${r.error}\x1b[0m\r\n`)
+      entry.term.write(`\r\n\x1b[31m${m().pane.notStartedTerm(r.error)}\x1b[0m\r\n`)
       entry.exited = true
       ui.exited[entry.id] = -1
     }
@@ -198,7 +200,7 @@ export function onExit(paneId: string, code: number, close: (paneId: string) => 
   }
   e.exited = true
   ui.exited[paneId] = code
-  e.term.write(`\r\n\x1b[2m[процесс завершён с кодом ${code} — Enter запустит оболочку снова]\x1b[0m\r\n`)
+  e.term.write(`\r\n\x1b[2m${m().pane.exitedTerm(code)}\x1b[0m\r\n`)
 }
 
 /** A pane's whole buffer as text, scrollback included (for the tests). */

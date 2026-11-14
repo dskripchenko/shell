@@ -1,5 +1,7 @@
 /** A unified diff (git's) read into lines with their numbers on both sides. */
 
+import { msg } from './i18n'
+
 export interface DiffLine {
   kind: 'hunk' | 'context' | 'add' | 'del'
   text: string
@@ -36,7 +38,7 @@ export function parseDiff(text: string): DiffLine[] {
 export function addedFile(text: string): DiffLine[] {
   const lines = text.endsWith('\n') ? text.slice(0, -1).split('\n') : text.split('\n')
   if (text === '') return []
-  return [{ kind: 'hunk', text: `@@ -0,0 +1,${lines.length} @@ новый файл` }, ...lines.map((t, i) => ({ kind: 'add' as const, text: t, new: i + 1 }))]
+  return [{ kind: 'hunk', text: `@@ -0,0 +1,${lines.length} @@ ${msg().changes.newFile}` }, ...lines.map((t, i) => ({ kind: 'add' as const, text: t, new: i + 1 }))]
 }
 
 /** What goes to an agent about a line: `file:line — comment`, on one line. */

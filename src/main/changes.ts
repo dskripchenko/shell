@@ -10,6 +10,7 @@ import { readFileSync, realpathSync, statSync, writeFileSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { compactEdits, JOURNAL, readEdits } from '@dskripchenko/shell-integration'
 import { isAbsolute, join, normalize, relative, resolve, sep } from 'node:path'
+import { msg } from '../common/i18n'
 
 export interface Baseline {
   root: string
@@ -113,13 +114,13 @@ export function inside(root: string, path: string): string | null {
 /** A file's diff against the baseline (unified, 3 lines of context); an untracked file's whole text. */
 export async function fileDiff(b: Baseline, path: string, untracked: boolean): Promise<{ diff: string } | { text: string } | { error: string }> {
   const full = inside(b.root, path)
-  if (!full) return { error: 'путь вне репозитория' }
+  if (!full) return { error: msg().main.outsideRepo }
   if (untracked || !b.base) {
     try {
       const text = await readFile(full, 'utf8')
-      return text.includes('\0') ? { error: 'двоичный файл' } : { text }
+      return text.includes('\0') ? { error: msg().main.binaryFile } : { text }
     } catch {
-      return { error: 'файл не прочитан' }
+      return { error: msg().main.notRead }
     }
   }
   return { diff: await git(b.root, ['diff', '--no-renames', '--no-color', b.base, '--', path]) }

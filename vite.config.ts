@@ -30,6 +30,7 @@ export default defineConfig({
   test: {
     root: import.meta.dirname,
     include: ['tests/unit/**/*.spec.ts'],
+    setupFiles: ['tests/unit/setup.ts'],
     environment: 'node',
   },
 })

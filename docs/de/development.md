@@ -31,6 +31,8 @@ Fokus nicht nehmen.
   Einstellungen, git, Dateien, Archive, SSH und SFTP, das Schema des
   Betrachters, die lokale API für folio, Updates.
 - `src/renderer/` — das Fenster: Bereiche, Palette, Dateibereiche, Betrachter.
+- `src/locales/` — die Wörter der Oberfläche auf Englisch, Russisch, Deutsch
+  und Chinesisch; ein neuer Text kommt in alle vier (ein Unit-Test prüft das).
 - `packages/shell-integration` — [`@dskripchenko/shell-integration`](https://www.npmjs.com/package/@dskripchenko/shell-integration)
   auf npm: die Marken der Shells, ihr Leser, das Journal der Bearbeitungen von
   Agenten; veröffentlicht über einen Tag `shell-integration-v<Version>`.

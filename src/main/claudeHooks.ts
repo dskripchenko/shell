@@ -10,6 +10,7 @@
 import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname } from 'node:path'
 import { EDITS_MARK, EDITS_MATCHER, editsHookCommand } from '@dskripchenko/shell-integration'
+import { msg } from '../common/i18n'
 
 export const MARK = 'shell-notify'
 
@@ -75,13 +76,13 @@ export function setClaudeHooks(file: string, on: boolean): string {
     try {
       settings = JSON.parse(readFileSync(file, 'utf8')) as Settings
     } catch {
-      return `${file} не прочитан как JSON — ничего не изменено`
+      return msg().main.hooksNotJson(file)
     }
   }
   const next = on ? withHooks(settings) : withoutHooks(settings)
-  if (JSON.stringify(next) === JSON.stringify(settings)) return on ? 'Хуки Claude Code уже подключены' : 'Хуков shell в Claude Code нет'
+  if (JSON.stringify(next) === JSON.stringify(settings)) return on ? msg().main.hooksAlready : msg().main.hooksNone
   mkdirSync(dirname(file), { recursive: true })
   if (existsSync(file)) copyFileSync(file, `${file}.before-shell`)
   writeFileSync(file, JSON.stringify(next, null, 2) + '\n')
-  return on ? `Хуки Claude Code подключены: ${file}` : `Хуки shell убраны из ${file}`
+  return on ? msg().main.hooksOn(file) : msg().main.hooksOff(file)
 }

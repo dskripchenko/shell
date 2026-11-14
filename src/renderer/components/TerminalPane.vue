@@ -3,6 +3,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { focusPane, updateActiveTab, type Tab } from '../../common/layout'
 import { commit, ui, ws } from '../store'
 import * as terminals from '../terminals'
+import { m } from '../i18n'
 
 const props = defineProps<{ paneId: string; tab: Tab }>()
 const slot = ref<HTMLElement | null>(null)
@@ -49,12 +50,12 @@ const broadcasting = computed(() => !!ui.broadcast && terminals.broadcastTargets
   <section
     class="pane"
     :class="{ focused, dimmed: multiple && !focused, broadcast: broadcasting }"
-    :aria-label="focused ? 'Активная панель' : 'Панель'"
+    :aria-label="focused ? m().pane.active : m().pane.pane"
     @pointerdown.capture="claimFocus"
   >
     <div ref="slot" class="pane-slot"></div>
     <div v-if="exitCode !== undefined" class="pane-exited">
-      {{ exitCode === -1 ? 'Оболочка не запустилась' : `Процесс завершён с кодом ${exitCode}` }} — Enter запустит снова
+      {{ exitCode === -1 ? m().pane.notStarted : m().pane.exited(exitCode) }} — {{ m().pane.enterAgain }}
     </div>
   </section>
 </template>

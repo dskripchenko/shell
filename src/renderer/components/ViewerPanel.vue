@@ -5,6 +5,7 @@ import type { ViewerDoc } from '../../common/ipc'
 import { lineOfText, viewKind } from '../../common/viewer'
 import { api, say, shortPath, toFolio, ui } from '../store'
 import { currentTheme } from '../theme'
+import { m } from '../i18n'
 
 const frame = ref<HTMLIFrameElement | null>(null)
 const doc = ref<ViewerDoc | null>(null)
@@ -30,7 +31,7 @@ function send(): void {
   const d = doc.value
   if (!ready || !d || !frame.value?.contentWindow) return
   const t = currentTheme()
-  frame.value.contentWindow.postMessage({ type: 'show', name: d.name, base: d.base, url: d.url, text: d.text, size: d.size, theme: t.kind, background: t.background, foreground: t.foreground }, '*')
+  frame.value.contentWindow.postMessage({ type: 'show', name: d.name, base: d.base, url: d.url, text: d.text, size: d.size, theme: t.kind, background: t.background, foreground: t.foreground, lang: ui.lang }, '*')
 }
 
 /**
@@ -77,7 +78,7 @@ function onMessage(e: MessageEvent): void {
   if (/^https?:\/\//.test(href) || href.startsWith('mailto:')) return api.openExternal(href)
   const d = doc.value
   // A file in the document's folder or below it: shown here, by its path from the document's own.
-  if (!href.startsWith(d.base)) return say('Ссылка ведёт выше папки документа — откройте файл из панелей')
+  if (!href.startsWith(d.base)) return say(m().say.linkAbove)
   const folder = d.path.slice(0, d.path.length - d.name.length)
   ui.viewer = { path: folder + decodeURIComponent(href.slice(d.base.length).split('#')[0]!) }
 }
@@ -92,15 +93,15 @@ watch(() => [ui.systemDark, ui.settings], send)
 </script>
 
 <template>
-  <aside class="viewer" aria-label="Просмотр файла" @keydown.esc="ui.viewer = null">
+  <aside class="viewer" :aria-label="m().viewer.label" @keydown.esc="ui.viewer = null">
     <header class="changes-head">
-      <span class="changes-title">{{ doc?.name ?? 'Просмотр' }}</span>
+      <span class="changes-title">{{ doc?.name ?? m().viewer.title }}</span>
       <span v-if="doc" class="changes-sub mono" :title="doc.path">{{ shortPath(doc.path.slice(0, doc.path.length - doc.name.length)) }}</span>
       <span class="changes-fill"></span>
-      <button v-if="doc && ui.folio" type="button" class="icon-button" aria-label="Править в folio" title="Править в folio (двойной щелчок по тексту — на этом месте)" @click="toFolio({ file: { path: doc.path, ...(ui.viewer?.line ? { line: ui.viewer.line } : {}) } })"><Pencil :size="14" aria-hidden="true" /></button>
-      <button v-if="doc && isHtml" type="button" class="button small" :aria-pressed="asCode" @click="asCode = !asCode">{{ asCode ? 'Как страница' : 'Как код' }}</button>
-      <button v-if="doc" type="button" class="icon-button" aria-label="Открыть программой системы" title="Открыть программой системы" @click="api.openPath(doc.path)"><ExternalLink :size="14" aria-hidden="true" /></button>
-      <button type="button" class="icon-button" aria-label="Закрыть просмотр" title="Закрыть просмотр" @click="ui.viewer = null"><X :size="14" aria-hidden="true" /></button>
+      <button v-if="doc && ui.folio" type="button" class="icon-button" :aria-label="m().viewer.editFolio" :title="m().viewer.editFolioTip" @click="toFolio({ file: { path: doc.path, ...(ui.viewer?.line ? { line: ui.viewer.line } : {}) } })"><Pencil :size="14" aria-hidden="true" /></button>
+      <button v-if="doc && isHtml" type="button" class="button small" :aria-pressed="asCode" @click="asCode = !asCode">{{ asCode ? m().viewer.asPage : m().viewer.asCode }}</button>
+      <button v-if="doc" type="button" class="icon-button" :aria-label="m().viewer.openSystem" :title="m().viewer.openSystem" @click="api.openPath(doc.path)"><ExternalLink :size="14" aria-hidden="true" /></button>
+      <button type="button" class="icon-button" :aria-label="m().viewer.close" :title="m().viewer.close" @click="ui.viewer = null"><X :size="14" aria-hidden="true" /></button>
     </header>
     <div v-if="error" class="changes-empty">{{ error }}</div>
     <!-- A PDF in Chromium's own viewer: a frame of its own, served as a PDF only. -->
@@ -108,6 +109,6 @@ watch(() => [ui.systemDark, ui.settings], send)
     <!-- An HTML page as a page: sandboxed (an opaque origin), its folder's files only, no network (the scheme's CSP). -->
     <iframe v-else-if="!error && doc && frameKind === 'html'" class="viewer-frame page" :src="doc.url" sandbox="allow-scripts" :title="doc.name" data-kind="html"></iframe>
     <!-- Sandboxed, on an origin of its own: the document cannot reach the window or its IPC. -->
-    <iframe v-show="!error && frameKind === 'viewer'" ref="frame" class="viewer-frame" src="shell-doc://app/viewer.html" sandbox="allow-scripts" title="Просмотр файла"></iframe>
+    <iframe v-show="!error && frameKind === 'viewer'" ref="frame" class="viewer-frame" src="shell-doc://app/viewer.html" sandbox="allow-scripts" :title="m().viewer.label"></iframe>
   </aside>
 </template>

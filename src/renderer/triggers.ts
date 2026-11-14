@@ -10,6 +10,7 @@ import { api, say, ui, ws } from './store'
 import { tabTitle } from './titles'
 import * as terminals from './terminals'
 import { showPane } from './requests'
+import { m } from './i18n'
 
 const runners = new Map<string, TriggerRunner>()
 let shape = ''
@@ -49,7 +50,7 @@ export function onOutput(paneId: string, data: string): void {
       case 'notify': {
         if (soon(paneId, trigger, 5000)) break
         const tab = tabOf(paneId)
-        if (inSight(paneId)) say(`Триггер: ${line.trim().slice(0, 120)}`)
+        if (inSight(paneId)) say(m().say.trigger(line.trim().slice(0, 120)))
         else {
           const n = new Notification(tab ? tabTitle(tab) : 'shell', { body: line.trim().slice(0, 200) })
           n.onclick = () => showPane(paneId)

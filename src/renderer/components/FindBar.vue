@@ -4,6 +4,7 @@ import { ChevronDown, ChevronUp, X } from '@dskripchenko/ui/icons'
 import { focusedPane } from '../commands'
 import { ui } from '../store'
 import * as terminals from '../terminals'
+import { m } from '../i18n'
 
 const input = ref<HTMLInputElement | null>(null)
 const find = ui.find!
@@ -60,14 +61,14 @@ onBeforeUnmount(() => view()?.clearFind())
     <input
       ref="input"
       v-model="query"
-      aria-label="Найти в выводе"
-      placeholder="Найти в выводе"
+      :aria-label="m().find.label"
+      :placeholder="m().find.label"
       @keydown.enter.prevent="step($event.shiftKey ? 1 : -1)"
       @keydown.esc.prevent="close"
     />
-    <span class="find-count" aria-live="polite">{{ count ? `${index + 1} из ${count}` : query ? 'нет' : '' }}</span>
-    <button type="button" class="icon-button" aria-label="Предыдущее" @click="step(-1)"><ChevronUp :size="14" aria-hidden="true" /></button>
-    <button type="button" class="icon-button" aria-label="Следующее" @click="step(1)"><ChevronDown :size="14" aria-hidden="true" /></button>
-    <button type="button" class="icon-button" aria-label="Закрыть поиск" @click="close"><X :size="14" aria-hidden="true" /></button>
+    <span class="find-count" aria-live="polite">{{ count ? m().find.of(index + 1, count) : query ? m().find.none : '' }}</span>
+    <button type="button" class="icon-button" :aria-label="m().find.prev" @click="step(-1)"><ChevronUp :size="14" aria-hidden="true" /></button>
+    <button type="button" class="icon-button" :aria-label="m().find.next" @click="step(1)"><ChevronDown :size="14" aria-hidden="true" /></button>
+    <button type="button" class="icon-button" :aria-label="m().find.close" @click="close"><X :size="14" aria-hidden="true" /></button>
   </div>
 </template>

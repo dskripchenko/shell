@@ -17,6 +17,8 @@ telemetry.
 
 ## Beside the system
 
+- The interface in English, Russian, German or Chinese — the system's
+  language by default.
 - No installer and no administrator rights: a zip on Windows and macOS, an
   AppImage on Linux.
 - Settings, themes, the last session and prompts live in `shell-data/` beside

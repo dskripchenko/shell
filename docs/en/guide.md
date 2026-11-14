@@ -107,18 +107,21 @@ listed there too.
 
 ## Settings
 
-⌘, opens the settings: font, theme, scrollback, the drop-down window,
+⌘, opens the settings: language, font, theme, scrollback, the drop-down window,
 notifications, folio, updates — each change written into
 `shell-data/config.toml` at once, the file's comments kept. The file itself
 (the button in the settings) holds the rest:
 
 ```toml
+[ui]
+language = "auto"            # en | ru | de | zh; auto follows the system
+
 [profiles.python]            # how to start a shell; give it to a group
 program = "/bin/zsh"
 args = ["-l"]
 env = { VIRTUAL_ENV_DISABLE_PROMPT = "1" }
 cwd = "~/projects"
-theme = "UID светлая"
+theme = "UID Light"
 
 [[triggers]]                 # a pattern in the output, and what to do
 pattern = "error|failed"
@@ -159,6 +162,3 @@ Themes: `.itermcolors`, Ghostty themes, Windows Terminal `.json` and base16
 Keys are read by their place on the keyboard, so they work on any layout. In
 `[keys]`: `"cmd+shift+t" = "tab.new"`, a chain `"ctrl+a>c"`, `"cmd+k" = "none"`
 to free one; the palette shows every command's id.
-
-shell's interface is in Russian for now, so the commands' names in the
-screenshots are Russian.

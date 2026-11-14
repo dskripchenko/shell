@@ -13,6 +13,7 @@ import { createGunzip, inflateRawSync } from 'node:zlib'
 import { archiveKind } from '../common/archive'
 import type { Entry } from '../common/commander'
 import type { OpResult } from './files'
+import { msg } from '../common/i18n'
 
 export interface ArchiveItem {
   /** `/`-separated, no leading slash; a folder without a trailing one. */
@@ -53,11 +54,11 @@ async function zipItems(file: string): Promise<ArchiveItem[]> {
         break
       }
     }
-    if (eocd < 0) throw new Error('не zip')
+    if (eocd < 0) throw new Error(msg().main.notZip)
     const count = tail.readUInt16LE(eocd + 10)
     const cdSize = tail.readUInt32LE(eocd + 12)
     const cdOffset = tail.readUInt32LE(eocd + 16)
-    if (cdOffset === 0xffffffff || count === 0xffff) throw new Error('zip64 не поддержан')
+    if (cdOffset === 0xffffffff || count === 0xffff) throw new Error(msg().main.zip64)
     const cd = Buffer.alloc(cdSize)
     await fh.read(cd, 0, cdSize, cdOffset)
     const out: ArchiveItem[] = []
@@ -94,13 +95,13 @@ async function zipData(file: string, item: ArchiveItem): Promise<Buffer> {
   try {
     const head = Buffer.alloc(30)
     await fh.read(head, 0, 30, item.offset!)
-    if (head.readUInt32LE(0) !== 0x04034b50) throw new Error('повреждён')
+    if (head.readUInt32LE(0) !== 0x04034b50) throw new Error(msg().main.damaged)
     const start = item.offset! + 30 + head.readUInt16LE(26) + head.readUInt16LE(28)
     const packed = Buffer.alloc(item.packed!)
     await fh.read(packed, 0, item.packed!, start)
     if (item.method === 0) return packed
     if (item.method === 8) return inflateRawSync(packed, { maxOutputLength: Math.max(item.size, 1) })
-    throw new Error(`сжатие ${item.method} не поддержано`)
+    throw new Error(msg().main.compression(item.method ?? 0))
   } finally {
     await fh.close()
   }
@@ -183,7 +184,7 @@ export async function archiveItems(file: string): Promise<ArchiveItem[]> {
   const hit = cache.get(file)
   if (hit?.key === key) return hit.items
   const kind = archiveKind(file)
-  if (!kind) throw new Error('не архив')
+  if (!kind) throw new Error(msg().main.notArchive)
   const items = kind === 'zip' ? await zipItems(file) : await tarPass(file, kind === 'tgz', () => null)
   // Folders only implied by a file inside them.
   const have = new Set(items.map((i) => i.path))
@@ -213,7 +214,7 @@ export async function listArchive(file: string, inner: string): Promise<Entry[]>
     if (!rest || rest.includes('/')) continue
     out.set(rest, { name: rest, kind: i.kind, size: i.size, mtime: i.mtime, hidden: rest.startsWith('.') })
   }
-  if (base && !items.some((i) => i.path === base && i.kind === 'dir')) throw new Error('нет такой папки в архиве')
+  if (base && !items.some((i) => i.path === base && i.kind === 'dir')) throw new Error(msg().main.noFolderInArchive)
   return [...out.values()]
 }
 
@@ -230,7 +231,7 @@ export async function extractArchive(file: string, inners: string[], target: str
     const top = inner.split('/').slice(0, -1).join('/')
     const chosen = items.filter((i) => i.path === inner || i.path.startsWith(inner + '/'))
     if (!chosen.length) {
-      r.failed.push({ path: inner, error: 'нет в архиве' })
+      r.failed.push({ path: inner, error: msg().main.notInArchive })
       continue
     }
     for (const i of chosen) {
@@ -248,7 +249,7 @@ export async function extractArchive(file: string, inners: string[], target: str
       await writeFile(to, data, { flag: 'wx' })
       if (item.mtime) await utimes(to, new Date(), new Date(item.mtime))
     } catch (e) {
-      if ((e as NodeJS.ErrnoException).code === 'EEXIST') r.failed.push({ path: item.path, error: 'такое имя уже есть' })
+      if ((e as NodeJS.ErrnoException).code === 'EEXIST') r.failed.push({ path: item.path, error: msg().main.nameTaken })
       else throw e
     }
   }

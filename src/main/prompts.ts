@@ -1,7 +1,7 @@
 /** The prompt library on disk: `prompts/*.md` in the data folder, examples written at the first look. */
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
 import { extname, join } from 'node:path'
-import { EXAMPLES, promptFile, type Prompt } from '../common/prompts'
+import { examples, promptFile, type Prompt } from '../common/prompts'
 
 export class PromptStore {
   readonly dir: string
@@ -13,7 +13,7 @@ export class PromptStore {
   list(): Prompt[] {
     if (!existsSync(this.dir)) {
       mkdirSync(this.dir, { recursive: true })
-      for (const p of EXAMPLES) writeFileSync(join(this.dir, promptFile(p.name)), p.text + '\n')
+      for (const p of examples()) writeFileSync(join(this.dir, promptFile(p.name)), p.text + '\n')
     }
     const out: Prompt[] = []
     for (const name of readdirSync(this.dir).sort((a, b) => a.localeCompare(b)).slice(0, 500)) {

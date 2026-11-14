@@ -3,6 +3,7 @@ import { activeGroup, activeTab } from '../common/layout'
 import { fillPrompt, placesIn, type Places, type Prompt } from '../common/prompts'
 import { api, say, ui, ws } from './store'
 import * as terminals from './terminals'
+import { m } from './i18n'
 
 /** The file in the viewer, as a full path. */
 function viewerFile(): string {
@@ -30,15 +31,15 @@ export async function usePrompt(p: Prompt): Promise<void> {
   terminals.typing(e)
   e.term.paste(fillPrompt(p.text, places))
   e.view.focus()
-  say(`Промпт «${p.name}» вставлен — отправьте его сами`)
+  say(m().say.promptPasted(p.name))
 }
 
 /** What is selected in the focused pane, kept as a new prompt. */
 export async function saveSelection(): Promise<void> {
   const e = terminals.get(activeTab(activeGroup(ws.value!)).focus)
   const text = e?.view.getSelection().trim() ?? ''
-  if (!text) return say('Выделите текст в панели — он станет промптом')
+  if (!text) return say(m().say.selectForPrompt)
   const name = text.split(/\s+/).slice(0, 6).join(' ')
   const file = await api.addPrompt(name, text)
-  say(file ? `Промпт сохранён: ${file}` : 'Промпт не сохранён')
+  say(file ? m().say.promptSaved(file) : m().say.promptNotSaved)
 }

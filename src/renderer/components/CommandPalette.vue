@@ -13,6 +13,7 @@ import { usePrompt } from '../prompts'
 import type { Prompt } from '../../common/prompts'
 import { api, commit, newId, shortPath, ui, ws } from '../store'
 import { tabTitle } from '../titles'
+import { m } from '../i18n'
 
 interface Item {
   id: string
@@ -46,7 +47,7 @@ function projectItems(prefix: string): Item[] {
   return [...recentProjects().map((p) => ({
     id: `project:${p.id}`,
     title: prefix + p.name,
-    section: open.has(p.id) ? `открыт · ${shortPath(p.root)}` : shortPath(p.root),
+    section: open.has(p.id) ? `${m().palette.open} · ${shortPath(p.root)}` : shortPath(p.root),
     keys: '',
     swatch: p.color,
     action: () => openProject(p.id),
@@ -67,21 +68,21 @@ const items = computed<Item[]>(() => {
     out.push(...promptItems(''))
     for (const id of ['prompts.saveSelection', 'prompts.folder']) {
       const c = COMMANDS.get(id)!
-      out.push({ id: c.id, title: c.title, section: 'Промпты', keys: keysOf(c.id), action: () => run(c.id) })
+      out.push({ id: c.id, title: c.title, section: m().palette.prompts, keys: keysOf(c.id), action: () => run(c.id) })
     }
     return out
   }
   if (projectsOnly.value) {
     out.push(...projectItems(''))
     const save = COMMANDS.get('project.save')!
-    out.push({ id: save.id, title: save.title, section: 'Проекты', keys: keysOf(save.id), action: () => run(save.id) })
+    out.push({ id: save.id, title: save.title, section: m().palette.projects, keys: keysOf(save.id), action: () => run(save.id) })
     return out
   }
-  out.push(...projectItems('Проект: '))
-  out.push(...promptItems('Промпт: '))
+  out.push(...projectItems(m().palette.project))
+  out.push(...promptItems(m().palette.prompt))
   for (const c of COMMANDS.values()) {
     if ((typeof c.hidden === 'function' ? c.hidden() : c.hidden) || c.id === 'palette.open') continue
-    out.push({ id: c.id, title: c.title, section: c.group, keys: keysOf(c.id), action: () => run(c.id) })
+    out.push({ id: c.id, title: c.title, section: m().groups[c.group], keys: keysOf(c.id), action: () => run(c.id) })
   }
   for (const h of hosts.value) {
     out.push({
@@ -90,14 +91,14 @@ const items = computed<Item[]>(() => {
     })
   }
   for (const agent of ui.settings?.config.agents.commands ?? []) {
-    out.push({ id: `agent:${agent}`, title: `Новый агент: ${agent}`, section: 'Агенты', keys: '', action: () => newAgentTab(agent) })
+    out.push({ id: `agent:${agent}`, title: m().palette.newAgent(agent), section: m().palette.agents, keys: '', action: () => newAgentTab(agent) })
   }
   for (const name of Object.keys(ui.settings?.config.profiles ?? {})) {
-    out.push({ id: `profile:${name}`, title: `Новая вкладка: ${name}`, section: 'Профили', keys: '', action: () => newTabWithProfile(name) })
+    out.push({ id: `profile:${name}`, title: m().palette.newTab(name), section: m().palette.profiles, keys: '', action: () => newTabWithProfile(name) })
   }
   for (const g of w.groups) {
-    out.push({ id: `group:${g.id}`, title: `Группа: ${g.name}`, section: 'Перейти', keys: '', swatch: g.color, action: () => commit(selectGroup(ws.value!, g.id)) })
-    for (const t of g.tabs) out.push({ id: `tab:${t.id}`, title: `${g.name} · ${tabTitle(t)}`, section: 'Перейти', keys: '', swatch: t.color ?? g.color, action: () => commit(selectTab(ws.value!, t.id)) })
+    out.push({ id: `group:${g.id}`, title: m().palette.group(g.name), section: m().palette.goTo, keys: '', swatch: g.color, action: () => commit(selectGroup(ws.value!, g.id)) })
+    for (const t of g.tabs) out.push({ id: `tab:${t.id}`, title: `${g.name} · ${tabTitle(t)}`, section: m().palette.goTo, keys: '', swatch: t.color ?? g.color, action: () => commit(selectTab(ws.value!, t.id)) })
   }
   return out
 })
@@ -159,14 +160,14 @@ function parts(title: string, positions: number[]): { text: string; hit: boolean
 
 <template>
   <div class="overlay" @pointerdown.self="close">
-    <div class="palette" role="dialog" :aria-label="projectsOnly ? 'Проекты' : promptsOnly ? 'Промпты' : 'Палитра команд'">
+    <div class="palette" role="dialog" :aria-label="projectsOnly ? m().palette.projects : promptsOnly ? m().palette.prompts : m().palette.title">
       <div class="palette-input">
         <Search :size="16" aria-hidden="true" />
         <input
           ref="input"
           v-model="query"
-          :aria-label="projectsOnly ? 'Проект' : 'Команда, группа или вкладка'"
-          :placeholder="promptsOnly ? 'Промпт — вставится в панель без Enter' : projectsOnly ? 'Проект — можно в любой раскладке' : 'Команда, группа или вкладка — можно в любой раскладке'"
+          :aria-label="projectsOnly ? m().palette.projectInput : m().palette.input"
+          :placeholder="promptsOnly ? m().palette.promptPlaceholder : projectsOnly ? m().palette.projectPlaceholder : m().palette.placeholder"
           role="combobox"
           aria-expanded="true"
           aria-controls="palette-list"
@@ -190,7 +191,7 @@ function parts(title: string, positions: number[]): { text: string; hit: boolean
           <span class="palette-section">{{ x.item.section }}</span>
           <kbd v-if="x.item.keys">{{ x.item.keys }}</kbd>
         </div>
-        <div v-if="shown.length === 0" class="palette-empty">Ничего не найдено</div>
+        <div v-if="shown.length === 0" class="palette-empty">{{ m().common.nothingFound }}</div>
       </div>
     </div>
   </div>

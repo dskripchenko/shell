@@ -13,6 +13,7 @@ import { basename, dirname, isAbsolute, join, posix } from 'node:path'
 import type { Entry } from '../common/commander'
 import { parseSftpList, parseSshConfig, sftpQuote, type SshHost } from '../common/ssh'
 import type { OpResult } from './files'
+import { msg } from '../common/i18n'
 
 /** The hosts of ~/.ssh/config, its Includes (globs of one level) read in place. */
 export function sshHosts(home = homedir()): SshHost[] {
@@ -50,7 +51,7 @@ const ALIAS = /^[\w.@-]{1,253}$/
 
 /** One sftp session in batch mode; what it said, and why it failed. */
 function sftp(alias: string, script: string, cwd?: string): Promise<{ out: string; error: string | null }> {
-  if (!ALIAS.test(alias)) return Promise.resolve({ out: '', error: 'не имя хоста' })
+  if (!ALIAS.test(alias)) return Promise.resolve({ out: '', error: msg().main.notHostName })
   return new Promise((done) => {
     const p = spawn('sftp', ['-q', '-b', '-', '-o', 'BatchMode=yes', '-o', 'ConnectTimeout=10', alias], { cwd, windowsHide: true })
     let out = ''
@@ -60,13 +61,13 @@ function sftp(alias: string, script: string, cwd?: string): Promise<{ out: strin
     p.stderr.on('data', (d: Buffer) => (err += d.toString('utf8')))
     p.on('error', (e) => {
       clearTimeout(timer)
-      done({ out, error: /ENOENT/.test(e.message) ? 'нет программы sftp (OpenSSH)' : e.message })
+      done({ out, error: /ENOENT/.test(e.message) ? msg().main.noSftp : e.message })
     })
     p.on('close', (code) => {
       clearTimeout(timer)
       if (code === 0) return done({ out, error: null })
-      const first = err.split(/\r?\n/).map((l) => l.trim()).filter(Boolean).pop() ?? `sftp завершился с кодом ${code}`
-      const hint = /Permission denied|Host key verification failed|password/i.test(err) ? ' — откройте хост один раз в терминале (SSH из палитры): нужен ключ или ssh-agent' : ''
+      const first = err.split(/\r?\n/).map((l) => l.trim()).filter(Boolean).pop() ?? msg().main.sftpEnded(code)
+      const hint = /Permission denied|Host key verification failed|password/i.test(err) ? msg().main.sftpHint : ''
       done({ out, error: first + hint })
     })
     p.stdin.end(script + '\n')
@@ -121,7 +122,7 @@ export function remoteRemove(alias: string, items: { path: string; dir: boolean 
       const dir = tagged.startsWith('d:')
       const path = tagged.slice(2)
       const r = await sftp(alias, `${dir ? 'rmdir' : 'rm'} ${sftpQuote(path)}`)
-      return r.error ? (dir ? `${r.error} (папка удаляется, только если пуста)` : r.error) : null
+      return r.error ? (dir ? msg().main.folderOnlyEmpty(r.error) : r.error) : null
     },
   ).then((r) => ({ done: r.done.map((x) => x.slice(2)), failed: r.failed.map((f) => ({ ...f, path: f.path.slice(2) })) }))
 }

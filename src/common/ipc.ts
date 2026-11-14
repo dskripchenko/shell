@@ -7,6 +7,7 @@ import type { ConfigResult } from './config'
 import type { Platform } from './keys'
 import type { Workspace } from './layout'
 import type { Project } from './projects'
+import type { Lang } from './i18n'
 import type { GitStatus } from './git'
 import type { Prompt } from './prompts'
 import type { ApiRequest } from '../main/api'
@@ -40,6 +41,8 @@ export interface Settings extends ConfigResult {
   themes: Theme[]
   themeErrors: string[]
   dataDir: string
+  /** The interface's language, as the config and the system say. */
+  lang: Lang
 }
 
 export type SpawnResult = { ok: true; pid: number } | { ok: false; error: string }

@@ -5,6 +5,8 @@
  * viewer, `{cwd}` — the pane's folder, `{branch}`, `{clipboard}`.
  */
 
+import { msg } from './i18n'
+
 export interface Prompt {
   name: string
   text: string
@@ -29,13 +31,11 @@ export function placesIn(text: string): Set<string> {
 /** A file name for a prompt's name: what a file system takes, `.md` after it. */
 export function promptFile(name: string): string {
   // eslint-disable-next-line no-control-regex -- what no file system takes
-  const base = name.replace(/[\\/:*?"<>|\x00-\x1f]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80) || 'Промпт'
+  const base = name.replace(/[\\/:*?"<>|\x00-\x1f]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80) || msg().prompts.untitled
   return `${base}.md`
 }
 
-/** The prompts a fresh library starts with. */
-export const EXAMPLES: Prompt[] = [
-  { name: 'Ревью изменений', text: 'Посмотри изменения в рабочей копии ({branch}) как ревьюер: ошибки, пропущенные случаи, что упростить. Ничего не правь — только список замечаний с файлом и строкой.' },
-  { name: 'Тесты для файла', text: 'Напиши тесты для {file}: обычные случаи, края и ошибки. Запусти их и почини, если упадут.' },
-  { name: 'Объясни выделенное', text: 'Объясни, что делает этот фрагмент и зачем:\n\n{selection}' },
-]
+/** The prompts a fresh library starts with, in the language in use. */
+export function examples(): Prompt[] {
+  return msg().prompts.examples.map((p) => ({ ...p }))
+}

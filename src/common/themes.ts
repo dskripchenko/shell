@@ -16,7 +16,7 @@ export interface Theme {
 }
 
 export const UID_DARK: Theme = {
-  name: 'UID тёмная',
+  name: 'UID Dark',
   kind: 'dark',
   background: '#1c1c1e',
   foreground: '#f4f4f5',
@@ -26,7 +26,7 @@ export const UID_DARK: Theme = {
 }
 
 export const UID_LIGHT: Theme = {
-  name: 'UID светлая',
+  name: 'UID Light',
   kind: 'light',
   background: '#fafafa',
   foreground: '#18181b',
@@ -36,6 +36,15 @@ export const UID_LIGHT: Theme = {
 }
 
 export const BUILT_IN: Theme[] = [UID_DARK, UID_LIGHT]
+
+/** The built-in themes' names before they were English: a config that says them still finds them. */
+const ALIASES: Record<string, string> = { 'UID тёмная': 'UID Dark', 'UID светлая': 'UID Light' }
+
+/** A theme by its name (or a former name of a built-in one). */
+export function themeNamed(all: Theme[], name: string): Theme | undefined {
+  const want = ALIASES[name] ?? name
+  return all.find((t) => t.name === want)
+}
 
 const HEX = /^#?([0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i
 
@@ -180,7 +189,7 @@ export function importThemes(fileName: string, text: string): Theme[] {
 /** The themes shell shows by day and by night: the chosen one both times, or the system's pair (`name = "system"`). */
 export function lookOf(theme: { name: string; light: string; dark: string }, imported: Theme[]): { light: Theme; dark: Theme } {
   const all = [...BUILT_IN, ...imported]
-  const find = (name: string, fallback: Theme) => all.find((t) => t.name === name) ?? fallback
+  const find = (name: string, fallback: Theme) => themeNamed(all, name) ?? fallback
   if (theme.name !== 'system') {
     const one = find(theme.name, UID_DARK)
     return { light: one, dark: one }

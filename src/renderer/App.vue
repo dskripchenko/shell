@@ -19,6 +19,7 @@ import TabStrip from './components/TabStrip.vue'
 import { run } from './commands'
 import { keysOf } from './keyboard'
 import { ui, ws } from './store'
+import { m } from './i18n'
 
 const tab = computed(() => (ws.value ? activeTab(activeGroup(ws.value)) : null))
 /** A zoomed pane is drawn alone, as if it were the tab's only one. */
@@ -37,12 +38,12 @@ const dim = computed(() => String(ui.settings?.config.window.dimInactive ?? 0.8)
       <TabStrip />
       <div class="titlebar-fill"></div>
       <div class="titlebar-actions">
-        <button type="button" class="chip" :title="`Палитра команд ${keysOf('palette.open')}`" @click="run('palette.open')">
+        <button type="button" class="chip" :title="`${m().app.palette} ${keysOf('palette.open')}`" @click="run('palette.open')">
           <Search :size="13" aria-hidden="true" />
-          <span>Команды</span>
+          <span>{{ m().app.commands }}</span>
           <kbd>{{ keysOf('palette.open') }}</kbd>
         </button>
-        <button type="button" class="icon-button" :aria-label="`Настройки ${keysOf('settings.open')}`" :title="`Настройки ${keysOf('settings.open')}`" @click="run('settings.open')">
+        <button type="button" class="icon-button" :aria-label="`${m().app.settings} ${keysOf('settings.open')}`" :title="`${m().app.settings} ${keysOf('settings.open')}`" @click="run('settings.open')">
           <Settings2 :size="15" aria-hidden="true" />
         </button>
       </div>

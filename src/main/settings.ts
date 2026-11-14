@@ -4,7 +4,8 @@
  */
 import { existsSync, mkdirSync, readdirSync, readFileSync, watch, writeFileSync, type FSWatcher } from 'node:fs'
 import { join } from 'node:path'
-import { DEFAULT_TEXT, FIELDS, parseConfig, setConfigValue } from '../common/config'
+import { defaultText, FIELDS, parseConfig, setConfigValue } from '../common/config'
+import { lang, msg, resolveLang, setLang } from '../common/i18n'
 import { writeAtomic } from './session'
 import type { Settings } from '../common/ipc'
 import { importThemes, type Theme } from '../common/themes'
@@ -19,11 +20,14 @@ export class SettingsStore {
   constructor(
     private readonly dir: string,
     private readonly onChange: (s: Settings) => void,
+    /** The system's locale (`ru-RU`): the language when the config says "auto". */
+    private readonly locale = 'en',
   ) {
     this.configFile = join(dir, 'config.toml')
     this.themesDir = join(dir, 'themes')
     mkdirSync(this.themesDir, { recursive: true })
-    if (!existsSync(this.configFile)) writeFileSync(this.configFile, DEFAULT_TEXT)
+    // The first file: its comments in the system's language.
+    if (!existsSync(this.configFile)) writeFileSync(this.configFile, defaultText(resolveLang('auto', locale)))
     this.current = this.read()
   }
 
@@ -51,15 +55,15 @@ export class SettingsStore {
   /** One setting written into the file, checked as the file would be read; read again at once. */
   set(section: string, key: string, value: unknown): { ok: true } | { error: string } {
     const f = FIELDS[section]?.[key]
-    if (!f) return { error: `нет настройки [${section}] ${key}` }
+    if (!f) return { error: msg().main.noSettingKey(section, key) }
     const ok =
       f.kind === 'strings' ? Array.isArray(value) && value.every((v) => typeof v === 'string') : typeof value === f.kind && (f.kind !== 'number' || Number.isFinite(value))
-    if (!ok) return { error: `[${section}] ${key}: не то значение` }
+    if (!ok) return { error: msg().main.badValue(section, key) }
     let text: string
     try {
       text = readFileSync(this.configFile, 'utf8')
     } catch {
-      text = DEFAULT_TEXT
+      text = defaultText(lang())
     }
     const next = setConfigValue(text, section, key, value as string | number | boolean | string[])
     const errors = parseConfig(next).errors.filter((e) => e.startsWith(`[${section}] ${key}`))
@@ -82,7 +86,13 @@ export class SettingsStore {
     } catch {
       text = ''
     }
-    const result = parseConfig(text)
+    // The language first (the config says it), then the config read again so its mistakes are said in it.
+    let result = parseConfig(text)
+    const language = resolveLang(result.config.ui.language, this.locale)
+    if (language !== lang()) {
+      setLang(language)
+      result = parseConfig(text)
+    }
     const themes: Theme[] = []
     const themeErrors: string[] = []
     let names: string[]
@@ -94,12 +104,12 @@ export class SettingsStore {
     for (const name of names) {
       try {
         const found = importThemes(name, readFileSync(join(this.themesDir, name), 'utf8'))
-        if (found.length === 0) themeErrors.push(`themes/${name}: не тема iTerm2, Ghostty, Windows Terminal или base16`)
+        if (found.length === 0) themeErrors.push(msg().main.notTheme(name))
         themes.push(...found)
       } catch (e) {
         themeErrors.push(`themes/${name}: ${e instanceof Error ? e.message : String(e)}`)
       }
     }
-    return { ...result, themes, themeErrors, dataDir: this.dir }
+    return { ...result, themes, themeErrors, dataDir: this.dir, lang: language }
   }
 }

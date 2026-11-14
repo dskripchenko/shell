@@ -1,10 +1,15 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { Check, LoaderCircle, X } from '@dskripchenko/ui/icons'
 import type { AgentStatus } from '../../common/agents'
+import { m } from '../i18n'
 
 defineProps<{ status: AgentStatus | null; size?: number }>()
 
-const LABEL: Record<AgentStatus, string> = { waiting: 'агент ждёт ввода', running: 'агент работает', done: 'агент закончил', failed: 'агент завершился с ошибкой', idle: '' }
+const LABEL = computed<Record<AgentStatus, string>>(() => {
+  const a = m().agent
+  return { waiting: a.waiting, running: a.running, done: a.done, failed: a.failed, idle: '' }
+})
 </script>
 
 <template>

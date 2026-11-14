@@ -70,7 +70,8 @@ menu — copy its output, run it again.
 
 ![The light theme with the project's tree](docs/images/light.png)
 
-The interface is in Russian for now.
+The interface speaks English, Russian, German and Chinese — the system's
+language by default, any of them in the settings.
 
 ## Download
 
@@ -106,7 +107,7 @@ program = "/bin/zsh"
 args = ["-l"]
 env = { VIRTUAL_ENV_DISABLE_PROMPT = "1" }
 cwd = "~/projects"
-theme = "UID светлая"
+theme = "UID Light"
 
 [keys]
 "cmd+k" = "palette.open"

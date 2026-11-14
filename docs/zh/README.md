@@ -14,6 +14,7 @@ AI 智能体（Claude Code、Codex、Grok 等）一起工作：标签分组与�
 
 ## 与系统相处
 
+- 界面支持中文、英语、俄语和德语，默认使用系统语言。
 - 无需安装程序和管理员权限：Windows 和 macOS 上是 zip，Linux 上是 AppImage。
 - 设置、主题、上次的会话和提示词都在程序旁边的 `shell-data/` 中；删除该文件夹即可完全
   移除 shell。

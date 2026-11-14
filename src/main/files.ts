@@ -6,6 +6,7 @@
 import { cp, lstat, mkdir, open, readdir, rename, rm, stat } from 'node:fs/promises'
 import { basename, join } from 'node:path'
 import { maskTest, type Entry } from '../common/commander'
+import { msg } from '../common/i18n'
 
 export async function listDir(dir: string): Promise<Entry[]> {
   const names = await readdir(dir)
@@ -55,8 +56,8 @@ export async function copyInto(items: string[], target: string): Promise<OpResul
   for (const item of items) {
     const to = join(target, basename(item))
     try {
-      if (to === item) throw new Error('копия в ту же папку')
-      if (await exists(to)) throw new Error('такое имя уже есть')
+      if (to === item) throw new Error(msg().main.sameFolder)
+      if (await exists(to)) throw new Error(msg().main.nameTaken)
       await cp(item, to, { recursive: true, errorOnExist: true, force: false, preserveTimestamps: true })
       r.done.push(to)
     } catch (e) {
@@ -68,7 +69,7 @@ export async function copyInto(items: string[], target: string): Promise<OpResul
 
 /** One item moved (or renamed) to a full path; across disks, copied then removed. */
 export async function moveTo(item: string, to: string): Promise<void> {
-  if (await exists(to)) throw new Error('такое имя уже есть')
+  if (await exists(to)) throw new Error(msg().main.nameTaken)
   try {
     await rename(item, to)
   } catch (e) {
@@ -83,7 +84,7 @@ export async function moveInto(items: string[], target: string): Promise<OpResul
   for (const item of items) {
     const to = join(target, basename(item))
     try {
-      if (to === item) throw new Error('уже в этой папке')
+      if (to === item) throw new Error(msg().main.alreadyHere)
       await moveTo(item, to)
       r.done.push(to)
     } catch (e) {
@@ -94,7 +95,7 @@ export async function moveInto(items: string[], target: string): Promise<OpResul
 }
 
 export async function makeDir(path: string): Promise<void> {
-  if (await exists(path)) throw new Error('такое имя уже есть')
+  if (await exists(path)) throw new Error(msg().main.nameTaken)
   await mkdir(path, { recursive: true })
 }
 

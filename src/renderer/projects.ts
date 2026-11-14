@@ -8,6 +8,7 @@ import { byRecent, groupOf, projectOf, type Project } from '../common/projects'
 import { typeWhenReady } from './agents'
 import { api, commit, newId, say, ui, ws } from './store'
 import * as terminals from './terminals'
+import { m } from './i18n'
 
 function save(list: Project[]): void {
   ui.projects = list
@@ -31,7 +32,7 @@ export async function saveGroupAsProject(): Promise<void> {
   const project = projectOf(g, { id: own?.id ?? newId(), root, opened: Date.now() }, (id) => terminals.paneCwd(id), commandOf)
   save([...ui.projects.filter((p) => p.id !== project.id), project])
   if (g.project !== project.id) commit(linkGroup(ws.value!, g.id, project.id))
-  say(own ? `Раскладка проекта «${project.name}» сохранена` : `Проект «${project.name}» сохранён: ${root}`)
+  say(own ? m().say.projectLayoutSaved(project.name) : m().say.projectSaved(project.name, root))
 }
 
 /** A project shown: its open group, or its group brought back with its agents. */
@@ -54,12 +55,12 @@ export function forgetProject(): void {
   const w = ws.value!
   const g = activeGroup(w)
   const project = ui.projects.find((p) => p.id === g.project)
-  if (!project) return say('Группа не связана с проектом')
+  if (!project) return say(m().say.groupNoProject)
   save(ui.projects.filter((p) => p.id !== project.id))
   let next = w
   for (const x of w.groups) if (x.project === project.id) next = linkGroup(next, x.id, null)
   commit(next)
-  say(`Проект «${project.name}» удалён из списка`)
+  say(m().say.projectForgotten(project.name))
 }
 
 export function recentProjects(): Project[] {

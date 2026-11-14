@@ -6,6 +6,7 @@
 import { execFile } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import { parseStatus, worktreePath, type GitStatus } from '../common/git'
+import { msg } from '../common/i18n'
 
 function git(cwd: string, args: string[], timeout = 5000): Promise<string> {
   return new Promise((done, fail) => {
@@ -27,15 +28,15 @@ export async function gitStatus(cwd: string): Promise<GitStatus | null> {
 export async function addWorktree(cwd: string, branch: string): Promise<{ path: string } | { error: string }> {
   try {
     const root = (await git(cwd, ['rev-parse', '--show-toplevel'])).trim()
-    if (!root) return { error: 'не репозиторий git' }
-    if (branch.startsWith('-')) return { error: `«${branch}» — не имя ветки` }
+    if (!root) return { error: msg().main.notRepo }
+    if (branch.startsWith('-')) return { error: msg().main.notBranchName(branch) }
     try {
       await git(root, ['check-ref-format', '--branch', branch])
     } catch {
-      return { error: `«${branch}» — не имя ветки` }
+      return { error: msg().main.notBranchName(branch) }
     }
     const path = worktreePath(root, branch)
-    if (existsSync(path)) return { error: `${path} уже есть` }
+    if (existsSync(path)) return { error: msg().main.exists(path) }
     let exists = true
     try {
       await git(root, ['rev-parse', '--verify', '--quiet', `refs/heads/${branch}`])

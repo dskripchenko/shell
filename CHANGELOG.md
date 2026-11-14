@@ -7,6 +7,19 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added
+
+- The interface in English, Russian, German and Chinese: `[ui] language`
+  in config.toml (`auto` — the system's language) or the language in the
+  settings, applied at once. The first config.toml is written with comments
+  in that language; messages of the main process, the menu, notifications,
+  file sizes and dates follow it too.
+
+### Changed
+
+- The built-in themes are called `UID Dark` and `UID Light`; the old Russian
+  names still work in config.toml and profiles.
+
 ## [0.7.0] - 2026-11-14
 
 The «later» list done: input to every pane, triggers, prompts, blocks, pictures, archives, finding and comparing files, the project's tree, previews.

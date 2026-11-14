@@ -8,6 +8,7 @@ import { projectAt, relativeTo } from '../common/projects'
 import type { ApiReply, ApiRequest } from '../common/ipc'
 import { api, commit, newId, say, ui, ws } from './store'
 import * as terminals from './terminals'
+import { m } from './i18n'
 
 /** A pane brought into sight: its group, its tab, focused. */
 export function showPane(paneId: string): void {
@@ -81,7 +82,7 @@ async function paste(repo: string, text: string): Promise<ApiReply> {
   e.view.scrollToBottom()
   e.term.paste(text)
   e.view.focus()
-  say('Текст из folio вставлен в панель — отправьте его сами')
+  say(m().say.folioPasted)
   const agent = ui.agents[paneId]
   return { status: 200, body: { pane: paneId, ...(agent && !agent.ended ? { agent: agent.name } : {}) } }
 }
@@ -92,9 +93,9 @@ async function review(repo: string, state: 'waiting' | 'none', message?: string)
     return { status: 204 }
   }
   const { roots } = await panesIn(repo)
-  ui.reviews[repo] = { message: message ?? 'ждёт ревью', roots }
+  ui.reviews[repo] = { message: message ?? m().main.notify.reviewWaits, roots }
   if (!document.hasFocus() && ui.settings?.config.agents.notify !== false) {
-    const n = new Notification('Ревью в folio', { body: `${message ?? 'Агент ждёт ответа'} — ${repo}` })
+    const n = new Notification(m().main.notify.reviewTitle, { body: m().main.notify.reviewBody(message ?? m().main.notify.agentWaits, repo) })
     n.onclick = () => void paneFor(repo).then((paneId) => paneId && showPane(paneId))
   }
   return { status: 204 }

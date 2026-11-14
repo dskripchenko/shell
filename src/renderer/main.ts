@@ -11,6 +11,7 @@ import { closePaneById, run } from './commands'
 import { install, rebuild } from './keyboard'
 import { handle as handleRequest, showPane } from './requests'
 import * as triggers from './triggers'
+import { useLang } from './i18n'
 import { api, commit, findFolio, newId, onCommit, ui, ws } from './store'
 import * as terminals from './terminals'
 import { applyChrome, currentTheme } from './theme'
@@ -23,6 +24,7 @@ async function start(): Promise<void> {
   ui.home = s.home
   ui.version = s.version
   ui.settings = s.settings
+  useLang(s.settings.lang)
   document.documentElement.dataset.platform = s.platform
   applyChrome(currentTheme())
   rebuild()
@@ -65,6 +67,7 @@ async function start(): Promise<void> {
   api.onSettings((settings) => {
     const before = drawnWith(ui.settings)
     ui.settings = settings
+    useLang(settings.lang)
     rebuild()
     applyChrome(currentTheme())
     if (drawnWith(settings) !== before) terminals.restyle()

@@ -2,6 +2,7 @@
 import { nextTick, onMounted, ref } from 'vue'
 import type { Found } from '../../common/ipc'
 import { api, shortPath } from '../store'
+import { m } from '../i18n'
 
 /** Find files under a folder (MC's Alt+F7): by a name mask and, if given, a text in them. */
 const props = defineProps<{ root: string }>()
@@ -56,22 +57,22 @@ function key(e: KeyboardEvent): void {
 
 <template>
   <div class="overlay commander-overlay" @pointerdown.self="emit('close')">
-    <div class="palette find-files" role="dialog" aria-label="Поиск файлов" @keydown.esc.stop.prevent="emit('close')">
+    <div class="palette find-files" role="dialog" :aria-label="m().findFiles.title" @keydown.esc.stop.prevent="emit('close')">
       <form class="find-form" @submit.prevent="find">
-        <div class="find-where mono" :title="root">Где: {{ shortPath(root) }}</div>
-        <label>Имя (маска) <input ref="maskInput" v-model="mask" class="mono" spellcheck="false" placeholder="*.ts;*.vue" /></label>
-        <label>Текст внутри <input v-model="text" spellcheck="false" placeholder="необязательно" /></label>
-        <button type="submit" class="button primary" :disabled="busy">{{ busy ? 'Ищу…' : 'Найти' }}</button>
+        <div class="find-where mono" :title="root">{{ m().findFiles.where(shortPath(root)) }}</div>
+        <label>{{ m().findFiles.mask }} <input ref="maskInput" v-model="mask" class="mono" spellcheck="false" placeholder="*.ts;*.vue" /></label>
+        <label>{{ m().findFiles.text }} <input v-model="text" spellcheck="false" :placeholder="m().findFiles.optional" /></label>
+        <button type="submit" class="button primary" :disabled="busy">{{ busy ? m().findFiles.finding : m().findFiles.find }}</button>
       </form>
       <p v-if="error" class="dialog-error" role="alert">{{ error }}</p>
-      <div v-if="results" ref="list" class="palette-list" role="listbox" tabindex="0" aria-label="Найденные файлы" @keydown="key">
-        <div v-if="!results.length" class="palette-item">Ничего не найдено</div>
+      <div v-if="results" ref="list" class="palette-list" role="listbox" tabindex="0" :aria-label="m().findFiles.found" @keydown="key">
+        <div v-if="!results.length" class="palette-item">{{ m().common.nothingFound }}</div>
         <div v-for="(f, i) in results" :key="f.path" class="palette-item" role="option" :aria-selected="i === at" @pointermove="at = i" @click="emit('go', f.path)">
           <span class="palette-title mono">{{ rel(f.path) }}</span>
-          <span v-if="f.line" class="palette-section">строка {{ f.line }}</span>
+          <span v-if="f.line" class="palette-section">{{ m().findFiles.line(f.line) }}</span>
         </div>
       </div>
-      <div v-if="results" class="find-foot">{{ results.length }}{{ partial ? '+ (поиск остановлен на пределе)' : '' }} · Enter — к файлу в панели</div>
+      <div v-if="results" class="find-foot">{{ results.length }}{{ partial ? m().findFiles.partial : '' }} · {{ m().findFiles.enter }}</div>
     </div>
   </div>
 </template>

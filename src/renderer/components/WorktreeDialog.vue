@@ -3,6 +3,7 @@ import { onMounted, ref } from 'vue'
 import { activeGroup, activeTab, addGroup } from '../../common/layout'
 import { typeWhenReady } from '../agents'
 import { api, baseName, commit, newId, say, ui, ws } from '../store'
+import { m } from '../i18n'
 
 const d = ui.worktree!
 const branch = ref('')
@@ -28,7 +29,7 @@ async function save(): Promise<void> {
   const next = addGroup(ws.value!, newId, { name: name || baseName(r.path), cwd: r.path })
   commit(next)
   if (agent.value) typeWhenReady(activeTab(activeGroup(next)).focus, agent.value)
-  say(`Worktree: ${r.path}`)
+  say(m().say.worktree(r.path))
 }
 
 function cancel(): void {
@@ -38,20 +39,20 @@ function cancel(): void {
 
 <template>
   <div class="overlay" @pointerdown.self="cancel">
-    <form class="dialog" role="dialog" aria-label="Новый worktree" @submit.prevent="save" @keydown.esc.prevent="cancel">
-      <h2>Новый worktree</h2>
-      <label for="branch-field">Ветка</label>
-      <input id="branch-field" ref="input" v-model="branch" placeholder="Новая или существующая ветка" autocomplete="off" spellcheck="false" />
-      <span class="dialog-hint">Папка рядом с репозиторием: {{ baseName(d.root) }}-ветка; откроется в новой группе.</span>
-      <label for="agent-field">Агент в ней</label>
+    <form class="dialog" role="dialog" :aria-label="m().worktree.title" @submit.prevent="save" @keydown.esc.prevent="cancel">
+      <h2>{{ m().worktree.title }}</h2>
+      <label for="branch-field">{{ m().worktree.branch }}</label>
+      <input id="branch-field" ref="input" v-model="branch" :placeholder="m().worktree.branchPlaceholder" autocomplete="off" spellcheck="false" />
+      <span class="dialog-hint">{{ m().worktree.hint(baseName(d.root)) }}</span>
+      <label for="agent-field">{{ m().worktree.agent }}</label>
       <select id="agent-field" v-model="agent">
-        <option value="">Без агента</option>
+        <option value="">{{ m().worktree.noAgent }}</option>
         <option v-for="a in agents" :key="a" :value="a">{{ a }}</option>
       </select>
       <span v-if="error" class="dialog-error" role="alert">{{ error }}</span>
       <div class="dialog-actions">
-        <button type="button" class="button" @click="cancel">Отмена</button>
-        <button type="submit" class="button primary" :disabled="busy || !branch.trim()">Создать</button>
+        <button type="button" class="button" @click="cancel">{{ m().common.cancel }}</button>
+        <button type="submit" class="button primary" :disabled="busy || !branch.trim()">{{ m().common.create }}</button>
       </div>
     </form>
   </div>

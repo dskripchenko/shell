@@ -8,6 +8,7 @@ import { tabTitle } from '../titles'
 import { keysOf } from '../keyboard'
 import { api, say, shortPath, toFolio, ui, ws } from '../store'
 import * as terminals from '../terminals'
+import { m } from '../i18n'
 
 /** The pane whose agent's changes are shown: the focused one, or the tab's pane running an agent. */
 const paneId = computed(() => {
@@ -45,7 +46,7 @@ async function refresh(): Promise<void> {
   const b = baseline.value
   if (!b) {
     files.value = []
-    error.value = 'Папка панели — не репозиторий git'
+    error.value = m().common.notRepo
     return
   }
   const r = await api.changesList(JSON.parse(JSON.stringify(b)))
@@ -105,7 +106,7 @@ function send(): void {
   e.view.scrollToBottom()
   e.term.paste(commentFor(selected.value, line, comment.value) + ' ')
   commentAt.value = null
-  say('Комментарий вставлен в панель агента — отправьте его там')
+  say(m().say.commentPasted)
   e.view.focus()
 }
 
@@ -143,13 +144,13 @@ function editor(f: ChangedFile): { label: string; title: string; mine: boolean }
   const e = edits.value.get(f.path)
   if (!e) return null
   const at = new Date(e.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-  if (e.pane && e.pane === paneId.value) return { label: 'этот агент', title: `Правил агент этой панели (${e.tool}, ${at})`, mine: true }
+  if (e.pane && e.pane === paneId.value) return { label: m().changes.thisAgent, title: m().changes.thisAgentTip(e.tool, at), mine: true }
   if (e.pane) {
     const tab = ws.value!.groups.flatMap((g) => g.tabs).find((t) => findPane(t.root, e.pane))
-    const name = tab ? tabTitle(tab) : 'закрытая вкладка'
-    return { label: name, title: `Правил агент во вкладке «${name}» (${e.tool}, ${at})`, mine: false }
+    const name = tab ? tabTitle(tab) : m().changes.closedTab
+    return { label: name, title: m().changes.otherTip(name, e.tool, at), mine: false }
   }
-  return { label: 'вне shell', title: `Правил агент вне shell, сессия ${e.session.slice(0, 8)} (${e.tool}, ${at})`, mine: false }
+  return { label: m().changes.outside, title: m().changes.outsideTip(e.session.slice(0, 8), e.tool, at), mine: false }
 }
 const hasMine = computed(() => files.value.some((f) => edits.value.get(f.path)?.pane === paneId.value))
 const shown = computed(() => (mineOnly.value && hasMine.value ? files.value.filter((f) => edits.value.get(f.path)?.pane === paneId.value) : files.value))
@@ -158,49 +159,49 @@ const STATUS = { added: 'A', modified: 'M', deleted: 'D' } as const
 </script>
 
 <template>
-  <aside class="changes" aria-label="Изменения агента">
+  <aside class="changes" :aria-label="m().changes.label">
     <header class="changes-head">
-      <span class="changes-title">Изменения</span>
-      <span class="changes-sub">{{ agent ? `${agent.name}, с начала сессии` : 'рабочая копия к HEAD' }}</span>
+      <span class="changes-title">{{ m().changes.title }}</span>
+      <span class="changes-sub">{{ agent ? m().changes.sinceSession(agent.name) : m().changes.workingCopy }}</span>
       <span class="changes-fill"></span>
       <span v-if="files.length" class="changes-count"><span class="plus">+{{ totals.adds }}</span> <span class="minus">−{{ totals.dels }}</span> · {{ totals.viewed }}/{{ files.length }}</span>
       <template v-if="ui.folio && baseline">
-        <button type="button" class="icon-button" aria-label="Ревью в folio" title="Ревью в folio" @click="toFolio({ review: baseline.root })"><GitCompare :size="14" aria-hidden="true" /></button>
-        <button v-if="selected" type="button" class="icon-button" aria-label="Открыть файл в folio" title="Открыть файл в folio" @click="fileToFolio()"><BookOpen :size="14" aria-hidden="true" /></button>
+        <button type="button" class="icon-button" :aria-label="m().changes.reviewFolio" :title="m().changes.reviewFolio" @click="toFolio({ review: baseline.root })"><GitCompare :size="14" aria-hidden="true" /></button>
+        <button v-if="selected" type="button" class="icon-button" :aria-label="m().changes.fileFolio" :title="m().changes.fileFolio" @click="fileToFolio()"><BookOpen :size="14" aria-hidden="true" /></button>
       </template>
-      <button type="button" class="icon-button" aria-label="Обновить" title="Обновить" @click="refresh()"><RefreshCw :size="14" aria-hidden="true" /></button>
-      <button type="button" class="icon-button" :aria-label="`Скрыть ${keysOf('changes.toggle')}`" :title="`Скрыть ${keysOf('changes.toggle')}`" @click="ui.changesOpen = false"><X :size="14" aria-hidden="true" /></button>
+      <button type="button" class="icon-button" :aria-label="m().common.refresh" :title="m().common.refresh" @click="refresh()"><RefreshCw :size="14" aria-hidden="true" /></button>
+      <button type="button" class="icon-button" :aria-label="m().common.hide(keysOf('changes.toggle'))" :title="m().common.hide(keysOf('changes.toggle'))" @click="ui.changesOpen = false"><X :size="14" aria-hidden="true" /></button>
     </header>
     <div v-if="baseline" class="changes-root mono" :title="baseline.root">{{ shortPath(baseline.root) }}</div>
     <div v-if="error" class="changes-empty">{{ error }}</div>
-    <div v-else-if="files.length === 0" class="changes-empty">Изменений нет</div>
+    <div v-else-if="files.length === 0" class="changes-empty">{{ m().changes.none }}</div>
     <div v-else class="changes-body">
-      <ul class="changes-files" role="listbox" aria-label="Изменённые файлы">
-        <li v-if="hasMine" class="changes-filter" role="none"><label><input v-model="mineOnly" type="checkbox" /> Только правки этого агента</label></li>
-        <li v-for="f in shown" :key="f.path" class="changes-file" :class="{ active: f.path === selected }" role="option" :aria-selected="f.path === selected" title="Двойной щелчок — открыть в просмотре" @click="select(f)" @dblclick="f.status !== 'deleted' && baseline && (ui.viewer = { path: f.path, cwd: baseline.root })">
+      <ul class="changes-files" role="listbox" :aria-label="m().changes.files">
+        <li v-if="hasMine" class="changes-filter" role="none"><label><input v-model="mineOnly" type="checkbox" /> {{ m().changes.mineOnly }}</label></li>
+        <li v-for="f in shown" :key="f.path" class="changes-file" :class="{ active: f.path === selected }" role="option" :aria-selected="f.path === selected" :title="m().changes.dblclick" @click="select(f)" @dblclick="f.status !== 'deleted' && baseline && (ui.viewer = { path: f.path, cwd: baseline.root })">
           <span class="file-status" :class="f.status">{{ STATUS[f.status] }}</span>
           <span class="file-path mono" :title="f.path">{{ f.path }}</span>
           <span v-if="editor(f)" class="file-editor" :class="{ mine: editor(f)!.mine }" :title="editor(f)!.title">{{ editor(f)!.label }}</span>
           <span class="plus mono">{{ f.adds ? `+${f.adds}` : '' }}</span>
           <span class="minus mono">{{ f.dels ? `−${f.dels}` : '' }}</span>
-          <input type="checkbox" class="file-viewed" :checked="isViewed(f)" :aria-label="`Просмотрено: ${f.path}`" title="Просмотрено" @click.stop="toggleViewed(f)" />
+          <input type="checkbox" class="file-viewed" :checked="isViewed(f)" :aria-label="m().changes.viewedOf(f.path)" :title="m().changes.viewed" @click.stop="toggleViewed(f)" />
         </li>
       </ul>
       <div class="changes-diff" role="region" :aria-label="`Diff: ${selected ?? ''}`">
         <div v-if="diffError" class="changes-empty">{{ diffError }}</div>
         <template v-for="(l, i) in lines" :key="i">
-          <div class="diff-line" :class="l.kind" :title="l.kind === 'hunk' ? '' : 'Щелчок — комментарий агенту к этой строке'" @click="openComment(i)">
+          <div class="diff-line" :class="l.kind" :title="l.kind === 'hunk' ? '' : m().changes.lineTip" @click="openComment(i)">
             <span class="diff-no">{{ l.old ?? '' }}</span>
             <span class="diff-no">{{ l.new ?? '' }}</span>
             <span class="diff-sign">{{ l.kind === 'add' ? '+' : l.kind === 'del' ? '−' : '' }}</span>
             <span class="diff-text">{{ l.text }}</span>
           </div>
           <form v-if="commentAt === i" class="diff-comment" @submit.prevent="send" @keydown.esc.prevent="commentAt = null">
-            <label :for="`comment-${i}`">Комментарий к строке {{ l.new ?? l.old }} — уйдёт агенту в консоль</label>
+            <label :for="`comment-${i}`">{{ m().changes.commentLabel(l.new ?? l.old ?? '') }}</label>
             <textarea :id="`comment-${i}`" v-model="comment" rows="2" autofocus @keydown.meta.enter.prevent="send" @keydown.ctrl.enter.prevent="send"></textarea>
             <div class="diff-comment-actions">
-              <button type="button" class="button" @click="commentAt = null">Отмена</button>
-              <button type="submit" class="button primary">Отправить агенту</button>
+              <button type="button" class="button" @click="commentAt = null">{{ m().common.cancel }}</button>
+              <button type="submit" class="button primary">{{ m().changes.send }}</button>
             </div>
           </form>
         </template>

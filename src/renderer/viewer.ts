@@ -5,6 +5,7 @@
  * the window sends it what to show and hears back only which link was clicked.
  */
 import { codeAsMarkdown, viewKind } from '../common/viewer'
+import { LANGS, messagesOf, type Lang } from '../common/i18n'
 
 interface Show {
   type: 'show'
@@ -16,6 +17,8 @@ interface Show {
   theme: 'light' | 'dark'
   background: string
   foreground: string
+  /** The interface's language, for the few words the page says. */
+  lang: Lang
 }
 
 declare const DskEmbed: { configure(o: { theme?: string; locale?: string }): void } | undefined
@@ -74,7 +77,7 @@ function show(m: Show): void {
       view.append(el('dsk-audio', { src: m.url }))
       break
     case 'binary':
-      view.append(el('p', { className: 'note', textContent: `Двоичный файл, ${m.size} байт — не показывается` }))
+      view.append(el('p', { className: 'note', textContent: messagesOf(LANGS.includes(m.lang) ? m.lang : 'en').viewer.binary(m.size) }))
       break
   }
 }

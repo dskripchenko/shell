@@ -22,6 +22,7 @@ import { dirname, isAbsolute, resolve as resolvePath } from 'node:path'
 import { findFolio, folioRequest, launchFolio, presenceOf, projectsOf } from './folio'
 import { addWorktree, gitStatus } from './git'
 import { lookOf } from '../common/themes'
+import { msg } from '../common/i18n'
 import { ProjectsStore } from './projects'
 import { PromptStore } from './prompts'
 import { extractArchive, fetchFromArchive, listArchive } from './archive'
@@ -198,11 +199,11 @@ function registerQuake(): string[] {
   const q = settings.get().config.quake
   if (!q.enabled) return []
   const accel = toAccelerator(q.hotkey, PLATFORM)
-  if (!accel) return [`[quake] hotkey: «${q.hotkey}» не сочетание клавиш`]
+  if (!accel) return [msg().main.quakeNotChord(q.hotkey)]
   try {
-    if (!globalShortcut.register(accel, toggleQuake)) return [`[quake] hotkey: «${q.hotkey}» занято другой программой`]
+    if (!globalShortcut.register(accel, toggleQuake)) return [msg().main.quakeTaken(q.hotkey)]
   } catch {
-    return [`[quake] hotkey: «${q.hotkey}» не поддерживается системой`]
+    return [msg().main.quakeUnsupported(q.hotkey)]
   }
   return []
 }
@@ -264,7 +265,7 @@ ipcMain.handle(IPC.gitStatus, async (_e, cwds: unknown) => {
   return Object.fromEntries(await Promise.all(list.map(async (c) => [c, await gitStatus(c)] as const)))
 })
 ipcMain.handle(IPC.addWorktree, (_e, cwd: unknown, branch: unknown) =>
-  typeof cwd === 'string' && isAbsolute(cwd) && typeof branch === 'string' && branch.trim() ? addWorktree(cwd, branch.trim()) : { error: 'нет ветки' },
+  typeof cwd === 'string' && isAbsolute(cwd) && typeof branch === 'string' && branch.trim() ? addWorktree(cwd, branch.trim()) : { error: msg().main.noBranch },
 )
 
 const projects = new ProjectsStore(DATA)
@@ -297,7 +298,7 @@ ipcMain.on(IPC.openExternal, (_e, url: unknown) => {
 })
 ipcMain.on(IPC.openConfig, () => void electronShell.openPath(settings.configFile))
 ipcMain.handle(IPC.setSetting, (_e, section: unknown, key: unknown, value: unknown) =>
-  typeof section === 'string' && typeof key === 'string' ? settings.set(section, key, value) : { error: 'нет настройки' },
+  typeof section === 'string' && typeof key === 'string' ? settings.set(section, key, value) : { error: msg().main.noSetting },
 )
 
 /** macOS: Secure Keyboard Entry as the config says; elsewhere there is no such thing. */
@@ -313,7 +314,7 @@ app.on('did-resign-active', () => {
 })
 ipcMain.on(IPC.openDataDir, () => void electronShell.openPath(DATA))
 ipcMain.handle(IPC.findFiles, async (_e, root: unknown, mask: unknown, text: unknown) => {
-  if (typeof root !== 'string' || !isAbsolute(root) || typeof mask !== 'string' || typeof text !== 'string') return { error: 'не путь' }
+  if (typeof root !== 'string' || !isAbsolute(root) || typeof mask !== 'string' || typeof text !== 'string') return { error: msg().main.notPath }
   try {
     return await findFiles(root, mask.slice(0, 500), text.slice(0, 500))
   } catch (e) {
@@ -323,7 +324,7 @@ ipcMain.handle(IPC.findFiles, async (_e, root: unknown, mask: unknown, text: unk
 // Archives as folders: a file named absolute, paths inside as lists of strings.
 const archiveFile = (f: unknown): f is string => typeof f === 'string' && isAbsolute(f)
 ipcMain.handle(IPC.archiveList, async (_e, file: unknown, inner: unknown) => {
-  if (!archiveFile(file) || typeof inner !== 'string') return { error: 'не путь' }
+  if (!archiveFile(file) || typeof inner !== 'string') return { error: msg().main.notPath }
   try {
     return await listArchive(file, inner)
   } catch (e) {
@@ -339,7 +340,7 @@ ipcMain.handle(IPC.archiveExtract, async (_e, file: unknown, inners: unknown, ta
     return { done: [], failed: [{ path: file, error: e instanceof Error ? e.message : String(e) }] }
   }
 })
-ipcMain.handle(IPC.archiveFetch, (_e, file: unknown, inner: unknown) => (archiveFile(file) && typeof inner === 'string' ? fetchFromArchive(file, inner) : { error: 'не путь' }))
+ipcMain.handle(IPC.archiveFetch, (_e, file: unknown, inner: unknown) => (archiveFile(file) && typeof inner === 'string' ? fetchFromArchive(file, inner) : { error: msg().main.notPath }))
 
 const prompts = new PromptStore(DATA)
 ipcMain.handle(IPC.prompts, () => prompts.list())
@@ -427,11 +428,11 @@ async function checkedBaseline(b: unknown): Promise<Baseline | null> {
 ipcMain.handle(IPC.changesBaseline, (_e, cwd: unknown, kind: unknown) => (typeof cwd === 'string' && cwd ? (kind === 'head' ? headBaseline(cwd) : takeBaseline(cwd)) : null))
 ipcMain.handle(IPC.changesList, async (_e, b: unknown) => {
   const base = await checkedBaseline(b)
-  if (!base) return { error: 'не репозиторий git' }
+  if (!base) return { error: msg().main.notRepo }
   try {
     return await changedFiles(base)
   } catch (e) {
-    return { error: e instanceof Error && /ENOENT/.test(e.message) ? 'нужна программа git' : String(e instanceof Error ? e.message : e).split('\n')[0] }
+    return { error: e instanceof Error && /ENOENT/.test(e.message) ? msg().main.needGit : String(e instanceof Error ? e.message : e).split('\n')[0] }
   }
 })
 ipcMain.handle(IPC.changesEdits, async (_e, b: unknown) => {
@@ -440,7 +441,7 @@ ipcMain.handle(IPC.changesEdits, async (_e, b: unknown) => {
 })
 ipcMain.handle(IPC.changesDiff, async (_e, b: unknown, path: unknown, untracked: unknown) => {
   const base = await checkedBaseline(b)
-  if (!base || typeof path !== 'string') return { error: 'не репозиторий git' }
+  if (!base || typeof path !== 'string') return { error: msg().main.notRepo }
   try {
     return await fileDiff(base, path, untracked === true)
   } catch (e) {
@@ -452,7 +453,7 @@ ipcMain.handle(IPC.changesDiff, async (_e, b: unknown, path: unknown, untracked:
 const paths = (v: unknown): string[] | null => (Array.isArray(v) && v.every((x) => typeof x === 'string' && isAbsolute(x)) ? (v as string[]) : null)
 const said = (e: unknown) => (e instanceof Error ? e.message.replace(/^\w+: /, '') : String(e))
 ipcMain.handle(IPC.filesList, async (_e, dir: unknown) => {
-  if (typeof dir !== 'string' || !isAbsolute(dir)) return { error: 'не путь' }
+  if (typeof dir !== 'string' || !isAbsolute(dir)) return { error: msg().main.notPath }
   try {
     return await listDir(dir)
   } catch (e) {
@@ -468,7 +469,7 @@ ipcMain.handle(IPC.filesMove, (_e, items: unknown, target: unknown) => {
   return list && typeof target === 'string' && isAbsolute(target) ? moveInto(list, target) : { done: [], failed: [] }
 })
 ipcMain.handle(IPC.filesRename, async (_e, item: unknown, to: unknown) => {
-  if (typeof item !== 'string' || typeof to !== 'string' || !isAbsolute(item) || !isAbsolute(to)) return 'не путь'
+  if (typeof item !== 'string' || typeof to !== 'string' || !isAbsolute(item) || !isAbsolute(to)) return msg().main.notPath
   try {
     await moveTo(item, to)
     return null
@@ -477,7 +478,7 @@ ipcMain.handle(IPC.filesRename, async (_e, item: unknown, to: unknown) => {
   }
 })
 ipcMain.handle(IPC.filesMkdir, async (_e, path: unknown) => {
-  if (typeof path !== 'string' || !isAbsolute(path)) return 'не путь'
+  if (typeof path !== 'string' || !isAbsolute(path)) return msg().main.notPath
   try {
     await makeDir(path)
     return null
@@ -498,7 +499,7 @@ ipcMain.handle(IPC.filesTrash, async (_e, items: unknown): Promise<OpResult> => 
   return r
 })
 ipcMain.handle(IPC.filesHead, async (_e, path: unknown) => {
-  if (typeof path !== 'string' || !isAbsolute(path)) return { error: 'не путь' }
+  if (typeof path !== 'string' || !isAbsolute(path)) return { error: msg().main.notPath }
   try {
     return await readHead(path)
   } catch (e) {
@@ -510,23 +511,23 @@ ipcMain.handle(IPC.filesHead, async (_e, path: unknown) => {
 const str = (v: unknown): v is string => typeof v === 'string' && v.length > 0
 const strs = (v: unknown): v is string[] => Array.isArray(v) && v.every(str)
 ipcMain.handle(IPC.remoteHosts, () => sshHosts())
-ipcMain.handle(IPC.remoteHome, (_e, a: unknown) => (str(a) ? remoteHome(a) : { error: 'нет хоста' }))
-ipcMain.handle(IPC.remoteList, (_e, a: unknown, p: unknown) => (str(a) && str(p) ? remoteList(a, p) : { error: 'нет пути' }))
+ipcMain.handle(IPC.remoteHome, (_e, a: unknown) => (str(a) ? remoteHome(a) : { error: msg().main.noHost }))
+ipcMain.handle(IPC.remoteList, (_e, a: unknown, p: unknown) => (str(a) && str(p) ? remoteList(a, p) : { error: msg().main.noPath }))
 ipcMain.handle(IPC.remoteGet, (_e, a: unknown, items: unknown, dir: unknown) => (str(a) && strs(items) && str(dir) && isAbsolute(dir) ? remoteGet(a, items, dir) : { done: [], failed: [] }))
 ipcMain.handle(IPC.remotePut, (_e, a: unknown, items: unknown, dir: unknown) => (str(a) && strs(items) && items.every((i) => isAbsolute(i)) && str(dir) ? remotePut(a, items, dir) : { done: [], failed: [] }))
-ipcMain.handle(IPC.remoteMkdir, (_e, a: unknown, p: unknown) => (str(a) && str(p) ? remoteMkdir(a, p) : 'нет пути'))
-ipcMain.handle(IPC.remoteRename, (_e, a: unknown, f: unknown, t: unknown) => (str(a) && str(f) && str(t) ? remoteRename(a, f, t) : 'нет пути'))
+ipcMain.handle(IPC.remoteMkdir, (_e, a: unknown, p: unknown) => (str(a) && str(p) ? remoteMkdir(a, p) : msg().main.noPath))
+ipcMain.handle(IPC.remoteRename, (_e, a: unknown, f: unknown, t: unknown) => (str(a) && str(f) && str(t) ? remoteRename(a, f, t) : msg().main.noPath))
 ipcMain.handle(IPC.remoteRemove, (_e, a: unknown, items: unknown) =>
   str(a) && Array.isArray(items) && items.every((i) => i && typeof i === 'object' && str((i as { path?: unknown }).path)) ? remoteRemove(a, items as { path: string; dir: boolean }[]) : { done: [], failed: [] },
 )
-ipcMain.handle(IPC.remoteFetch, (_e, a: unknown, p: unknown) => (str(a) && str(p) ? remoteFetch(a, p) : { error: 'нет пути' }))
+ipcMain.handle(IPC.remoteFetch, (_e, a: unknown, p: unknown) => (str(a) && str(p) ? remoteFetch(a, p) : { error: msg().main.noPath }))
 
 // A file for the viewer: a path, absolute or relative to the pane's folder (`~` the home).
 ipcMain.handle(IPC.viewerOpen, async (_e, path: unknown, cwd: unknown) => {
-  if (typeof path !== 'string' || !path) return { error: 'нет пути' }
+  if (typeof path !== 'string' || !path) return { error: msg().main.noPath }
   const expanded = path.replace(/^~(?=$|[\\/])/, homedir())
   const full = isAbsolute(expanded) ? expanded : typeof cwd === 'string' && isAbsolute(cwd) ? resolvePath(cwd, expanded) : null
-  if (!full) return { error: 'путь не найден' }
+  if (!full) return { error: msg().main.pathNotFound }
   const root = await repoRoot(dirname(full)).catch(() => null)
   const r = await viewerFiles.open(full, root)
   return 'error' in r ? r : { ...r, path: full }
@@ -563,9 +564,9 @@ ipcMain.handle(IPC.folioProjects, () => {
 })
 ipcMain.handle(IPC.folioOpen, (_e, r: unknown) => {
   const request = folioRequest(r)
-  if (!request) return { error: 'не путь' }
+  if (!request) return { error: msg().main.notPath }
   const folio = folioOf()
-  return folio ? launchFolio(folio, request, process.env) : { error: 'folio не найден' }
+  return folio ? launchFolio(folio, request, process.env) : { error: msg().main.folioNotFound }
 })
 
 ipcMain.handle(IPC.claudeHooks, (_e, on: unknown) => setClaudeHooks(join(homedir(), '.claude', 'settings.json'), on === true))
@@ -618,9 +619,9 @@ function buildMenu(): void {
   }
   const template: Electron.MenuItemConstructorOptions[] = [
     ...(PLATFORM === 'mac'
-      ? [{ label: 'shell', submenu: [{ role: 'about' as const }, { type: 'separator' as const }, { label: 'Настройки…', click: command('settings.open') }, { type: 'separator' as const }, { role: 'hide' as const }, { role: 'hideOthers' as const }, { role: 'unhide' as const }, { type: 'separator' as const }, { role: 'quit' as const }] }]
+      ? [{ label: 'shell', submenu: [{ role: 'about' as const }, { type: 'separator' as const }, { label: msg().main.menuSettings, click: command('settings.open') }, { type: 'separator' as const }, { role: 'hide' as const }, { role: 'hideOthers' as const }, { role: 'unhide' as const }, { type: 'separator' as const }, { role: 'quit' as const }] }]
       : []),
-    { label: 'Окно', submenu: [{ role: 'minimize' }, { role: 'zoom' }, { role: 'togglefullscreen' }, { type: 'separator' }, { label: 'Инструменты разработчика', role: 'toggleDevTools' }] },
+    { label: msg().main.menuWindow, submenu: [{ role: 'minimize' }, { role: 'zoom' }, { role: 'togglefullscreen' }, { type: 'separator' }, { label: msg().main.menuDevTools, role: 'toggleDevTools' }] },
   ]
   Menu.setApplicationMenu(Menu.buildFromTemplate(template))
 }
@@ -644,14 +645,17 @@ app.whenReady().then(async () => {
   } catch {
     // No local port: agents' signals do not reach shell; the rest works.
   }
+  // The language: the config's, else the system's (Russian under test, unless a test says).
+  const locale = process.env.SHELL_LANG || (E2E ? 'ru' : app.getLocale())
   settings = new SettingsStore(DATA, (s) => {
     applySecureKeyboard()
+    buildMenu()
     quakeErrors = registerQuake()
     for (const host of hosts.values()) {
       host.ptys.setTailLimit(tailLimit(s))
       send(host, IPC.settings, settingsWithShortcuts())
     }
-  })
+  }, locale)
   settings.watch()
   applySecureKeyboard()
   buildMenu()

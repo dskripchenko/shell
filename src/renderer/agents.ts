@@ -8,6 +8,7 @@ import { nextAgent, type AgentInput, type AgentState } from '../common/agents'
 import { activeGroup, activeTab, allPanes, findPane, type Workspace } from '../common/layout'
 import { api, ui, ws } from './store'
 import { paneCwd } from './terminals'
+import { m } from './i18n'
 
 function agentsList(): string[] {
   return ui.settings?.config.agents.commands ?? []
@@ -39,7 +40,8 @@ function tell(paneId: string, before: AgentState | undefined, after: AgentState 
   if (after.status !== 'waiting' && after.status !== 'done' && after.status !== 'failed') return
   const place = ws.value ? placeOf(ws.value, paneId) : null
   const title = `${after.name}${place ? ` · ${place.group}` : ''}`
-  const body = after.status === 'waiting' ? (after.message ?? 'ждёт ввода') : after.status === 'done' ? 'закончил' : 'завершился с ошибкой'
+  const a = m().agent
+  const body = after.status === 'waiting' ? (after.message ?? a.notifyWaiting) : after.status === 'done' ? a.notifyDone : a.notifyFailed
   try {
     const n = new Notification(title, { body, silent: after.status === 'done' })
     n.onclick = () => {

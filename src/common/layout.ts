@@ -4,6 +4,8 @@
  * every change returns a new workspace and leaves the old one as it was.
  */
 
+import { msg } from './i18n'
+
 export type Direction = 'row' | 'column'
 export type Side = 'left' | 'right' | 'up' | 'down'
 
@@ -151,8 +153,8 @@ export function newGroup(newId: NewId, opts: { name: string; color?: string; cwd
   return { id: newId(), name: opts.name, color: opts.color ?? freeColor(opts.taken ?? []), ...(opts.cwd ? { cwd: opts.cwd } : {}), ...(opts.profile ? { profile: opts.profile } : {}), tabs: [tab], activeTab: tab.id }
 }
 
-export function newWorkspace(newId: NewId, cwd?: string): Workspace {
-  const group = newGroup(newId, { name: 'Основная', cwd })
+export function newWorkspace(newId: NewId, cwd?: string, name = msg().names.mainGroup): Workspace {
+  const group = newGroup(newId, { name, cwd })
   return { groups: [group], activeGroup: group.id, sidebarCollapsed: false }
 }
 

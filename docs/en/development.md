@@ -30,6 +30,8 @@ taking focus.
   settings, git, files, archives, SSH and SFTP, the viewer's scheme, the local
   API for folio, updates.
 - `src/renderer/` — the window: panes, palette, panels, viewer.
+- `src/locales/` — the interface's words in English, Russian, German and
+  Chinese; a new string goes into all four (a unit test checks).
 - `packages/shell-integration` — [`@dskripchenko/shell-integration`](https://www.npmjs.com/package/@dskripchenko/shell-integration)
   on npm: the shells' marks, their reader, the journal of agents' edits;
   published by a tag `shell-integration-v<version>`.

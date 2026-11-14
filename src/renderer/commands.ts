@@ -5,14 +5,19 @@
 import { activeGroup, activeTab, addGroup, addTab, closeGroup, closePane, closeTab, cycleGroup, cycleTab, findPane, focusSide, newWorkspace, selectGroup, splitPane, tabAt, toggleZoom, updateActiveTab, updateTab, type Workspace } from '../common/layout'
 import { forgetProject, saveGroupAsProject } from './projects'
 import { saveSelection } from './prompts'
+import { m } from './i18n'
+import type { Messages } from '../common/i18n'
 import { api, baseName, commit, newId, say, toFolio, ui, ws } from './store'
 import * as agents from './agents'
 import * as terminals from './terminals'
 
+export type GroupKey = keyof Messages['groups']
+
 export interface Command {
   id: string
-  title: string
-  group: string
+  /** Its name in the interface's language. */
+  readonly title: string
+  group: GroupKey
   run: () => void
   /** Not offered in the palette (the numbered ones). */
   hidden?: boolean | (() => boolean)
@@ -54,7 +59,7 @@ export function closePaneById(paneId: string): void {
 
 function newGroupHere(): void {
   const cwd = terminals.paneCwd(focusedPane()) ?? ui.home
-  const next = addGroup(w(), newId, { name: baseName(cwd) || 'Группа', cwd })
+  const next = addGroup(w(), newId, { name: baseName(cwd) || m().names.group, cwd })
   commit(next)
   const g = activeGroup(next)
   ui.dialog = { kind: 'group', id: g.id, name: g.name, color: g.color, isNew: true }
@@ -63,15 +68,15 @@ function newGroupHere(): void {
 /** The focused pane's repository (or its folder, for a project) handed to folio. */
 async function folioRepo(kind: 'review' | 'project'): Promise<void> {
   const cwd = terminals.paneCwd(focusedPane())
-  if (!cwd) return say('Папка панели неизвестна')
+  if (!cwd) return say(m().common.paneFolderUnknown)
   const repo = (await api.changesBaseline(cwd, 'head'))?.root
-  if (kind === 'review' && !repo) return say('Папка панели — не репозиторий git')
+  if (kind === 'review' && !repo) return say(m().common.notRepo)
   toFolio(kind === 'review' ? { review: repo } : { project: repo ?? cwd })
 }
 
 function toggleBroadcast(scope: 'tab' | 'group'): void {
   ui.broadcast = ui.broadcast === scope ? null : scope
-  say(ui.broadcast ? `Ввод уходит во все панели ${scope === 'tab' ? 'вкладки' : 'группы'}` : 'Ввод — только в активную панель')
+  say(ui.broadcast ? m().say.broadcastOn(scope) : m().say.broadcastOff)
 }
 
 function fontBy(delta: number | null): void {
@@ -79,97 +84,97 @@ function fontBy(delta: number | null): void {
   terminals.restyle()
 }
 
-const list: Command[] = [
-  { id: 'palette.open', group: 'Окно', title: 'Палитра команд', run: () => (ui.palette = ui.palette ? false : 'all') },
+const list: Omit<Command, 'title'>[] = [
+  { id: 'palette.open', group: 'window', run: () => (ui.palette = ui.palette ? false : 'all') },
   {
-    id: 'git.worktree', group: 'Проекты', title: 'Новый worktree в новой группе (с агентом)',
+    id: 'git.worktree', group: 'projects',
     run: () => {
       const cwd = terminals.paneCwd(focusedPane())
-      if (!cwd) return say('Папка панели неизвестна')
-      void api.changesBaseline(cwd, 'head').then((b) => (b ? (ui.worktree = { cwd, root: b.root }) : say('Папка панели — не репозиторий git')))
+      if (!cwd) return say(m().common.paneFolderUnknown)
+      void api.changesBaseline(cwd, 'head').then((b) => (b ? (ui.worktree = { cwd, root: b.root }) : say(m().common.notRepo)))
     },
   },
-  { id: 'input.broadcastTab', group: 'Терминал', title: 'Ввод во все панели вкладки: включить или выключить', run: () => toggleBroadcast('tab') },
-  { id: 'input.broadcastGroup', group: 'Терминал', title: 'Ввод во все панели группы: включить или выключить', run: () => toggleBroadcast('group') },
-  { id: 'prompts.insert', group: 'Агенты', title: 'Промпты: вставить в панель', run: () => (ui.palette = ui.palette === 'prompts' ? false : 'prompts') },
-  { id: 'prompts.saveSelection', group: 'Агенты', title: 'Промпты: сохранить выделенное как промпт', run: () => void saveSelection() },
-  { id: 'prompts.folder', group: 'Агенты', title: 'Промпты: открыть папку (файлы .md)', run: () => api.openPrompts() },
-  { id: 'project.switch', group: 'Проекты', title: 'Проекты: открыть или перейти', run: () => (ui.palette = ui.palette === 'projects' ? false : 'projects') },
-  { id: 'project.save', group: 'Проекты', title: 'Сохранить группу как проект (раскладка и агенты)', run: () => void saveGroupAsProject() },
-  { id: 'project.forget', group: 'Проекты', title: 'Убрать проект группы из списка', hidden: () => !ui.projects.some((p) => p.id === activeGroup(w()).project), run: forgetProject },
-  { id: 'sidebar.toggle', group: 'Окно', title: 'Свернуть или развернуть панель групп', run: () => commit({ ...w(), sidebarCollapsed: !w().sidebarCollapsed }) },
-  { id: 'settings.open', group: 'Окно', title: 'Настройки', run: () => (ui.settingsOpen = !ui.settingsOpen) },
-  { id: 'config.open', group: 'Окно', title: 'Открыть config.toml', run: () => api.openConfig() },
+  { id: 'input.broadcastTab', group: 'terminal', run: () => toggleBroadcast('tab') },
+  { id: 'input.broadcastGroup', group: 'terminal', run: () => toggleBroadcast('group') },
+  { id: 'prompts.insert', group: 'agents', run: () => (ui.palette = ui.palette === 'prompts' ? false : 'prompts') },
+  { id: 'prompts.saveSelection', group: 'agents', run: () => void saveSelection() },
+  { id: 'prompts.folder', group: 'agents', run: () => api.openPrompts() },
+  { id: 'project.switch', group: 'projects', run: () => (ui.palette = ui.palette === 'projects' ? false : 'projects') },
+  { id: 'project.save', group: 'projects', run: () => void saveGroupAsProject() },
+  { id: 'project.forget', group: 'projects', hidden: () => !ui.projects.some((p) => p.id === activeGroup(w()).project), run: forgetProject },
+  { id: 'sidebar.toggle', group: 'window', run: () => commit({ ...w(), sidebarCollapsed: !w().sidebarCollapsed }) },
+  { id: 'settings.open', group: 'window', run: () => (ui.settingsOpen = !ui.settingsOpen) },
+  { id: 'config.open', group: 'window', run: () => api.openConfig() },
   {
-    id: 'security.secureKeyboard', group: 'Окно', title: 'Защищённый ввод (Secure Keyboard Entry): включить или выключить', hidden: () => ui.os !== 'darwin',
+    id: 'security.secureKeyboard', group: 'window', hidden: () => ui.os !== 'darwin',
     run: () => {
       const on = !ui.settings?.config.security.secureKeyboard
-      void api.setSetting('security', 'secure-keyboard', on).then((r) => say('error' in r ? r.error : on ? 'Защищённый ввод включён' : 'Защищённый ввод выключен'))
+      void api.setSetting('security', 'secure-keyboard', on).then((r) => say('error' in r ? r.error : on ? m().say.secureOn : m().say.secureOff))
     },
   },
-  { id: 'data.open', group: 'Окно', title: 'Открыть папку данных shell-data', run: () => api.openDataDir() },
+  { id: 'data.open', group: 'window', run: () => api.openDataDir() },
   {
-    id: 'commander.toggle', group: 'Файлы', title: 'Файловые панели (как в Midnight Commander)',
+    id: 'commander.toggle', group: 'files',
     // A full-screen program (vim, less, mc itself) keeps the keys.
     when: () => ui.commander || terminals.get(focusedPane())?.term.buffer !== terminals.get(focusedPane())?.term.alt,
     run: () => (ui.commander = !ui.commander),
   },
-  { id: 'tree.toggle', group: 'Окно', title: 'Дерево проекта: показать или скрыть', run: () => (ui.treeOpen = !ui.treeOpen) },
-  { id: 'changes.toggle', group: 'Агенты', title: 'Изменения агента: показать или скрыть', run: () => (ui.changesOpen = !ui.changesOpen) },
-  { id: 'claude.hooksOn', group: 'Агенты', title: 'Claude Code: точные статусы через хуки (~/.claude/settings.json)', run: () => void api.claudeHooks(true).then(say) },
-  { id: 'claude.hooksOff', group: 'Агенты', title: 'Claude Code: убрать хуки shell', run: () => void api.claudeHooks(false).then(say) },
-  { id: 'folio.review', group: 'folio', title: 'folio: ревью изменений репозитория текущей панели', hidden: () => !ui.folio, run: () => void folioRepo('review') },
-  { id: 'folio.project', group: 'folio', title: 'folio: открыть папку текущей панели как проект', hidden: () => !ui.folio, run: () => void folioRepo('project') },
-  { id: 'update.check', group: 'Окно', title: 'Проверить обновления', run: () => api.checkUpdate() },
-  { id: 'update.restart', group: 'Окно', title: 'Перезапустить и обновить', run: () => api.restartToUpdate() },
-  { id: 'font.bigger', group: 'Окно', title: 'Крупнее шрифт', run: () => fontBy(1) },
-  { id: 'font.smaller', group: 'Окно', title: 'Мельче шрифт', run: () => fontBy(-1) },
-  { id: 'font.reset', group: 'Окно', title: 'Обычный размер шрифта', run: () => fontBy(null) },
+  { id: 'tree.toggle', group: 'window', run: () => (ui.treeOpen = !ui.treeOpen) },
+  { id: 'changes.toggle', group: 'agents', run: () => (ui.changesOpen = !ui.changesOpen) },
+  { id: 'claude.hooksOn', group: 'agents', run: () => void api.claudeHooks(true).then(say) },
+  { id: 'claude.hooksOff', group: 'agents', run: () => void api.claudeHooks(false).then(say) },
+  { id: 'folio.review', group: 'folio', hidden: () => !ui.folio, run: () => void folioRepo('review') },
+  { id: 'folio.project', group: 'folio', hidden: () => !ui.folio, run: () => void folioRepo('project') },
+  { id: 'update.check', group: 'window', run: () => api.checkUpdate() },
+  { id: 'update.restart', group: 'window', run: () => api.restartToUpdate() },
+  { id: 'font.bigger', group: 'window', run: () => fontBy(1) },
+  { id: 'font.smaller', group: 'window', run: () => fontBy(-1) },
+  { id: 'font.reset', group: 'window', run: () => fontBy(null) },
 
-  { id: 'group.new', group: 'Группы', title: 'Новая группа в папке текущей панели', run: newGroupHere },
+  { id: 'group.new', group: 'groups', run: newGroupHere },
   {
-    id: 'group.rename', group: 'Группы', title: 'Переименовать группу или сменить цвет',
+    id: 'group.rename', group: 'groups',
     run: () => {
       const g = activeGroup(w())
       ui.dialog = { kind: 'group', id: g.id, name: g.name, color: g.color, profile: g.profile ?? '' }
     },
   },
-  { id: 'group.close', group: 'Группы', title: 'Закрыть группу', run: () => commit(closeGroup(w(), activeGroup(w()).id, newId)) },
-  { id: 'group.next', group: 'Группы', title: 'Следующая группа', run: () => commit(cycleGroup(w(), 1)) },
-  { id: 'group.prev', group: 'Группы', title: 'Предыдущая группа', run: () => commit(cycleGroup(w(), -1)) },
+  { id: 'group.close', group: 'groups', run: () => commit(closeGroup(w(), activeGroup(w()).id, newId)) },
+  { id: 'group.next', group: 'groups', run: () => commit(cycleGroup(w(), 1)) },
+  { id: 'group.prev', group: 'groups', run: () => commit(cycleGroup(w(), -1)) },
 
-  { id: 'tab.new', group: 'Вкладки', title: 'Новая вкладка', run: () => commit(addTab(w(), newId, { cwd: terminals.paneCwd(focusedPane()) })) },
-  { id: 'tab.close', group: 'Вкладки', title: 'Закрыть вкладку', run: () => commit(closeTab(w(), activeTab(activeGroup(w())).id, newId)) },
-  { id: 'tab.next', group: 'Вкладки', title: 'Следующая вкладка', run: () => commit(cycleTab(w(), 1)) },
-  { id: 'tab.prev', group: 'Вкладки', title: 'Предыдущая вкладка', run: () => commit(cycleTab(w(), -1)) },
+  { id: 'tab.new', group: 'tabs', run: () => commit(addTab(w(), newId, { cwd: terminals.paneCwd(focusedPane()) })) },
+  { id: 'tab.close', group: 'tabs', run: () => commit(closeTab(w(), activeTab(activeGroup(w())).id, newId)) },
+  { id: 'tab.next', group: 'tabs', run: () => commit(cycleTab(w(), 1)) },
+  { id: 'tab.prev', group: 'tabs', run: () => commit(cycleTab(w(), -1)) },
   {
-    id: 'tab.rename', group: 'Вкладки', title: 'Переименовать вкладку или сменить цвет',
+    id: 'tab.rename', group: 'tabs',
     run: () => {
       const t = activeTab(activeGroup(w()))
       ui.dialog = { kind: 'tab', id: t.id, name: t.name ?? '', color: t.color ?? null }
     },
   },
 
-  { id: 'pane.splitRight', group: 'Панели', title: 'Разделить вправо', run: () => commit(updateActiveTab(w(), (t) => splitPane(t, t.focus, 'row', newId))) },
-  { id: 'pane.splitDown', group: 'Панели', title: 'Разделить вниз', run: () => commit(updateActiveTab(w(), (t) => splitPane(t, t.focus, 'column', newId))) },
-  { id: 'pane.close', group: 'Панели', title: 'Закрыть панель', run: () => closePaneById(focusedPane()) },
-  { id: 'pane.zoom', group: 'Панели', title: 'Панель на всю вкладку и обратно', run: () => commit(updateActiveTab(w(), toggleZoom)) },
-  { id: 'pane.focusLeft', group: 'Панели', title: 'Панель слева', run: () => commit(updateActiveTab(w(), (t) => focusSide(t, 'left'))) },
-  { id: 'pane.focusRight', group: 'Панели', title: 'Панель справа', run: () => commit(updateActiveTab(w(), (t) => focusSide(t, 'right'))) },
-  { id: 'pane.focusUp', group: 'Панели', title: 'Панель выше', run: () => commit(updateActiveTab(w(), (t) => focusSide(t, 'up'))) },
-  { id: 'pane.focusDown', group: 'Панели', title: 'Панель ниже', run: () => commit(updateActiveTab(w(), (t) => focusSide(t, 'down'))) },
+  { id: 'pane.splitRight', group: 'panes', run: () => commit(updateActiveTab(w(), (t) => splitPane(t, t.focus, 'row', newId))) },
+  { id: 'pane.splitDown', group: 'panes', run: () => commit(updateActiveTab(w(), (t) => splitPane(t, t.focus, 'column', newId))) },
+  { id: 'pane.close', group: 'panes', run: () => closePaneById(focusedPane()) },
+  { id: 'pane.zoom', group: 'panes', run: () => commit(updateActiveTab(w(), toggleZoom)) },
+  { id: 'pane.focusLeft', group: 'panes', run: () => commit(updateActiveTab(w(), (t) => focusSide(t, 'left'))) },
+  { id: 'pane.focusRight', group: 'panes', run: () => commit(updateActiveTab(w(), (t) => focusSide(t, 'right'))) },
+  { id: 'pane.focusUp', group: 'panes', run: () => commit(updateActiveTab(w(), (t) => focusSide(t, 'up'))) },
+  { id: 'pane.focusDown', group: 'panes', run: () => commit(updateActiveTab(w(), (t) => focusSide(t, 'down'))) },
 
-  { id: 'terminal.clear', group: 'Терминал', title: 'Очистить экран и прокрутку', run: () => focusedView()?.clear() },
-  { id: 'terminal.find', group: 'Терминал', title: 'Найти в выводе', run: () => (ui.find = { query: ui.find?.query ?? '', count: 0, index: 0 }) },
+  { id: 'terminal.clear', group: 'terminal', run: () => focusedView()?.clear() },
+  { id: 'terminal.find', group: 'terminal', run: () => (ui.find = { query: ui.find?.query ?? '', count: 0, index: 0 }) },
   {
-    id: 'terminal.copy', group: 'Терминал', title: 'Копировать выделенное',
+    id: 'terminal.copy', group: 'terminal',
     run: () => {
       const text = focusedView()?.getSelection()
       if (text) api.copy(text)
     },
   },
   {
-    id: 'terminal.paste', group: 'Терминал', title: 'Вставить',
+    id: 'terminal.paste', group: 'terminal',
     run: () => {
       const id = focusedPane()
       void api.paste().then((text) => {
@@ -182,15 +187,15 @@ const list: Command[] = [
       })
     },
   },
-  { id: 'terminal.selectAll', group: 'Терминал', title: 'Выделить весь вывод', run: () => focusedView()?.selectAll() },
-  { id: 'terminal.prevCommand', group: 'Терминал', title: 'К предыдущей команде', run: () => void focusedView()?.scrollToCommand(-1) },
-  { id: 'terminal.nextCommand', group: 'Терминал', title: 'К следующей команде', run: () => void focusedView()?.scrollToCommand(1) },
+  { id: 'terminal.selectAll', group: 'terminal', run: () => focusedView()?.selectAll() },
+  { id: 'terminal.prevCommand', group: 'terminal', run: () => void focusedView()?.scrollToCommand(-1) },
+  { id: 'terminal.nextCommand', group: 'terminal', run: () => void focusedView()?.scrollToCommand(1) },
 ]
 
 for (let i = 1; i <= 9; i++) {
-  list.push({ id: `tab.select.${i}`, group: 'Вкладки', title: i === 9 ? 'Последняя вкладка' : `Вкладка ${i}`, hidden: true, run: () => commit(tabAt(w(), i)) })
+  list.push({ id: `tab.select.${i}`, group: 'tabs', hidden: true, run: () => commit(tabAt(w(), i)) })
   list.push({
-    id: `group.select.${i}`, group: 'Группы', title: `Группа ${i}`, hidden: true,
+    id: `group.select.${i}`, group: 'groups', hidden: true,
     run: () => {
       const g = w().groups[i - 1]
       if (g) commit(selectGroup(w(), g.id))
@@ -198,7 +203,15 @@ for (let i = 1; i <= 9; i++) {
   })
 }
 
-export const COMMANDS = new Map(list.map((c) => [c.id, c]))
+/** A command's name in the interface's language (the numbered ones by their number). */
+function titleOf(id: string): string {
+  const t = m().commands
+  const n = /^(tab|group)\.select\.(\d)$/.exec(id)
+  if (n) return n[1] === 'tab' ? t.tabAt(Number(n[2])) : t.groupAt(Number(n[2]))
+  return (t as unknown as Record<string, string>)[id] ?? id
+}
+
+export const COMMANDS = new Map<string, Command>(list.map((c) => [c.id, Object.defineProperty({ ...c }, 'title', { get: () => titleOf(c.id), enumerable: true }) as Command]))
 
 /** A new tab with a name, in a folder (the focused pane's by default); its pane's id. */
 export function newNamedTab(name: string, cwd?: string): string {

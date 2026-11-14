@@ -17,6 +17,7 @@ import { dirname, join } from 'node:path'
 import { Readable } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
 import type { UpdateState } from '../common/ipc'
+import { msg } from '../common/i18n'
 
 export interface Product {
   /** The name in archives and executables: `shell-0.1.0-mac-arm64.zip`, `shell.exe`. */
@@ -171,7 +172,7 @@ export class Updater {
     writeJson(join(this.o.dir, 'state.json'), { checkedAt: Date.now() })
     try {
       const res = await this.fetchWithin(this.o.releases ?? `https://api.github.com/repos/${this.o.product.repo}/releases/latest`, (this.o.timeouts ?? { answer: 30_000 }).answer, 'GitHub')
-      if (!res.ok) throw new Error(`релизы ответили ${res.status}`)
+      if (!res.ok) throw new Error(msg().main.update.releases(res.status))
       const release = pickRelease(await res.json(), this.o.product.name, this.o.current, this.o.platform, this.o.arch)
       if (!release) {
         this.set({ status: 'latest' })
@@ -188,7 +189,7 @@ export class Updater {
 
   /** A request that must start answering in time: a network that swallows it is not waited on for ever. */
   private async fetchWithin(url: string, ms: number, what: string, abort = new AbortController()): Promise<Response> {
-    const timer = setTimeout(() => abort.abort(new Error(`${what} не ответил за ${Math.round(ms / 1000)} с`)), ms)
+    const timer = setTimeout(() => abort.abort(new Error(msg().main.update.noAnswer(what, Math.round(ms / 1000)))), ms)
     try {
       return await this.o.fetch(url, { signal: abort.signal })
     } catch (e) {
@@ -200,14 +201,14 @@ export class Updater {
 
   private async download(release: Release): Promise<void> {
     const { answer, idle } = this.o.timeouts ?? { answer: 30_000, idle: 60_000 }
-    const shaRes = await this.fetchWithin(release.shaUrl, answer, 'файл контрольной суммы')
-    if (!shaRes.ok) throw new Error(`контрольная сумма ответила ${shaRes.status}`)
+    const shaRes = await this.fetchWithin(release.shaUrl, answer, msg().main.update.checksumFile)
+    if (!shaRes.ok) throw new Error(msg().main.update.checksum(shaRes.status))
     const expected = shaOf(await shaRes.text())
-    if (!expected) throw new Error('в файле контрольной суммы нет SHA-256')
+    if (!expected) throw new Error(msg().main.update.noSha)
     const file = join(this.o.dir, `${release.name}.part`)
     const abort = new AbortController()
-    const res = await this.fetchWithin(release.url, answer, 'архив', abort)
-    if (!res.ok || !res.body) throw new Error(`архив ответил ${res.status}`)
+    const res = await this.fetchWithin(release.url, answer, msg().main.update.archive, abort)
+    if (!res.ok || !res.body) throw new Error(msg().main.update.archiveAnswered(res.status))
     const total = Number(res.headers.get('content-length')) || undefined
     const hash = createHash('sha256')
     const source = Readable.fromWeb(res.body as import('node:stream/web').ReadableStream<Uint8Array>)
@@ -216,7 +217,7 @@ export class Updater {
     let stalled: ReturnType<typeof setTimeout> | null = null
     const watch = () => {
       if (stalled) clearTimeout(stalled)
-      stalled = setTimeout(() => source.destroy(new Error(`загрузка стояла ${Math.round(idle / 1000)} с`)), idle)
+      stalled = setTimeout(() => source.destroy(new Error(msg().main.update.stalled(Math.round(idle / 1000)))), idle)
     }
     watch()
     source.on('data', (chunk: Buffer) => {
@@ -240,7 +241,7 @@ export class Updater {
     }
     if (hash.digest('hex') !== expected) {
       rmSync(file, { force: true })
-      throw new Error('архив не совпал с контрольной суммой')
+      throw new Error(msg().main.update.mismatch)
     }
     const target = join(this.o.dir, release.version)
     rmSync(target, { recursive: true, force: true })
@@ -255,7 +256,7 @@ export class Updater {
     const name = this.o.product.name
     const run = (cmd: string, args: string[]): void => {
       const r = spawnSync(cmd, args, { stdio: 'ignore', windowsHide: true })
-      if (r.status !== 0) throw new Error(`${cmd} не распаковал обновление`)
+      if (r.status !== 0) throw new Error(msg().main.update.unpack(cmd))
     }
     if (this.o.platform === 'linux') {
       const path = join(target, `${name}.AppImage`)
@@ -266,11 +267,11 @@ export class Updater {
     if (this.o.platform === 'darwin') {
       run('ditto', ['-x', '-k', file, target])
       const app = readdirSync(target).find((n) => n.endsWith('.app'))
-      if (!app) throw new Error('в архиве нет .app')
+      if (!app) throw new Error(msg().main.update.noApp)
       return join(target, app)
     }
     run('tar', ['-xf', file, '-C', target])
-    if (!existsSync(join(target, `${name}.exe`))) throw new Error(`в архиве нет ${name}.exe`)
+    if (!existsSync(join(target, `${name}.exe`))) throw new Error(msg().main.update.noExe(name))
     return target
   }
 
