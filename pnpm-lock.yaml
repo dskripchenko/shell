@@ -12,6 +12,9 @@ importers:
         specifier: ^1.1.0
         version: 1.1.0
     devDependencies:
+      '@dskripchenko/embed':
+        specifier: 1.21.0
+        version: 1.21.0
       '@dskripchenko/shell-integration':
         specifier: workspace:*
         version: link:packages/shell-integration
@@ -96,6 +99,10 @@ packages:
 
   '@cacheable/utils@2.5.0':
     resolution: {integrity: sha512-buipgOVDkkPXNR5+xBpDw7Zk2n1EvU7qBJCNUcL7rhQ//kfpOXPAvQ511Os0vpLYJ1pZnvudNytkQt2hst3wqA==}
+
+  '@dskripchenko/embed@1.21.0':
+    resolution: {integrity: sha512-1GUu6t9Y16EQwfvuyVCIr0kgYCsjpdNboeG8AAfo/ydJQhasbD+76cFvt9Bb7Qefyl8qKlJQO+4KiJqLHtU10A==}
+    engines: {node: '>=20'}
 
   '@dskripchenko/math@0.1.0':
     resolution: {integrity: sha512-M87c5BAvDsYRZviaXHFkQWK/0a++xkVbidB+loqS5cHTXIyyD5yoHLMHFDqMLlLEyvMOOuJeMRPRjvoYyiilRw==}
@@ -2189,6 +2196,8 @@ snapshots:
     dependencies:
       hashery: 1.5.1
       keyv: 5.6.0
+
+  '@dskripchenko/embed@1.21.0': {}
 
   '@dskripchenko/math@0.1.0': {}
 

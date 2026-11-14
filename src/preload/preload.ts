@@ -15,6 +15,8 @@ const api: ShellApi = {
   onExit: (listener) => void ipcRenderer.on(IPC.exit, (_e, paneId: string, code: number) => listener(paneId, code)),
   onAgentSignal: (listener) => void ipcRenderer.on(IPC.agentSignal, (_e, s: AgentSignal) => listener(s)),
   claudeHooks: (on) => ipcRenderer.invoke(IPC.claudeHooks, on),
+  viewerOpen: (path, cwd) => ipcRenderer.invoke(IPC.viewerOpen, path, cwd),
+  openPath: (path) => ipcRenderer.send(IPC.openPath, path),
   files: {
     list: (dir) => ipcRenderer.invoke(IPC.filesList, dir),
     copy: (items, target) => ipcRenderer.invoke(IPC.filesCopy, items, target),

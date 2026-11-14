@@ -7,6 +7,15 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added
+
+- A viewer beside the panes: markdown with live blocks (diagrams of every
+  notation, BPMN, draw.io, OpenAPI…), diagram and API files, pictures, video
+  and sound, code highlighted. Opened by Cmd/Ctrl+click on a path in the
+  output (`src/a.ts:42`), Enter on a file in the file panels, a double click
+  in an agent's changes. Sandboxed on a scheme of its own, no network: a
+  document sees only its folder.
+
 ## [0.2.0] - 2026-11-14
 
 Stage 2 begins: agents in panes, their changes, files the Midnight Commander way.

@@ -78,7 +78,7 @@ Shell портативный, по правилам folio и `portable`: без 
 
 Собственные пакеты автора (исходники лежат рядом в `../`): `@dskripchenko/ui` (компоненты, токены, темы на CSS-переменных), `@dskripchenko/code-editor` и `@dskripchenko/syntax` (просмотрщик кода), `@dskripchenko/embed` (живые блоки: markdown, диаграммы, BPMN, draw.io, OpenAPI, flow, board, kanban, calendar). Соседние проекты используют pnpm, Vite, TypeScript, ESLint, Vitest и Playwright, Node ≥ 20.
 
-Правила подключения embed:
-- Использовать ESM-плагины embed (`dist/plugins/*`, голые импорты `vue` и `@dskripchenko/*`), чтобы Vite собрал их с одним Vue и одним UI-kit. CDN-загрузчик (`embed.js`, import map на jsdelivr) и толстый бандл (`embed.bundle.js`, свой Vue) не использовать: приложение работает офлайн.
-- Локальные файлы (`src=`, относительные пути в md) читаются через главный процесс Electron (свой протокол, как `folio://app/r/…` в folio), с базой — каталогом документа.
-- Документы приходят от агентов и из чужих репозиториев, их содержимое недоверенное. WebView с превью не должен иметь доступа к IPC управления PTY и файлами (отдельное окно или iframe без capabilities, строгий CSP); сетевые запросы блоков (`poll-url` у flow) — только к явно разрешённым адресам.
+Просмотрщик и embed (так и сделано):
+- Документы недоверенные (от агентов, из чужих репозиториев). Просмотрщик — отдельная страница `src/renderer/viewer.html` + `viewer.ts` в iframe с `sandbox="allow-scripts"` на своей схеме `shell-doc://` (`src/main/viewer.ts`): другой origin, без preload, строгий CSP без сети. Окно передаёт ей файл через `postMessage`, обратно слушает только ссылки.
+- На странице просмотрщика — толстый бандл `embed.bundle.js` (копируется в `dist/renderer/vendor` при сборке): у изолированной страницы и так свой Vue, CDN не нужен. Элементы: `dsk-markdown` (живые блоки), `dsk-diagram`, `dsk-bpmn`, `dsk-dmn`, `dsk-drawio`, `dsk-openapi`, `dsk-asyncapi`, `dsk-video`, `dsk-audio`; код показывается как огороженный блок markdown. Что каким элементом — `src/common/viewer.ts`.
+- `shell-doc://app/` отдаёт только `viewer.html`, `vendor/*`, `assets/*`; `shell-doc://r-<id>/` — файлы папки, открытой для просмотра (корень репозитория документа или его папка), и ничего вне её. Сетевые запросы блоков (`poll-url` у flow, «Try it» у OpenAPI) запрещены CSP.

@@ -140,7 +140,7 @@ const STATUS = { added: 'A', modified: 'M', deleted: 'D' } as const
     <div v-else-if="files.length === 0" class="changes-empty">Изменений нет</div>
     <div v-else class="changes-body">
       <ul class="changes-files" role="listbox" aria-label="Изменённые файлы">
-        <li v-for="f in files" :key="f.path" class="changes-file" :class="{ active: f.path === selected }" role="option" :aria-selected="f.path === selected" @click="select(f)">
+        <li v-for="f in files" :key="f.path" class="changes-file" :class="{ active: f.path === selected }" role="option" :aria-selected="f.path === selected" title="Двойной щелчок — открыть в просмотре" @click="select(f)" @dblclick="f.status !== 'deleted' && baseline && (ui.viewer = { path: f.path, cwd: baseline.root })">
           <span class="file-status" :class="f.status">{{ STATUS[f.status] }}</span>
           <span class="file-path mono" :title="f.path">{{ f.path }}</span>
           <span class="plus mono">{{ f.adds ? `+${f.adds}` : '' }}</span>

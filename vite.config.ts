@@ -24,6 +24,8 @@ export default defineConfig({
     target: 'chrome140',
     sourcemap: true,
     chunkSizeWarningLimit: 2048,
+    // The window, and the viewer page shown in it on a scheme of its own.
+    rollupOptions: { input: { index: resolve(import.meta.dirname, 'src/renderer/index.html'), viewer: resolve(import.meta.dirname, 'src/renderer/viewer.html') } },
   },
   test: {
     root: import.meta.dirname,

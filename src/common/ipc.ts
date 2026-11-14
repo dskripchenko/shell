@@ -58,6 +58,10 @@ export interface ShellApi {
   changesBaseline(cwd: string, kind: 'agent' | 'head'): Promise<Baseline | null>
   changesList(baseline: Baseline): Promise<ChangedFile[] | { error: string }>
   changesDiff(baseline: Baseline, path: string, untracked: boolean): Promise<{ diff: string } | { text: string } | { error: string }>
+  /** A file opened for the viewer (a path absolute, or relative to `cwd`). */
+  viewerOpen(path: string, cwd?: string): Promise<ViewerDoc | { error: string }>
+  /** A file opened by the system's own program. */
+  openPath(path: string): void
   /** The file panels' work on disk. */
   files: {
     list(dir: string): Promise<Entry[] | { error: string }>
@@ -83,6 +87,15 @@ export interface ShellApi {
   /** The update put in place now: shell closes and starts again. */
   restartToUpdate(): void
   onUpdate(listener: (info: UpdateInfo) => void): void
+}
+
+export interface ViewerDoc {
+  path: string
+  name: string
+  base: string
+  url: string
+  text: string | null
+  size: number
 }
 
 export interface AgentSignal {
@@ -125,6 +138,8 @@ export const IPC = {
   changesBaseline: 'changes:baseline',
   changesList: 'changes:list',
   changesDiff: 'changes:diff',
+  viewerOpen: 'viewer:open',
+  openPath: 'open:path',
   filesList: 'files:list',
   filesCopy: 'files:copy',
   filesMove: 'files:move',

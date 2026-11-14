@@ -8,6 +8,7 @@ import { allPanes, findPane, type PaneLeaf, type Workspace } from '../common/lay
 import { api, ui, ws } from './store'
 import * as agents from './agents'
 import { allThemes, currentTheme } from './theme'
+import { PATH_IN_OUTPUT, splitPathLine } from '../common/viewer'
 
 interface Entry {
   id: string
@@ -44,6 +45,8 @@ function options(id: string, profile?: string): TerminalViewOptions {
     lineHeight: c?.font.lineHeight ?? 1.3,
     onResize: (cols, rows) => api.resize(id, cols, rows),
     onLink: (url) => api.openExternal(url),
+    // A path in the output (`src/a.ts:42`) opens in the viewer, from the pane's folder.
+    links: [{ pattern: PATH_IN_OUTPUT, activate: (text: string) => (ui.viewer = { path: splitPathLine(text).path, cwd: paneCwd(id) }) }],
   }
 }
 

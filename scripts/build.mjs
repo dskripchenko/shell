@@ -1,6 +1,6 @@
 // Builds the main process and the preload with esbuild, the window with Vite, into dist/.
 import { build } from 'esbuild'
-import { cpSync, rmSync } from 'node:fs'
+import { cpSync, mkdirSync, rmSync } from 'node:fs'
 import { build as vite } from 'vite'
 
 rmSync('dist', { recursive: true, force: true })
@@ -10,5 +10,8 @@ const common = { bundle: true, sourcemap: true, logLevel: 'warning', target: 'no
 await build({ ...common, entryPoints: ['src/main/index.ts'], outfile: 'dist/main.cjs', external: ['electron', 'node-pty'], loader: { '.zsh': 'text', '.bash': 'text', '.ps1': 'text' } })
 await build({ ...common, entryPoints: ['src/preload/preload.ts'], outfile: 'dist/preload.cjs', external: ['electron'] })
 await vite({ configFile: 'vite.config.ts', logLevel: 'warn' })
+mkdirSync('dist/renderer/vendor', { recursive: true })
+// embed's whole bundle for the viewer page: every block, nothing fetched at run time.
+cpSync('node_modules/@dskripchenko/embed/dist/embed.bundle.js', 'dist/renderer/vendor/embed.bundle.js')
 // The window's icon (Linux shows it; macOS and Windows take the bundle's).
 cpSync('build/icons/png/512.png', 'dist/icon.png')

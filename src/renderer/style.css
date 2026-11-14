@@ -205,3 +205,7 @@ kbd:empty { display: none; }
 .fkey kbd { color: var(--uid-accent-text); min-width: 22px; }
 .fkey:hover { background: color-mix(in srgb, var(--uid-text-primary) 8%, var(--uid-surface-raised)); }
 .commander-overlay { position: absolute; }
+
+/* The viewer: the sandboxed page fills the panel. */
+.viewer { width: min(640px, 50vw); flex: none; display: flex; flex-direction: column; min-height: 0; background: var(--term-bg); border-left: 1px solid var(--uid-border-subtle); }
+.viewer-frame { flex: 1; min-height: 0; width: 100%; border: 0; background: var(--term-bg); }

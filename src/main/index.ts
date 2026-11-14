@@ -2,7 +2,7 @@
  * The main process: the window (and the drop-down one), the shells, the
  * settings and the last session — everything the window may not touch itself.
  */
-import { app, BrowserWindow, clipboard, globalShortcut, ipcMain, Menu, nativeTheme, net, screen, shell as electronShell, type WebContents } from 'electron'
+import { app, BrowserWindow, clipboard, globalShortcut, ipcMain, Menu, nativeTheme, net, protocol, screen, shell as electronShell, type WebContents } from 'electron'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { toAccelerator, type Platform } from '../common/keys'
@@ -16,7 +16,8 @@ import { SettingsStore } from './settings'
 import { Updater, type UpdateState } from './update'
 import { NotifyServer } from './notify'
 import { copyInto, listDir, makeDir, moveInto, moveTo, readHead, type OpResult } from './files'
-import { isAbsolute } from 'node:path'
+import { dirname, isAbsolute, resolve as resolvePath } from 'node:path'
+import { SCHEME, ViewerFiles } from './viewer'
 import { setClaudeHooks } from './claudeHooks'
 import { changedFiles, fileDiff, headBaseline, repoRoot, takeBaseline, type Baseline } from './changes'
 import type { UpdateInfo } from '../common/ipc'
@@ -33,6 +34,10 @@ const PLATFORM: Platform = process.platform === 'darwin' ? 'mac' : 'other'
 const VERSION = app.getVersion()
 
 if (!app.requestSingleInstanceLock()) app.quit()
+
+// The viewer's scheme: a page and documents on an origin of their own (src/main/viewer.ts).
+protocol.registerSchemesAsPrivileged([{ scheme: SCHEME, privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: true, stream: true } }])
+const viewerFiles = new ViewerFiles(join(__dirname, 'renderer'))
 
 type Kind = 'main' | 'quake'
 
@@ -364,6 +369,20 @@ ipcMain.handle(IPC.filesHead, async (_e, path: unknown) => {
   }
 })
 
+// A file for the viewer: a path, absolute or relative to the pane's folder (`~` the home).
+ipcMain.handle(IPC.viewerOpen, async (_e, path: unknown, cwd: unknown) => {
+  if (typeof path !== 'string' || !path) return { error: 'нет пути' }
+  const expanded = path.replace(/^~(?=$|[\\/])/, homedir())
+  const full = isAbsolute(expanded) ? expanded : typeof cwd === 'string' && isAbsolute(cwd) ? resolvePath(cwd, expanded) : null
+  if (!full) return { error: 'путь не найден' }
+  const root = await repoRoot(dirname(full)).catch(() => null)
+  const r = await viewerFiles.open(full, root)
+  return 'error' in r ? r : { ...r, path: full }
+})
+ipcMain.on(IPC.openPath, (_e, path: unknown) => {
+  if (typeof path === 'string' && isAbsolute(path)) void electronShell.openPath(path)
+})
+
 ipcMain.handle(IPC.claudeHooks, (_e, on: unknown) => setClaudeHooks(join(homedir(), '.claude', 'settings.json'), on === true))
 
 // Updates ----------------------------------------------------------------------------------
@@ -432,6 +451,7 @@ app.on('second-instance', () => {
 
 app.whenReady().then(async () => {
   if (E2E) app.dock?.hide()
+  protocol.handle(SCHEME, (req) => viewerFiles.handle(req.url))
   try {
     await notify.start()
   } catch {

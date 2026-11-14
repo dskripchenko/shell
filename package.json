@@ -24,6 +24,7 @@
     "node-pty": "^1.1.0"
   },
   "devDependencies": {
+    "@dskripchenko/embed": "1.21.0",
     "@dskripchenko/shell-integration": "workspace:*",
     "@dskripchenko/terminal": "^0.4.1",
     "@dskripchenko/ui": "^1.59.0",

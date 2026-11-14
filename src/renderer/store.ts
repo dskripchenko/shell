@@ -56,6 +56,8 @@ export const ui = reactive({
   /** The file panels over the terminal; panes whose shell runs a command now (its marks say). */
   commander: false,
   busy: {} as Record<string, boolean>,
+  /** The file in the viewer: its path, absolute or relative to `cwd`. */
+  viewer: null as null | { path: string; cwd?: string },
   /** The changes panel: shown or not; the baselines agents started from, by pane; files marked viewed. */
   changesOpen: false,
   baselines: {} as Record<string, import('../common/ipc').Baseline>,

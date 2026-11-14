@@ -59,8 +59,8 @@ async function open(p: PanelState, i: number): Promise<void> {
   if (!e) return
   if (e.name === '..') return go(p, parentOf(p.dir), p.dir.split(/[\\/]/).filter(Boolean).pop())
   if (e.kind === 'dir' || e.linkToDir) return go(p, joinPath(p.dir, e.name))
-  quick.value = true
-  await showQuick()
+  // A file: in the viewer beside the panels (F3 shows its start in the other panel).
+  ui.viewer = { path: joinPath(p.dir, e.name) }
 }
 
 /** The items F5, F6, F8 act on: the marked ones, else the one under the cursor. */
