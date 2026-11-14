@@ -43,16 +43,3 @@ describe('the shell and its environment', () => {
   })
 })
 
-describe('PowerShell says its folder', () => {
-  it('its prompt wrapped by an encoded command after the profile; other shells as they are', async () => {
-    const { withCwdReport } = await import('../../src/main/pty')
-    const ps = withCwdReport({ file: 'powershell.exe', args: ['-NoLogo'] })
-    expect(ps.args.slice(0, 3)).toEqual(['-NoLogo', '-NoExit', '-EncodedCommand'])
-    const script = Buffer.from(ps.args[3]!, 'base64').toString('utf16le')
-    expect(script).toContain("']7;file://'")
-    expect(script).toContain('& $__shellPrompt')
-    expect(withCwdReport({ file: 'C:\\Program Files\\PowerShell\\7\\pwsh.exe', args: [] }).args[1]).toBe('-EncodedCommand')
-    expect(withCwdReport({ file: 'pwsh', args: ['-Command', 'x'] }).args).toEqual(['-Command', 'x'])
-    expect(withCwdReport({ file: '/bin/zsh', args: ['-l'] })).toEqual({ file: '/bin/zsh', args: ['-l'] })
-  })
-})

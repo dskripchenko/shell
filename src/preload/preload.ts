@@ -1,4 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron'
+import type { ShellEvent } from '@dskripchenko/shell-integration'
 import { IPC, type Settings, type ShellApi, type UpdateInfo } from '../common/ipc'
 
 const api: ShellApi = {
@@ -12,6 +13,7 @@ const api: ShellApi = {
   saveWorkspace: (ws) => ipcRenderer.send(IPC.saveWorkspace, ws),
   onData: (listener) => void ipcRenderer.on(IPC.data, (_e, paneId: string, data: string) => listener(paneId, data)),
   onExit: (listener) => void ipcRenderer.on(IPC.exit, (_e, paneId: string, code: number) => listener(paneId, code)),
+  onEvents: (listener) => void ipcRenderer.on(IPC.events, (_e, paneId: string, events: ShellEvent[]) => listener(paneId, events)),
   onSettings: (listener) => void ipcRenderer.on(IPC.settings, (_e, s: Settings) => listener(s)),
   onCommand: (listener) => void ipcRenderer.on(IPC.command, (_e, command: string) => listener(command)),
   copy: (text) => ipcRenderer.send(IPC.copy, text),

@@ -7,6 +7,7 @@ import type { ConfigResult } from './config'
 import type { Platform } from './keys'
 import type { Workspace } from './layout'
 import type { Theme } from './themes'
+import type { ShellEvent } from '@dskripchenko/shell-integration'
 
 export interface Startup {
   platform: Platform
@@ -43,6 +44,7 @@ export interface ShellApi {
   saveWorkspace(ws: Workspace): void
   onData(listener: (paneId: string, data: string) => void): void
   onExit(listener: (paneId: string, code: number) => void): void
+  onEvents(listener: (paneId: string, events: ShellEvent[]) => void): void
   onSettings(listener: (settings: Settings) => void): void
   /** A window-level command sent by the main process (the menu, the drop-down hotkey). */
   onCommand(listener: (command: string) => void): void
@@ -85,6 +87,7 @@ export const IPC = {
   gitBranch: 'git:branch',
   data: 'pty:data',
   exit: 'pty:exit',
+  events: 'pty:events',
   saveWorkspace: 'session:save',
   settings: 'settings:changed',
   command: 'window:command',

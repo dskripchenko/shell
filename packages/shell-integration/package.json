@@ -1,0 +1,12 @@
+{
+  "name": "@dskripchenko/shell-integration",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Shell integration for terminal apps: zsh, bash and PowerShell mark their commands (OSC 133, 633;E) and say their folder (OSC 7) after the user's own startup files; and a reader of those marks, notifications and bells from a shell's output.",
+  "license": "MIT",
+  "author": "Denis Skripchenko",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

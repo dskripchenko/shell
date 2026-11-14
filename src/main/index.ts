@@ -93,9 +93,11 @@ function createHost(kind: Kind): Host {
       {
         data: (paneId, data) => send(host, IPC.data, paneId, data),
         exit: (paneId, code) => send(host, IPC.exit, paneId, code),
+        events: (paneId, events) => send(host, IPC.events, paneId, events),
       },
       VERSION,
       tailLimit(s),
+      join(DATA, 'shell-integration'),
     ),
     workspace: session.workspace(),
     replay: s.config.scrollback.restore ? session.readScrollback() : {},

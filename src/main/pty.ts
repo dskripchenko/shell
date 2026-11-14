@@ -9,6 +9,7 @@ import { createRequire } from 'node:module'
 import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
 import type { IPty } from 'node-pty'
+import { EventReader, integrate, type ShellEvent } from '@dskripchenko/shell-integration'
 
 // The main process is bundled as CommonJS; the tests' runner gives __filename too.
 const require = createRequire(__filename)
@@ -81,27 +82,6 @@ export function shellEnv(from: NodeJS.ProcessEnv, version: string, platform: Nod
   return env
 }
 
-/**
- * PowerShell says its folder after each command (OSC 7), as other shells do
- * with their integration: its prompt function wrapped, the user's kept. Run
- * after the profile, as an encoded command, so no execution policy stops it.
- */
-const PWSH_CWD = [
-  '$__shellPrompt = $function:prompt',
-  'function prompt {',
-  '  $p = $executionContext.SessionState.Path.CurrentLocation',
-  "  if ($p.Provider.Name -eq 'FileSystem') { [Console]::Write([char]27 + ']7;file://' + $env:COMPUTERNAME + '/' + ($p.ProviderPath -replace '\\\\', '/') + [char]7) }",
-  '  & $__shellPrompt',
-  '}',
-].join('\n')
-
-/** The shell's arguments, with what makes it say its folder where shell can add it (PowerShell). */
-export function withCwdReport(shell: { file: string; args: string[] }): { file: string; args: string[] } {
-  if (!/(^|[\\/])(pwsh|powershell)(\.exe)?$/i.test(shell.file) || shell.args.some((a) => /^-(EncodedCommand|Command|File|c)$/i.test(a))) return shell
-  const encoded = Buffer.from(PWSH_CWD, 'utf16le').toString('base64')
-  return { file: shell.file, args: [...shell.args.filter((a) => !/^-NoExit$/i.test(a)), '-NoExit', '-EncodedCommand', encoded] }
-}
-
 /** node-pty's helper on macOS comes out of the package without the right to run (pnpm drops it). */
 function fixSpawnHelper(): void {
   if (process.platform !== 'darwin') return
@@ -119,6 +99,8 @@ function fixSpawnHelper(): void {
 export interface PtySink {
   data(paneId: string, data: string): void
   exit(paneId: string, code: number): void
+  /** What the shell's output says besides its text: marks, its folder, a notification, a bell. */
+  events(paneId: string, events: ShellEvent[]): void
 }
 
 interface Session {
@@ -143,6 +125,8 @@ export class Ptys {
     private readonly sink: PtySink,
     private readonly version: string,
     private tailLimit: number,
+    /** Where the shell integration's scripts are written. */
+    private readonly scripts: string,
   ) {}
 
   /** Output kept from before, put back as the pane's tail (it is saved again with what comes next). */
@@ -163,12 +147,16 @@ export class Ptys {
       fixSpawnHelper()
       this.helperFixed = true
     }
-    const shell = withCwdReport(opts.shell.program ? { file: opts.shell.program, args: opts.shell.args } : shellOf())
+    const base = opts.shell.program ? { file: opts.shell.program, args: opts.shell.args } : shellOf()
+    const env = { ...shellEnv(process.env, this.version), ...(opts.shell.env ?? {}) }
+    // The integration's marks and folder, where shell has a script for the shell.
+    const launch = integrate(base.file, base.args, this.scripts, env)
+    const shell = { file: base.file, args: launch?.args ?? base.args }
     const cwd = opts.cwd && existsSync(opts.cwd) ? opts.cwd : homedir()
     let pty: IPty
     try {
       const { spawn } = require('node-pty') as typeof import('node-pty')
-      pty = spawn(shell.file, shell.args, { name: 'xterm-256color', cols: Math.max(2, opts.cols), rows: Math.max(1, opts.rows), cwd, env: { ...shellEnv(process.env, this.version), ...(opts.shell.env ?? {}) } })
+      pty = spawn(shell.file, shell.args, { name: 'xterm-256color', cols: Math.max(2, opts.cols), rows: Math.max(1, opts.rows), cwd, env: { ...env, ...(launch?.env ?? {}) } })
     } catch (e) {
       return { ok: false, error: e instanceof Error ? e.message : String(e) }
     }
@@ -176,6 +164,7 @@ export class Ptys {
     this.sessions.set(paneId, session)
     if (!this.tails.has(paneId)) this.tails.set(paneId, new Tail(this.tailLimit))
     const tail = this.tails.get(paneId)!
+    const reader = new EventReader()
     const flush = () => {
       session.timer = null
       if (session.pending) {
@@ -185,6 +174,8 @@ export class Ptys {
     }
     pty.onData((data) => {
       tail.push(data)
+      const events = reader.read(data)
+      if (events.length) this.sink.events(paneId, events)
       session.pending += data
       // A lot at once goes out at once; a little waits a moment for the rest.
       if (session.pending.length > 256 * 1024) flush()

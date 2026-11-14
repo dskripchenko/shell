@@ -13,5 +13,5 @@
     "resolveJsonModule": true,
     "jsx": "preserve"
   },
-  "include": ["src", "tests", "*.ts"]
+  "include": ["src", "tests", "packages/*/src", "*.ts"]
 }

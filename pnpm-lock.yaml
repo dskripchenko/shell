@@ -12,6 +12,9 @@ importers:
         specifier: ^1.1.0
         version: 1.1.0
     devDependencies:
+      '@dskripchenko/shell-integration':
+        specifier: workspace:*
+        version: link:packages/shell-integration
       '@dskripchenko/terminal':
         specifier: ^0.4.1
         version: 0.4.1
@@ -66,6 +69,8 @@ importers:
       vue-tsc:
         specifier: 3.2.7
         version: 3.2.7(typescript@6.0.3)
+
+  packages/shell-integration: {}
 
 packages:
 
