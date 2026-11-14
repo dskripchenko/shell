@@ -48,6 +48,13 @@ function options(id: string, profile?: string): TerminalViewOptions {
     lineHeight: c?.font.lineHeight ?? 1.3,
     onResize: (cols, rows) => api.resize(id, cols, rows),
     onLink: (url) => api.openExternal(url),
+    // A command's block: its menu (copy the command or the output, run it again).
+    onCommand: (c, e) => {
+      const view = entries.get(id)?.view
+      if (!view) return
+      const { command, output } = view.commandText(c)
+      ui.block = { paneId: id, x: e.clientX, y: e.clientY, command, output, ...(c.exitCode !== undefined ? { exitCode: c.exitCode } : {}) }
+    },
     // A path in the output (`src/a.ts:42`) opens in the viewer, from the pane's folder.
     links: [
       {

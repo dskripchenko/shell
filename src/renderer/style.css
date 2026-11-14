@@ -131,6 +131,14 @@ kbd:empty { display: none; }
 .settings-row > span { display: flex; flex-direction: column; gap: 6px; }
 .settings-check { display: flex; align-items: center; gap: 8px; color: var(--uid-text-primary) !important; font-size: 13px !important; }
 .status-secure { font-size: 11px; color: var(--uid-color-warning-text); }
+.overlay.clear { background: transparent; }
+.block-menu { position: fixed; min-width: 220px; display: flex; flex-direction: column; padding: 4px; background: var(--uid-surface-overlay); border: 1px solid var(--uid-border-default); border-radius: var(--uid-radius-md); box-shadow: var(--uid-shadow-lg); }
+.block-menu-title { padding: 6px 10px; font-size: 12px; color: var(--uid-text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 320px; }
+.block-menu-title .ok { color: var(--uid-color-success-text); }
+.block-menu-title .fail { color: var(--uid-color-danger-text); }
+.block-menu button { text-align: left; padding: 6px 10px; border: 0; border-radius: var(--uid-radius-sm); background: transparent; color: var(--uid-text-primary); font: inherit; font-size: 13px; cursor: pointer; }
+.block-menu button:hover:not(:disabled), .block-menu button:focus-visible { background: color-mix(in srgb, var(--uid-text-primary) 8%, transparent); outline: none; }
+.block-menu button:disabled { color: var(--uid-text-tertiary); cursor: default; }
 .dialog-error { font-size: 12px; color: var(--uid-color-danger-text); }
 .dialog-hint { font-size: 12px; color: var(--uid-text-secondary); }
 .dialog fieldset { border: 0; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }

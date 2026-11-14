@@ -43,6 +43,8 @@ export const ui = reactive({
   palette: false as false | 'all' | 'projects' | 'prompts',
   projects: [] as Project[],
   settingsOpen: false,
+  /** A command's block asked for (its mark, a right click in its output): what can be done with it. */
+  block: null as null | { paneId: string; x: number; y: number; command: string; output: string; exitCode?: number },
   /** Panes a trigger marked (`action = "mark"`), until their tab is looked at. */
   marked: {} as Record<string, boolean>,
   /** Input typed in a pane goes to the others of its tab or of its group too (Broadcast Input). */

@@ -9,6 +9,9 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- Commands as blocks (`@dskripchenko/terminal` 0.7.0): a command's mark, or
+  a right click in its output, opens its menu — copy the command, its output,
+  or both as Markdown; run it again (when the shell waits at its prompt).
 - A prompt library: texts for agents as files in `shell-data/prompts/*.md`
   (three examples to start with). Cmd+Shift+L (Ctrl+Shift+L elsewhere) picks
   one and pastes it into the focused pane without Enter, its places filled

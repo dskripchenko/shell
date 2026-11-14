@@ -10,6 +10,7 @@ import GroupsSidebar from './components/GroupsSidebar.vue'
 import NameDialog from './components/NameDialog.vue'
 import WorktreeDialog from './components/WorktreeDialog.vue'
 import SettingsDialog from './components/SettingsDialog.vue'
+import BlockMenu from './components/BlockMenu.vue'
 import CommandPalette from './components/CommandPalette.vue'
 import PaneTree from './components/PaneTree.vue'
 import StatusBar from './components/StatusBar.vue'
@@ -61,5 +62,6 @@ const dim = computed(() => String(ui.settings?.config.window.dimInactive ?? 0.8)
     <NameDialog v-if="ui.dialog" />
     <WorktreeDialog v-if="ui.worktree" />
     <SettingsDialog v-if="ui.settingsOpen" />
+    <BlockMenu v-if="ui.block" />
   </div>
 </template>
