@@ -8,7 +8,7 @@ import * as agents from './agents'
 import App from './App.vue'
 import { closePaneById, run } from './commands'
 import { install, rebuild } from './keyboard'
-import { api, commit, newId, onCommit, ui, ws } from './store'
+import { api, commit, findFolio, newId, onCommit, ui, ws } from './store'
 import * as terminals from './terminals'
 import { applyChrome, currentTheme } from './theme'
 
@@ -61,6 +61,10 @@ async function start(): Promise<void> {
     applyChrome(currentTheme())
     terminals.restyle()
   })
+  // folio: looked for at start, after a change of settings and when the window comes back.
+  void findFolio()
+  api.onSettings(() => void findFolio())
+  window.addEventListener('focus', () => void findFolio())
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
     ui.systemDark = e.matches
     applyChrome(currentTheme())

@@ -59,6 +59,10 @@ export interface ShellApi {
   changesBaseline(cwd: string, kind: 'agent' | 'head'): Promise<Baseline | null>
   changesList(baseline: Baseline): Promise<ChangedFile[] | { error: string }>
   changesDiff(baseline: Baseline, path: string, untracked: boolean): Promise<{ diff: string } | { text: string } | { error: string }>
+  /** Whether folio is on the machine (the config's path, a running folio, the usual places). */
+  folioFind(): Promise<boolean>
+  /** folio handed a file at a line, a folder as a project, a repository's review. */
+  folioOpen(request: FolioRequest): Promise<{ ok: true } | { error: string }>
   /** A file opened for the viewer (a path absolute, or relative to `cwd`). */
   viewerOpen(path: string, cwd?: string): Promise<ViewerDoc | { error: string }>
   /** A file opened by the system's own program. */
@@ -152,6 +156,8 @@ export const IPC = {
   changesList: 'changes:list',
   changesDiff: 'changes:diff',
   viewerOpen: 'viewer:open',
+  folioFind: 'folio:find',
+  folioOpen: 'folio:open',
   openPath: 'open:path',
   remoteHosts: 'remote:hosts',
   remoteHome: 'remote:home',
@@ -182,3 +188,10 @@ export const IPC = {
   updateRestart: 'update:restart',
   updateChanged: 'update:changed',
 } as const
+
+/** What folio is asked to open (paths absolute). */
+export interface FolioRequest {
+  file?: { path: string; line?: number }
+  project?: string
+  review?: string
+}

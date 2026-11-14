@@ -46,7 +46,15 @@ function options(id: string, profile?: string): TerminalViewOptions {
     onResize: (cols, rows) => api.resize(id, cols, rows),
     onLink: (url) => api.openExternal(url),
     // A path in the output (`src/a.ts:42`) opens in the viewer, from the pane's folder.
-    links: [{ pattern: PATH_IN_OUTPUT, activate: (text: string) => (ui.viewer = { path: splitPathLine(text).path, cwd: paneCwd(id) }) }],
+    links: [
+      {
+        pattern: PATH_IN_OUTPUT,
+        activate: (text: string) => {
+          const { path, line } = splitPathLine(text)
+          ui.viewer = { path, cwd: paneCwd(id), ...(line ? { line } : {}) }
+        },
+      },
+    ],
   }
 }
 

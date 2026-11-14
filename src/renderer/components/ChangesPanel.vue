@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { RefreshCw, X } from '@dskripchenko/ui/icons'
+import { BookOpen, GitCompare, RefreshCw, X } from '@dskripchenko/ui/icons'
 import { addedFile, commentFor, parseDiff, type DiffLine } from '../../common/diff'
 import { activeGroup, activeTab, panes } from '../../common/layout'
 import type { Baseline, ChangedFile } from '../../common/ipc'
 import { keysOf } from '../keyboard'
-import { api, say, shortPath, ui, ws } from '../store'
+import { api, say, shortPath, toFolio, ui, ws } from '../store'
 import * as terminals from '../terminals'
 
 /** The pane whose agent's changes are shown: the focused one, or the tab's pane running an agent. */
@@ -122,6 +122,16 @@ watch(
   },
 )
 
+/** The selected file in folio, at the line commented on or the first changed one. */
+function fileToFolio(): void {
+  const b = baseline.value
+  const f = files.value.find((x) => x.path === selected.value)
+  if (!b || !f || f.status === 'deleted') return
+  const at = commentAt.value !== null ? lines.value[commentAt.value] : lines.value.find((l) => l.kind === 'add')
+  const sep = b.root.includes('\\') ? '\\' : '/'
+  toFolio({ file: { path: b.root + sep + f.path.split('/').join(sep), ...(at?.new ? { line: at.new } : {}) } })
+}
+
 const STATUS = { added: 'A', modified: 'M', deleted: 'D' } as const
 </script>
 
@@ -132,6 +142,10 @@ const STATUS = { added: 'A', modified: 'M', deleted: 'D' } as const
       <span class="changes-sub">{{ agent ? `${agent.name}, с начала сессии` : 'рабочая копия к HEAD' }}</span>
       <span class="changes-fill"></span>
       <span v-if="files.length" class="changes-count"><span class="plus">+{{ totals.adds }}</span> <span class="minus">−{{ totals.dels }}</span> · {{ totals.viewed }}/{{ files.length }}</span>
+      <template v-if="ui.folio && baseline">
+        <button type="button" class="icon-button" aria-label="Ревью в folio" title="Ревью в folio" @click="toFolio({ review: baseline.root })"><GitCompare :size="14" aria-hidden="true" /></button>
+        <button v-if="selected" type="button" class="icon-button" aria-label="Открыть файл в folio" title="Открыть файл в folio" @click="fileToFolio()"><BookOpen :size="14" aria-hidden="true" /></button>
+      </template>
       <button type="button" class="icon-button" aria-label="Обновить" title="Обновить" @click="refresh()"><RefreshCw :size="14" aria-hidden="true" /></button>
       <button type="button" class="icon-button" :aria-label="`Скрыть ${keysOf('changes.toggle')}`" :title="`Скрыть ${keysOf('changes.toggle')}`" @click="ui.changesOpen = false"><X :size="14" aria-hidden="true" /></button>
     </header>

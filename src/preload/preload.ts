@@ -37,6 +37,8 @@ const api: ShellApi = {
     trash: (items) => ipcRenderer.invoke(IPC.filesTrash, items),
     head: (path) => ipcRenderer.invoke(IPC.filesHead, path),
   },
+  folioFind: () => ipcRenderer.invoke(IPC.folioFind),
+  folioOpen: (request) => ipcRenderer.invoke(IPC.folioOpen, request),
   changesBaseline: (cwd, kind) => ipcRenderer.invoke(IPC.changesBaseline, cwd, kind),
   changesList: (b) => ipcRenderer.invoke(IPC.changesList, b),
   changesDiff: (b, path, untracked) => ipcRenderer.invoke(IPC.changesDiff, b, path, untracked),

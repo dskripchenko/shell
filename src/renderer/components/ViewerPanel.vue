@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { ExternalLink, X } from '@dskripchenko/ui/icons'
+import { BookOpen, ExternalLink, X } from '@dskripchenko/ui/icons'
 import type { ViewerDoc } from '../../common/ipc'
-import { api, say, shortPath, ui } from '../store'
+import { api, say, shortPath, toFolio, ui } from '../store'
 import { currentTheme } from '../theme'
 
 const frame = ref<HTMLIFrameElement | null>(null)
@@ -65,6 +65,7 @@ watch(() => [ui.systemDark, ui.settings], send)
       <span class="changes-title">{{ doc?.name ?? 'Просмотр' }}</span>
       <span v-if="doc" class="changes-sub mono" :title="doc.path">{{ shortPath(doc.path.slice(0, doc.path.length - doc.name.length)) }}</span>
       <span class="changes-fill"></span>
+      <button v-if="doc && ui.folio" type="button" class="icon-button" aria-label="Открыть в folio" title="Открыть в folio" @click="toFolio({ file: { path: doc.path, ...(ui.viewer?.line ? { line: ui.viewer.line } : {}) } })"><BookOpen :size="14" aria-hidden="true" /></button>
       <button v-if="doc" type="button" class="icon-button" aria-label="Открыть программой системы" title="Открыть программой системы" @click="api.openPath(doc.path)"><ExternalLink :size="14" aria-hidden="true" /></button>
       <button type="button" class="icon-button" aria-label="Закрыть просмотр" title="Закрыть просмотр" @click="ui.viewer = null"><X :size="14" aria-hidden="true" /></button>
     </header>

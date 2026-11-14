@@ -9,6 +9,13 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- folio, when it is on the machine (a running one, the config's `[folio]
+  path`, PATH, /Applications, ~/Applications or beside shell): a file from
+  the viewer opened there at its line, an agent's changes reviewed there
+  (the repository's working copy), a changed file opened at its line, the
+  pane's folder added as a project. Needs folio with `file:line`,
+  `--project` and `--review` on its command line.
+
 - SSH hosts of `~/.ssh/config` (its Includes too) in the palette, each opened
   in a tab of its own; a host's files in the file panels over sftp — browsed,
   copied both ways, moved, renamed, a folder made, deleted (for good: no

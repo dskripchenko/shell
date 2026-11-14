@@ -17,6 +17,7 @@ import { Updater, type UpdateState } from './update'
 import { NotifyServer } from './notify'
 import { copyInto, listDir, makeDir, moveInto, moveTo, readHead, type OpResult } from './files'
 import { dirname, isAbsolute, resolve as resolvePath } from 'node:path'
+import { findFolio, folioRequest, launchFolio } from './folio'
 import { SCHEME, ViewerFiles } from './viewer'
 import { remoteFetch, remoteGet, remoteHome, remoteList, remoteMkdir, remotePut, remoteRemove, remoteRename, sshHosts } from './remote'
 import { setClaudeHooks } from './claudeHooks'
@@ -397,6 +398,20 @@ ipcMain.handle(IPC.viewerOpen, async (_e, path: unknown, cwd: unknown) => {
 })
 ipcMain.on(IPC.openPath, (_e, path: unknown) => {
   if (typeof path === 'string' && isAbsolute(path)) void electronShell.openPath(path)
+})
+
+/** folio, looked for anew on each ask: it may have started or been installed since. */
+const folioOf = () => {
+  const c = settings.get().config.folio
+  if (!c.enabled) return null
+  return findFolio({ configured: c.path, env: process.env, platform: process.platform, execPath: process.execPath, uid: process.getuid?.() })
+}
+ipcMain.handle(IPC.folioFind, () => folioOf() !== null)
+ipcMain.handle(IPC.folioOpen, (_e, r: unknown) => {
+  const request = folioRequest(r)
+  if (!request) return { error: 'не путь' }
+  const folio = folioOf()
+  return folio ? launchFolio(folio, request, process.env) : { error: 'folio не найден' }
 })
 
 ipcMain.handle(IPC.claudeHooks, (_e, on: unknown) => setClaudeHooks(join(homedir(), '.claude', 'settings.json'), on === true))

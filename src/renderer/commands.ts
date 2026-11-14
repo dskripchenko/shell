@@ -3,7 +3,7 @@
  * and the menu run the same ones, and the user's keys name them.
  */
 import { activeGroup, activeTab, addGroup, addTab, closeGroup, closePane, closeTab, cycleGroup, cycleTab, findPane, focusSide, newWorkspace, selectGroup, splitPane, tabAt, toggleZoom, updateActiveTab, updateTab, type Workspace } from '../common/layout'
-import { api, baseName, commit, newId, say, ui, ws } from './store'
+import { api, baseName, commit, newId, say, toFolio, ui, ws } from './store'
 import * as agents from './agents'
 import * as terminals from './terminals'
 
@@ -13,7 +13,7 @@ export interface Command {
   group: string
   run: () => void
   /** Not offered in the palette (the numbered ones). */
-  hidden?: boolean
+  hidden?: boolean | (() => boolean)
   /** Whether the keys run it now; when not, they go on to the program in the pane. */
   when?: () => boolean
 }
@@ -58,6 +58,15 @@ function newGroupHere(): void {
   ui.dialog = { kind: 'group', id: g.id, name: g.name, color: g.color, isNew: true }
 }
 
+/** The focused pane's repository (or its folder, for a project) handed to folio. */
+async function folioRepo(kind: 'review' | 'project'): Promise<void> {
+  const cwd = terminals.paneCwd(focusedPane())
+  if (!cwd) return say('Папка панели неизвестна')
+  const repo = (await api.changesBaseline(cwd, 'head'))?.root
+  if (kind === 'review' && !repo) return say('Папка панели — не репозиторий git')
+  toFolio(kind === 'review' ? { review: repo } : { project: repo ?? cwd })
+}
+
 function fontBy(delta: number | null): void {
   ui.fontDelta = delta === null ? 0 : Math.max(-6, Math.min(24, ui.fontDelta + delta))
   terminals.restyle()
@@ -77,6 +86,8 @@ const list: Command[] = [
   { id: 'changes.toggle', group: 'Агенты', title: 'Изменения агента: показать или скрыть', run: () => (ui.changesOpen = !ui.changesOpen) },
   { id: 'claude.hooksOn', group: 'Агенты', title: 'Claude Code: точные статусы через хуки (~/.claude/settings.json)', run: () => void api.claudeHooks(true).then(say) },
   { id: 'claude.hooksOff', group: 'Агенты', title: 'Claude Code: убрать хуки shell', run: () => void api.claudeHooks(false).then(say) },
+  { id: 'folio.review', group: 'folio', title: 'folio: ревью изменений репозитория текущей панели', hidden: () => !ui.folio, run: () => void folioRepo('review') },
+  { id: 'folio.project', group: 'folio', title: 'folio: открыть папку текущей панели как проект', hidden: () => !ui.folio, run: () => void folioRepo('project') },
   { id: 'update.check', group: 'Окно', title: 'Проверить обновления', run: () => api.checkUpdate() },
   { id: 'update.restart', group: 'Окно', title: 'Перезапустить и обновить', run: () => api.restartToUpdate() },
   { id: 'font.bigger', group: 'Окно', title: 'Крупнее шрифт', run: () => fontBy(1) },

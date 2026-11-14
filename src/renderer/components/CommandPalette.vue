@@ -30,7 +30,7 @@ const items = computed<Item[]>(() => {
   const w = ws.value!
   const out: Item[] = []
   for (const c of COMMANDS.values()) {
-    if (c.hidden || c.id === 'palette.open') continue
+    if ((typeof c.hidden === 'function' ? c.hidden() : c.hidden) || c.id === 'palette.open') continue
     out.push({ id: c.id, title: c.title, section: c.group, keys: keysOf(c.id), action: () => run(c.id) })
   }
   for (const h of hosts.value) {

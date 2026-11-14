@@ -12,8 +12,10 @@ installer, no account, no telemetry.
 > updates. Stage 2 so far — shell integration in zsh, bash and PowerShell; AI
 > agents in panes shown working, waiting for you or done (with `shell-notify`
 > and Claude Code's hooks); an agent's changes with their diffs; file panels as
-> in Midnight Commander (Ctrl+O). The plan is in [FEATURES.md](FEATURES.md)
-> (in Russian).
+> in Midnight Commander (Ctrl+O); a viewer of markdown with live diagrams; SSH
+> hosts and their files over sftp; work handed to
+> [folio](https://github.com/dskripchenko/folio) when it is there. The plan is
+> in [FEATURES.md](FEATURES.md) (in Russian).
 
 ## Download
 
@@ -54,6 +56,10 @@ theme = "UID светлая"
 "cmd+k" = "palette.open"
 "ctrl+a>c" = "tab.new"
 ```
+
+folio, when found by itself (running, in PATH, /Applications, ~/Applications
+or beside shell), opens files at their line, reviews an agent's changes and
+takes a folder as a project; `[folio] path` names it otherwise.
 
 Themes: put `.itermcolors`, Ghostty themes, Windows Terminal `.json` or base16
 `.yaml` files in `shell-data/themes/` and name one in `[theme]`.

@@ -26,6 +26,8 @@ export interface Config {
   updates: { auto: boolean }
   /** Commands that start an AI agent; whether the system is told when one waits or is done. */
   agents: { commands: string[]; notify: boolean }
+  /** folio: where it is when not found by itself ('' — found by itself); `enabled = false` hides it. */
+  folio: { path: string; enabled: boolean }
   /** Keys of the user's own: `"cmd+t" = "tab.new"`, `"cmd+k" = "none"`. */
   keys: Record<string, string>
   profiles: Record<string, Profile>
@@ -40,6 +42,7 @@ export const DEFAULTS: Config = {
   quake: { enabled: true, hotkey: 'ctrl+`', height: 0.45 },
   updates: { auto: true },
   agents: { commands: [...DEFAULT_AGENTS], notify: true },
+  folio: { path: '', enabled: true },
   keys: {},
   profiles: {},
 }
@@ -93,6 +96,13 @@ export const DEFAULT_TEXT = `# Настройки shell. Файл перечит
 # Уведомление системы, когда агент ждёт ввода или закончил, а его вкладка не на виду.
 # notify = true
 
+[folio]
+# folio (https://github.com/dskripchenko/folio): открыть файл на строке, папку
+# как проект, ревью изменений. Запущенный folio находится сам, иначе — в PATH,
+# /Applications, ~/Applications или рядом с shell. Здесь — свой путь к программе.
+# path = ""
+# enabled = true
+
 [keys]
 # Свои сочетания: команда на клавиши, "none" — снять.
 # "cmd+k" = "palette.open"
@@ -124,6 +134,7 @@ const FIELDS: Record<string, Record<string, { key: string; kind: Kind; min?: num
   quake: { enabled: { key: 'enabled', kind: 'boolean' }, hotkey: { key: 'hotkey', kind: 'string' }, height: { key: 'height', kind: 'number', min: 0.15, max: 1 } },
   updates: { auto: { key: 'auto', kind: 'boolean' } },
   agents: { commands: { key: 'commands', kind: 'strings' }, notify: { key: 'notify', kind: 'boolean' } },
+  folio: { path: { key: 'path', kind: 'string' }, enabled: { key: 'enabled', kind: 'boolean' } },
 }
 
 const PROFILE_FIELDS: Record<string, Kind | 'table'> = { program: 'string', args: 'strings', env: 'table', cwd: 'string', theme: 'string' }

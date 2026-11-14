@@ -4,7 +4,7 @@
  */
 import { reactive, shallowRef } from 'vue'
 import type { AgentState } from '../common/agents'
-import type { Settings, ShellApi, UpdateInfo } from '../common/ipc'
+import type { FolioRequest, Settings, ShellApi, UpdateInfo } from '../common/ipc'
 import type { Platform } from '../common/keys'
 import type { Workspace } from '../common/layout'
 
@@ -57,7 +57,9 @@ export const ui = reactive({
   commander: false,
   busy: {} as Record<string, boolean>,
   /** The file in the viewer: its path, absolute or relative to `cwd`. */
-  viewer: null as null | { path: string; cwd?: string },
+  viewer: null as null | { path: string; cwd?: string; line?: number },
+  /** folio found on the machine: its buttons and commands are shown. */
+  folio: false,
   /** The changes panel: shown or not; the baselines agents started from, by pane; files marked viewed. */
   changesOpen: false,
   baselines: {} as Record<string, import('../common/ipc').Baseline>,
@@ -103,4 +105,17 @@ export function shortPath(path: string): string {
 export function baseName(path: string): string {
   const parts = path.split(/[\\/]/).filter(Boolean)
   return parts.at(-1) ?? path
+}
+
+/** folio handed a file, a project or a review; what went wrong said in the status bar. */
+export function toFolio(request: FolioRequest): void {
+  void api.folioOpen(JSON.parse(JSON.stringify(request)) as FolioRequest).then((r) => {
+    if ('error' in r) say(`folio: ${r.error}`)
+    else say('Отправлено в folio')
+  })
+}
+
+/** Whether folio is on the machine, asked again (it may have been started or installed since). */
+export async function findFolio(): Promise<void> {
+  ui.folio = await api.folioFind()
 }
