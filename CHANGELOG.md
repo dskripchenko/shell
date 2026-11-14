@@ -7,6 +7,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-11-14
+
+Stage 3 closes: the rest shared with folio.
+
 ### Added
 
 - folio's projects in the project switcher (Cmd/Ctrl+Shift+O), after shell's

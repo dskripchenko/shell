@@ -6,7 +6,7 @@ on keys of your own — and, next, AI agents in their panes, files the Midnight
 Commander way, documents with live diagrams. Portable and offline: no
 installer, no account, no telemetry.
 
-> Status: **0.5.** Stage 1 — groups, tabs, splits, a palette, keys of your own
+> Status: **0.6.** Stage 1 — groups, tabs, splits, a palette, keys of your own
 > (on any keyboard layout), `config.toml`, profiles, imported themes, a
 > drop-down window, the session and each pane's output back after a restart,
 > updates. Stage 2 — shell integration in zsh, bash and PowerShell; AI
@@ -14,8 +14,7 @@ installer, no account, no telemetry.
 > and Claude Code's hooks); an agent's changes with their diffs; file panels as
 > in Midnight Commander (Ctrl+O); a viewer of markdown with live diagrams; SSH
 > hosts and their files over sftp; work handed to
-> [folio](https://github.com/dskripchenko/folio) when it is there. Stage 3 so
-> far — projects (a group's layout and agents saved, a switcher), git on the
+> [folio](https://github.com/dskripchenko/folio) when it is there. Stage 3 — projects (a group's layout and agents saved, a switcher), git on the
 > tabs and worktrees in groups of their own, folio both ways, settings with
 > fields, Secure Keyboard Entry, the kitty keyboard protocol, a journal of agents'
 > edits shared with folio. The plan is in
