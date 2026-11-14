@@ -6,6 +6,8 @@ import { run } from '../commands'
 import { keysOf } from '../keyboard'
 import { commit, newId, ui, ws } from '../store'
 import { initials } from '../titles'
+import { groupStatus } from '../agentStatus'
+import AgentMark from './AgentMark.vue'
 
 const collapsed = computed(() => ws.value!.sidebarCollapsed)
 const groups = computed(() => ws.value!.groups)
@@ -53,6 +55,7 @@ function keys(i: number): string {
     >
       <span class="swatch" :style="{ background: g.color }" aria-hidden="true"></span>
       <span class="group-name">{{ g.name }}</span>
+      <AgentMark :status="groupStatus(g)" />
       <span class="group-count">{{ g.tabs.length }}</span>
       <kbd>{{ keys(i) }}</kbd>
     </button>
@@ -83,6 +86,7 @@ function keys(i: number): string {
       @drop="drop(g)"
     >
       {{ initials(g.name) }}
+      <span v-if="groupStatus(g)" class="rail-mark"><AgentMark :status="groupStatus(g)" :size="10" /></span>
     </button>
     <div class="sidebar-fill"></div>
     <button type="button" class="icon-button rail-button" :aria-label="`Новая группа ${keysOf('group.new')}`" :title="`Новая группа ${keysOf('group.new')}`" @click="run('group.new')">

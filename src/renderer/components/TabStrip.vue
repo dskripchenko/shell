@@ -6,6 +6,8 @@ import { run } from '../commands'
 import { keysOf } from '../keyboard'
 import { commit, newId, ui, ws } from '../store'
 import { tabTitle } from '../titles'
+import { tabStatus } from '../agentStatus'
+import AgentMark from './AgentMark.vue'
 
 const group = computed(() => activeGroup(ws.value!))
 const dragging = ref<string | null>(null)
@@ -51,6 +53,7 @@ function drop(to: number): void {
     >
       <span class="swatch" :style="{ background: tab.color ?? 'var(--uid-text-tertiary)' }" aria-hidden="true"></span>
       <span class="tab-name">{{ tabTitle(tab) }}</span>
+      <AgentMark :status="tabStatus(tab)" />
       <span v-if="tab.zoomed" class="tab-note" title="Панель развёрнута на всю вкладку">zoom</span>
       <button type="button" class="tab-close" :aria-label="`Закрыть вкладку ${tabTitle(tab)}`" @click.stop="close(tab)">
         <X :size="12" aria-hidden="true" />

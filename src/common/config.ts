@@ -4,6 +4,7 @@
  * default and the mistake is said, by its place in the file.
  */
 import { parse } from 'smol-toml'
+import { DEFAULT_AGENTS } from './agents'
 
 /** A way to start a shell: its program, arguments, environment, folder and theme. */
 export interface Profile {
@@ -23,6 +24,8 @@ export interface Config {
   window: { dimInactive: number }
   quake: { enabled: boolean; hotkey: string; height: number }
   updates: { auto: boolean }
+  /** Commands that start an AI agent; whether the system is told when one waits or is done. */
+  agents: { commands: string[]; notify: boolean }
   /** Keys of the user's own: `"cmd+t" = "tab.new"`, `"cmd+k" = "none"`. */
   keys: Record<string, string>
   profiles: Record<string, Profile>
@@ -36,6 +39,7 @@ export const DEFAULTS: Config = {
   window: { dimInactive: 0.8 },
   quake: { enabled: true, hotkey: 'ctrl+`', height: 0.45 },
   updates: { auto: true },
+  agents: { commands: [...DEFAULT_AGENTS], notify: true },
   keys: {},
   profiles: {},
 }
@@ -83,6 +87,12 @@ export const DEFAULT_TEXT = `# Настройки shell. Файл перечит
 # Раз в сутки при запуске проверять релизы на GitHub; обновление ставится при выходе.
 # auto = true
 
+[agents]
+# Команды, которые запускают ИИ-агента: вкладка показывает, работает он, ждёт или закончил.
+# commands = ["claude", "codex", "grok", "gemini", "aider", "opencode", "cursor-agent", "amp", "qwen", "goose"]
+# Уведомление системы, когда агент ждёт ввода или закончил, а его вкладка не на виду.
+# notify = true
+
 [keys]
 # Свои сочетания: команда на клавиши, "none" — снять.
 # "cmd+k" = "palette.open"
@@ -113,6 +123,7 @@ const FIELDS: Record<string, Record<string, { key: string; kind: Kind; min?: num
   window: { 'dim-inactive': { key: 'dimInactive', kind: 'number', min: 0.5, max: 1 } },
   quake: { enabled: { key: 'enabled', kind: 'boolean' }, hotkey: { key: 'hotkey', kind: 'string' }, height: { key: 'height', kind: 'number', min: 0.15, max: 1 } },
   updates: { auto: { key: 'auto', kind: 'boolean' } },
+  agents: { commands: { key: 'commands', kind: 'strings' }, notify: { key: 'notify', kind: 'boolean' } },
 }
 
 const PROFILE_FIELDS: Record<string, Kind | 'table'> = { program: 'string', args: 'strings', env: 'table', cwd: 'string', theme: 'string' }

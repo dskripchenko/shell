@@ -3,6 +3,7 @@
  * saved by the main process) and what the window shows around it.
  */
 import { reactive, shallowRef } from 'vue'
+import type { AgentState } from '../common/agents'
 import type { Settings, ShellApi, UpdateInfo } from '../common/ipc'
 import type { Platform } from '../common/keys'
 import type { Workspace } from '../common/layout'
@@ -49,6 +50,8 @@ export const ui = reactive({
   chain: '',
   notices: [] as string[],
   update: null as UpdateInfo | null,
+  /** The agent in each pane that runs one. */
+  agents: {} as Record<string, AgentState>,
   /** A tab being dragged, to be dropped on a group. */
   draggingTab: null as string | null,
 })

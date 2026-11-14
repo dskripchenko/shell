@@ -3,7 +3,7 @@ import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { Search } from '@dskripchenko/ui/icons'
 import { fuzzy } from '../../common/fuzzy'
 import { selectGroup, selectTab } from '../../common/layout'
-import { COMMANDS, newTabWithProfile, run } from '../commands'
+import { COMMANDS, newAgentTab, newTabWithProfile, run } from '../commands'
 import { keysOf } from '../keyboard'
 import { commit, ui, ws } from '../store'
 import { tabTitle } from '../titles'
@@ -28,6 +28,9 @@ const items = computed<Item[]>(() => {
   for (const c of COMMANDS.values()) {
     if (c.hidden || c.id === 'palette.open') continue
     out.push({ id: c.id, title: c.title, section: c.group, keys: keysOf(c.id), action: () => run(c.id) })
+  }
+  for (const agent of ui.settings?.config.agents.commands ?? []) {
+    out.push({ id: `agent:${agent}`, title: `Новый агент: ${agent}`, section: 'Агенты', keys: '', action: () => newAgentTab(agent) })
   }
   for (const name of Object.keys(ui.settings?.config.profiles ?? {})) {
     out.push({ id: `profile:${name}`, title: `Новая вкладка: ${name}`, section: 'Профили', keys: '', action: () => newTabWithProfile(name) })

@@ -2,8 +2,9 @@
  * Every action of the window is a command with an id: the keys, the palette
  * and the menu run the same ones, and the user's keys name them.
  */
-import { activeGroup, activeTab, addGroup, addTab, closeGroup, closePane, closeTab, cycleGroup, cycleTab, findPane, focusSide, newWorkspace, selectGroup, splitPane, tabAt, toggleZoom, updateActiveTab, type Workspace } from '../common/layout'
+import { activeGroup, activeTab, addGroup, addTab, closeGroup, closePane, closeTab, cycleGroup, cycleTab, findPane, focusSide, newWorkspace, selectGroup, splitPane, tabAt, toggleZoom, updateActiveTab, updateTab, type Workspace } from '../common/layout'
 import { api, baseName, commit, newId, ui, ws } from './store'
+import * as agents from './agents'
 import * as terminals from './terminals'
 
 export interface Command {
@@ -143,6 +144,14 @@ for (let i = 1; i <= 9; i++) {
 }
 
 export const COMMANDS = new Map(list.map((c) => [c.id, c]))
+
+/** A new tab named after an agent, the agent's command typed once its shell is ready. */
+export function newAgentTab(agent: string): void {
+  const next = addTab(w(), newId, { cwd: terminals.paneCwd(focusedPane()) })
+  const tab = activeTab(activeGroup(next))
+  commit(updateTab(next, tab.id, { name: agent }))
+  agents.typeWhenReady(tab.focus, agent)
+}
 
 /** A new tab in the active group, started with a profile. */
 export function newTabWithProfile(profile: string): void {

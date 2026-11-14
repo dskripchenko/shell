@@ -26,6 +26,14 @@ const update = computed(() => {
   if (s.status === 'downloading') return { text: `Загрузка ${s.version}${s.total && s.received ? ` · ${Math.round((s.received / s.total) * 100)}%` : ''}`, action: false }
   return null
 })
+/** The agents that need the person, said in words: «claude ждёт ввода». */
+const agentsNote = computed(() => {
+  const words: Record<string, string> = { waiting: 'ждёт ввода', done: 'закончил', failed: 'с ошибкой', running: 'работает' }
+  const all = Object.values(ui.agents).filter((a) => a.status !== 'idle')
+  const need = all.filter((a) => a.status === 'waiting' || a.status === 'failed')
+  const show = (need.length ? need : all).slice(0, 2)
+  return show.map((a) => `${a.name} ${words[a.status]}`).join(' · ') + (all.length > show.length ? ` · ещё ${all.length - show.length}` : '')
+})
 const problems = computed(() => [...(ui.settings?.errors ?? []), ...(ui.settings?.themeErrors ?? []), ...keyErrors])
 </script>
 
@@ -35,6 +43,7 @@ const problems = computed(() => [...(ui.settings?.errors ?? []), ...(ui.settings
     <span v-if="cwd" class="mono" :title="cwd">{{ cwd }}</span>
     <span v-if="ui.branch" class="status-branch"><GitBranch :size="12" aria-hidden="true" />{{ ui.branch }}</span>
     <span v-if="ui.chain" class="status-chain" aria-live="polite">{{ ui.chain }} …</span>
+    <span v-if="agentsNote" class="status-agents" aria-live="polite">{{ agentsNote }}</span>
     <span class="status-fill"></span>
     <button v-if="problems.length" type="button" class="status-problem" :title="problems.join('\n')" @click="api.openConfig()">
       <TriangleAlert :size="12" aria-hidden="true" />

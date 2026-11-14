@@ -6,6 +6,7 @@
 import { Terminal, TerminalView, type TerminalViewOptions } from '@dskripchenko/terminal'
 import { allPanes, findPane, type PaneLeaf, type Workspace } from '../common/layout'
 import { api, ui, ws } from './store'
+import * as agents from './agents'
 import { allThemes, currentTheme } from './theme'
 
 interface Entry {
@@ -66,7 +67,10 @@ function create(pane: PaneLeaf, replay?: string): Entry {
   const entry: Entry = { id: pane.id, profile: pane.profile, term, view: new TerminalView(term, host, options(pane.id, pane.profile)), host, exited: false }
   entries.set(pane.id, entry)
   term.onData((data) => {
-    if (!entry.exited) return api.write(pane.id, data)
+    if (!entry.exited) {
+      agents.onInput(pane.id, data)
+      return api.write(pane.id, data)
+    }
     // A shell that ended with an error waits: Enter starts it again.
     if (data === '\r') {
       term.write('\r\n')

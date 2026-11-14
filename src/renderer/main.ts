@@ -3,7 +3,8 @@ import '@dskripchenko/ui/styles/themes.css'
 import '@dskripchenko/ui/styles/fonts.css'
 import './style.css'
 import { createApp } from 'vue'
-import { activeGroup, activeTab, allPanes, newWorkspace, setPaneCwd } from '../common/layout'
+import { activeGroup, activeTab, allPanes, findPane, focusPane, newWorkspace, selectTab, setPaneCwd, updateActiveTab } from '../common/layout'
+import * as agents from './agents'
 import App from './App.vue'
 import { closePaneById, run } from './commands'
 import { install, rebuild } from './keyboard'
@@ -29,7 +30,23 @@ async function start(): Promise<void> {
   terminals.startAll(initial)
   if (!s.workspace) api.saveWorkspace(initial)
 
-  api.onData((paneId, data) => terminals.write(paneId, data))
+  api.onData((paneId, data) => {
+    terminals.write(paneId, data)
+    agents.onOutput(paneId)
+  })
+  api.onEvents((paneId, events) => {
+    agents.onEvents(paneId, events)
+    if (events.some((e) => e.kind === 'prompt')) agents.onPrompt(paneId)
+  })
+  onCommit((next) => agents.prune(next))
+  setInterval(agents.tick, 1000)
+  agents.setShowPane((paneId) => {
+    const w = ws.value
+    if (!w) return
+    const g = w.groups.find((x) => x.tabs.some((t) => findPane(t.root, paneId)))
+    const t = g?.tabs.find((x) => findPane(x.root, paneId))
+    if (g && t) commit(updateActiveTab(selectTab(w, t.id), (tab) => focusPane(tab, paneId)))
+  })
   api.onExit((paneId, code) => terminals.onExit(paneId, code, closePaneById))
   api.onCommand((command) => run(command))
   api.onSettings((settings) => {
