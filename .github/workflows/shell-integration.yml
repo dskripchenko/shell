@@ -29,6 +29,8 @@ jobs:
           test "$want" = "$have" || { echo "tag $want, package $have"; exit 1; }
       - run: pnpm vitest run tests/unit/shellIntegration.spec.ts tests/unit/agentEdits.spec.ts
       - run: pnpm --filter @dskripchenko/shell-integration build
-      - run: pnpm --filter @dskripchenko/shell-integration publish --no-git-checks --provenance
+      # Provenance by the environment: pnpm does not pass --provenance on to npm.
+      - run: pnpm --filter @dskripchenko/shell-integration publish --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: true
