@@ -7,6 +7,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-14
+
+Stage 2 begins: agents in panes, their changes, files the Midnight Commander way.
+
 ### Added
 
 - Shell integration for zsh, bash and PowerShell (`packages/shell-integration`,

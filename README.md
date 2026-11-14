@@ -6,12 +6,14 @@ on keys of your own — and, next, AI agents in their panes, files the Midnight
 Commander way, documents with live diagrams. Portable and offline: no
 installer, no account, no telemetry.
 
-> Status: **0.1 — stage 1.** Groups (a sidebar that folds to a rail), tabs,
-> splits, a palette, keys of your own (chains too, on any keyboard layout),
-> `config.toml` read again on save, profiles, themes imported from iTerm2,
-> Ghostty, Windows Terminal and base16, a drop-down window on a global key,
-> the workspace and each pane's output back after a restart, updates. The plan
-> is in [FEATURES.md](FEATURES.md) (in Russian).
+> Status: **0.2.** Stage 1 — groups, tabs, splits, a palette, keys of your own
+> (on any keyboard layout), `config.toml`, profiles, imported themes, a
+> drop-down window, the session and each pane's output back after a restart,
+> updates. Stage 2 so far — shell integration in zsh, bash and PowerShell; AI
+> agents in panes shown working, waiting for you or done (with `shell-notify`
+> and Claude Code's hooks); an agent's changes with their diffs; file panels as
+> in Midnight Commander (Ctrl+O). The plan is in [FEATURES.md](FEATURES.md)
+> (in Russian).
 
 ## Download
 
