@@ -185,8 +185,14 @@ export class Ptys {
     pty.onData((data) => {
       tail.push(data)
       const events = reader.read(data)
-      if (events.length) this.sink.events(paneId, events)
       session.pending += data
+      if (events.length) {
+        // The output first, then what its marks say: the window sees a prompt after what came before it.
+        if (session.timer) clearTimeout(session.timer)
+        flush()
+        this.sink.events(paneId, events)
+        return
+      }
       // A lot at once goes out at once; a little waits a moment for the rest.
       if (session.pending.length > 256 * 1024) flush()
       else session.timer ??= setTimeout(flush, 4)

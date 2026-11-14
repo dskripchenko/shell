@@ -32,6 +32,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Secure Keyboard Entry on macOS (settings, palette, `[security]
   secure-keyboard`): while shell is in front, other programs cannot read the
   keys typed; the status bar says when it is on.
+- The kitty keyboard protocol (`@dskripchenko/terminal` 0.5.0): a program
+  that asks for it — Claude Code, neovim, helix, fish — gets Shift+Enter, Esc
+  and keys with Ctrl or Alt of their own. Flags a program left behind are
+  dropped at the shell's prompt, so Ctrl+C still reaches the shell.
 - A new worktree in a group of its own (palette): a new or existing branch,
   the folder beside the repository (`app-feature-x`), an agent started there
   if chosen.

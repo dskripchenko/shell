@@ -167,6 +167,16 @@ export function bufferText(paneId: string): string {
   return Array.from({ length: t.buffer.length }, (_, i) => t.lineText(i)).join('\n')
 }
 
+/**
+ * At the shell's prompt: keyboard flags a program left behind (it ended
+ * without taking them back) are dropped, or the shell would get Ctrl+C as
+ * `CSI 99;5 u` and not understand it.
+ */
+export function atPrompt(paneId: string): void {
+  const e = entries.get(paneId)
+  if (e && e.term.buffer !== e.term.alt && e.term.kittyFlags) e.term.write('\x1b[<99u')
+}
+
 export function write(paneId: string, data: string): void {
   entries.get(paneId)?.term.write(data)
 }

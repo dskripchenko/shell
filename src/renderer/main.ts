@@ -41,7 +41,10 @@ async function start(): Promise<void> {
     if (events.some((e) => e.kind === 'prompt')) agents.onPrompt(paneId)
     for (const e of events) {
       if (e.kind === 'start') ui.busy[paneId] = true
-      else if (e.kind === 'prompt') ui.busy[paneId] = false
+      else if (e.kind === 'prompt') {
+        ui.busy[paneId] = false
+        terminals.atPrompt(paneId)
+      }
     }
   })
   api.onAgentSignal((s) => agents.onSignal(s))
