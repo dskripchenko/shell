@@ -27,6 +27,12 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   the status bar says it is on and turns it off. Only what the person types
   or pastes goes — not the terminal's answers to a program, not the mouse.
 
+### Changed
+
+- A change of settings makes the panes' views again only when what they
+  draw with changed (font, theme, triggers, profiles): a selection is no
+  longer lost when the file is saved for something else.
+
 ## [0.6.0] - 2026-11-14
 
 Stage 3 closes: the rest shared with folio.
@@ -42,9 +48,6 @@ Stage 3 closes: the rest shared with folio.
 
 ### Changed
 
-- A change of settings makes the panes' views again only when what they
-  draw with changed (font, theme, triggers, profiles): a selection is no
-  longer lost when the file is saved for something else.
 - Group and tab colours are the same nine as folio's tab groups (blue,
   green, orange, purple, pink, teal, red, yellow, grey); colours chosen
   before stay as they were.

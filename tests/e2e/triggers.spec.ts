@@ -35,6 +35,8 @@ action = "notify"
   const text = () => page.evaluate(() => (window as unknown as { shellTest: { text(): string } }).shellTest.text())
 
   await type(page, "printf 'a boom b\\n'")
+  // Its output, not only the line typed (the next command typed after it, not ahead of it).
+  await expect.poll(text).toMatch(/^a boom b/m)
   await expect(page.locator('.pane.focused .dsk-term-mark-text', { hasText: 'boom' }).last()).toHaveAttribute('style', 'background:#ff000055')
 
   // A prompt not ended by a newline: answered.
