@@ -2,12 +2,13 @@ import { expect, test } from '@playwright/test'
 import { dataFolder, launch, MOD, screen, type } from './app'
 
 const win = process.platform === 'win32'
+const mac = process.platform === 'darwin'
 
 test('a tab with a profile: its program and its environment', async () => {
   const program = win ? 'program = "powershell.exe"\nargs = ["-NoLogo"]\n' : 'program = "/bin/sh"\n'
   const data = dataFolder(`[profiles.marked]\n${program}env = { SHELL_PROFILE_MARK = "from-the-profile" }\n`)
   const { app, page } = await launch(data)
-  await page.keyboard.press(win ? 'Control+Shift+p' : 'Meta+Shift+p')
+  await page.keyboard.press(mac ? 'Meta+Shift+p' : 'Control+Shift+p')
   await page.keyboard.type('Новая вкладка: marked')
   await expect(page.locator('.palette-item').first()).toContainText('marked')
   await page.keyboard.press('Enter')
@@ -32,7 +33,7 @@ test('a tab dragged onto another group moves there', async () => {
   const { app, page } = await launch(dataFolder())
   await page.keyboard.press(`${MOD}+t`)
   await expect(page.locator('.tab')).toHaveCount(2)
-  await page.keyboard.press(win ? 'Control+Shift+n' : 'Meta+Shift+n')
+  await page.keyboard.press(mac ? 'Meta+Shift+n' : 'Control+Shift+n')
   await page.locator('#name-field').fill('вторая')
   await page.keyboard.press('Enter')
   await page.locator('.group-row').first().click()
