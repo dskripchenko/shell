@@ -43,7 +43,7 @@ export const ui = reactive({
   palette: false as false | 'all' | 'projects',
   projects: [] as Project[],
   /** Reviews waiting in folio for an agent, by repository: what folio said. */
-  reviews: {} as Record<string, string>,
+  reviews: {} as Record<string, { message: string; roots: string[] }>,
   /** The new-worktree dialog, for the repository of a folder. */
   worktree: null as null | { cwd: string; root: string },
   /** Each tab's git status (its focused pane's folder), the active group's tabs only. */

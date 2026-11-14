@@ -62,6 +62,8 @@ export interface ShellApi {
   saveProjects(projects: Project[]): void
   onProjects(listener: (projects: Project[]) => void): void
   /** Another program's request (folio over the local API), answered with a status and a body. */
+  /** Paths with their links resolved (a path that is not there: as given). */
+  realpaths(paths: string[]): Promise<string[]>
   onApiRequest(listener: (request: ApiRequest) => Promise<ApiReply> | ApiReply): void
   onData(listener: (paneId: string, data: string) => void): void
   onExit(listener: (paneId: string, code: number) => void): void
@@ -195,6 +197,7 @@ export const IPC = {
   saveProjects: 'projects:save',
   projectsChanged: 'projects:changed',
   apiRequest: 'api:request',
+  realpaths: 'fs:realpaths',
   apiReply: 'api:reply',
   settings: 'settings:changed',
   command: 'window:command',

@@ -40,8 +40,10 @@ test('folio’s requests: a tab in a folder, a comment pasted into the agent’s
   await page.keyboard.press('Enter')
   await expect.poll(text).toContain('helper ready')
 
-  // A comment pasted into the agent's pane, without Enter: sent by the person.
-  const r = await post('/api/paste', { repo, text: 'src/a.ts:2 — rename it' })
+  // A comment pasted into the agent's pane, without Enter: sent by the person. The repository
+  // may be spelled through a link (on a Mac /var is /private/var): the same folder.
+  const alias = repo.startsWith('/private/') ? repo.slice('/private'.length) : repo
+  const r = await post('/api/paste', { repo: alias, text: 'src/a.ts:2 — rename it' })
   expect(r.status).toBe(200)
   expect(await r.json()).toMatchObject({ agent: 'helper' })
   await page.keyboard.press('Enter')

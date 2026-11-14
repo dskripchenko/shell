@@ -17,6 +17,7 @@ const api: ShellApi = {
   projects: () => ipcRenderer.invoke(IPC.projects),
   saveProjects: (list) => ipcRenderer.send(IPC.saveProjects, list),
   onProjects: (listener) => void ipcRenderer.on(IPC.projectsChanged, (_e, list: Project[]) => listener(list)),
+  realpaths: (paths) => ipcRenderer.invoke(IPC.realpaths, paths),
   onApiRequest: (listener) =>
     void ipcRenderer.on(IPC.apiRequest, (_e, id: number, request: ApiRequest) => {
       void Promise.resolve(listener(request)).then(

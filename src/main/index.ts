@@ -14,7 +14,7 @@ import { Ptys } from './pty'
 import { SessionStore, type Bounds } from './session'
 import { SettingsStore } from './settings'
 import { Updater, type UpdateState } from './update'
-import { readFileSync } from 'node:fs'
+import { readFileSync, realpathSync } from 'node:fs'
 import { NotifyServer } from './notify'
 import { apiToken, presencePath, removePresence, writePresence } from './api'
 import { copyInto, listDir, makeDir, moveInto, moveTo, readHead, type OpResult } from './files'
@@ -334,6 +334,18 @@ notify.api = {
       send(host, IPC.apiRequest, id, request)
     }),
 }
+ipcMain.handle(IPC.realpaths, (_e, paths: unknown) =>
+  Array.isArray(paths)
+    ? paths.slice(0, 512).map((p) => {
+        if (typeof p !== 'string') return ''
+        try {
+          return realpathSync.native(p)
+        } catch {
+          return p
+        }
+      })
+    : [],
+)
 ipcMain.on(IPC.apiReply, (_e, id: unknown, reply: unknown) => {
   const done = typeof id === 'number' ? pendingApi.get(id) : undefined
   if (!done) return
