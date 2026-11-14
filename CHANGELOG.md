@@ -9,6 +9,11 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- Pictures in the terminal (`@dskripchenko/terminal` 0.8.0): sixel and the
+  kitty graphics protocol — what chafa, timg, yazi, matplotlib's backends
+  draw — shown over their cells, scrolled with the text, cleared with the
+  screen. Only what comes in the output is shown, never a file a program
+  names. Pictures are not brought back after a restart (the text is).
 - Commands as blocks (`@dskripchenko/terminal` 0.7.0): a command's mark, or
   a right click in its output, opens its menu — copy the command, its output,
   or both as Markdown; run it again (when the shell waits at its prompt).

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { shellEnv, shellOf, Tail } from '../../src/main/pty'
+import { shellEnv, shellOf, Tail, withoutPictures } from '../../src/main/pty'
 
 describe('a pane’s last output', () => {
   it('keeps the last part, cut after a line break', () => {
@@ -43,3 +43,12 @@ describe('the shell and its environment', () => {
   })
 })
 
+
+describe('the output kept for a restart', () => {
+  it('without pictures: whole ones, the end of one cut at the start, one still coming', () => {
+    expect(withoutPictures('a\x1b_Ga=T;AAAA\x1b\\b\x1bP0;1q#0!5~\x1b\\c')).toBe('abc')
+    expect(withoutPictures('QUFBQUFB\x1b\\after\x1b[31mred')).toBe('after\x1b[31mred')
+    expect(withoutPictures('before\x1b_Ga=T;AAA')).toBe('before')
+    expect(withoutPictures('\x1b]0;title\x1b\\text')).toBe('\x1b]0;title\x1b\\text')
+  })
+})

@@ -38,14 +38,31 @@ export class Tail {
     this.size = 0
   }
 
-  /** The text kept, cut at the limit — after a line break, so no row starts in its middle. */
+  /**
+   * The text kept, cut at the limit — after a line break, so no row starts in
+   * its middle. Pictures (DCS and APC strings) are not brought back: taken out,
+   * and the end of one cut at the start (its data would show as text) too.
+   */
   text(): string {
-    const all = this.parts.join('')
+    const all = withoutPictures(this.parts.join(''))
     if (all.length <= this.limit) return all
     const cut = all.slice(all.length - this.limit)
     const nl = cut.indexOf('\n')
     return nl >= 0 ? cut.slice(nl + 1) : cut
   }
+}
+
+/** DCS and APC strings (sixel, kitty pictures) out of output; one cut short at either end too. */
+export function withoutPictures(text: string): string {
+  // eslint-disable-next-line no-control-regex -- escape sequences are what is taken out
+  let out = text.replace(/\x1b[P_][\s\S]*?\x1b\\/g, '')
+  // The rest of one whose start was cut off: up to its terminator, with no other escape before it.
+  const firstEsc = out.indexOf('\x1b')
+  if (firstEsc >= 0 && out[firstEsc + 1] === '\\') out = out.slice(firstEsc + 2)
+  // One still coming at the end.
+  // eslint-disable-next-line no-control-regex -- the same
+  const open = out.search(/\x1b[P_][^\x1b]*$/)
+  return open >= 0 ? out.slice(0, open) : out
 }
 
 /** The shell people use: theirs on macOS and Linux, PowerShell on Windows. */

@@ -26,7 +26,7 @@
   "devDependencies": {
     "@dskripchenko/embed": "1.21.0",
     "@dskripchenko/shell-integration": "workspace:*",
-    "@dskripchenko/terminal": "^0.7.0",
+    "@dskripchenko/terminal": "^0.8.0",
     "@dskripchenko/ui": "^1.59.0",
     "@eslint/js": "10.0.1",
     "@playwright/test": "1.64.1",

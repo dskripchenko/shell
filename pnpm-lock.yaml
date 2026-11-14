@@ -19,8 +19,8 @@ importers:
         specifier: workspace:*
         version: link:packages/shell-integration
       '@dskripchenko/terminal':
-        specifier: ^0.7.0
-        version: 0.7.0
+        specifier: ^0.8.0
+        version: 0.8.0
       '@dskripchenko/ui':
         specifier: ^1.59.0
         version: 1.59.0(vue@3.5.33(typescript@6.0.3))
@@ -112,8 +112,8 @@ packages:
     resolution: {integrity: sha512-da8l9z7h01QmOPKrFj9QXcsvTwPF7IAOgI11GJIHoga0Eobo64nGyP7gBlWHMNaEXNidGEO4ynkA32GyWH9Tdg==}
     engines: {node: '>=20'}
 
-  '@dskripchenko/terminal@0.7.0':
-    resolution: {integrity: sha512-2Q19N0H9iMIOyJbM1bgwnHH16pEDiESY7ZvwVmlCz3tAemBIl253Vk+FyPlrsEAIigmMMG6QpGcU/VteZmu1lg==}
+  '@dskripchenko/terminal@0.8.0':
+    resolution: {integrity: sha512-uAkvVoVL4hgIuONK9+C+oXM6tvnN0rzHZmAU4NUEBlWOUs+nhDRWZVRZONBfXKiv/OHmFtzaDG/t6mOCqDfMzg==}
     engines: {node: '>=20'}
 
   '@dskripchenko/ui@1.59.0':
@@ -2203,7 +2203,7 @@ snapshots:
 
   '@dskripchenko/syntax@0.4.1': {}
 
-  '@dskripchenko/terminal@0.7.0': {}
+  '@dskripchenko/terminal@0.8.0': {}
 
   '@dskripchenko/ui@1.59.0(vue@3.5.33(typescript@6.0.3))':
     dependencies:
