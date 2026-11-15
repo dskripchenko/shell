@@ -19,6 +19,7 @@ pnpm lint && pnpm typecheck                 # eslint; vue-tsc
 pnpm test:e2e                               # сборка + Playwright с настоящим Electron, tests/e2e
 pnpm exec playwright test -g "restart"      # один e2e-тест (после pnpm build)
 pnpm dist                                   # переносные архивы в release/
+SHELL_APP=<исполняемый> SHELL_ARCHIVE=<архив> pnpm exec playwright test -c playwright.package.config.ts  # собранная программа обновляет себя (tests/package; в release.yml на трёх ОС)
 pnpm build && pnpm readme:shots             # скриншоты docs/images (tests/readme, ImageMagick; без личных данных — проверять глазами)
 TERMINAL_DIST=../terminal/dist pnpm build   # собрать против локальной сборки @dskripchenko/terminal
 ```
