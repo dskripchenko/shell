@@ -24,7 +24,7 @@ kbd:empty { display: none; }
 /* Title bar: the group's tabs, dragging the window by its empty part. */
 .titlebar { height: 40px; flex: none; display: flex; align-items: stretch; background: var(--uid-surface-raised); border-bottom: 1px solid var(--uid-border-subtle); -webkit-app-region: drag; }
 .titlebar button, .titlebar [role='tab'] { -webkit-app-region: no-drag; }
-.traffic { width: 76px; flex: none; border-right: 1px solid var(--uid-border-subtle); }
+.traffic { width: 92px; flex: none; border-right: 1px solid var(--uid-border-subtle); }
 .titlebar-fill { flex: 1; }
 .titlebar-actions { display: flex; align-items: center; gap: 4px; padding: 0 10px; }
 .window-controls { width: 138px; flex: none; }
@@ -130,6 +130,9 @@ kbd:empty { display: none; }
 .settings-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .settings-row > span { display: flex; flex-direction: column; gap: 6px; }
 .settings-check { display: flex; align-items: center; gap: 8px; color: var(--uid-text-primary) !important; font-size: 13px !important; }
+.settings-update-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.settings-version { color: var(--uid-text-primary); font-size: 13px; font-variant-numeric: tabular-nums; }
+.settings-note { margin: 0; color: var(--uid-text-secondary); font-size: 12px; overflow-wrap: anywhere; }
 .status-secure { font-size: 11px; color: var(--uid-color-warning-text); }
 .overlay.clear { background: transparent; }
 .block-menu { position: fixed; min-width: 220px; display: flex; flex-direction: column; padding: 4px; background: var(--uid-surface-overlay); border: 1px solid var(--uid-border-default); border-radius: var(--uid-radius-md); box-shadow: var(--uid-shadow-lg); }

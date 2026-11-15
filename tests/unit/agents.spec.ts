@@ -23,18 +23,34 @@ describe('which command is an agent', () => {
 describe('what an agent is doing', () => {
   const run = (steps: [AgentInput, number][]): AgentState | null => steps.reduce<AgentState | null>((s, [input, now]) => nextAgent(s, input, now, A), null)
 
-  it('works while it writes; its turn is done when it goes quiet; looked at, done is seen', () => {
+  it('started with no task, waits for one: its screen moving is a redraw, typing a prompt is not work', () => {
     let s = run([[{ kind: 'command', text: 'claude' }, 0], [{ kind: 'output' }, 100]])
+    expect(s).toMatchObject({ name: 'claude', status: 'idle' })
+    s = nextAgent(s, { kind: 'input' }, 200, A)
+    expect(s!.status).toBe('idle')
+    expect(nextAgent(s, { kind: 'output' }, 300, A)!.status).toBe('idle')
+  })
+
+  it('given a task, works while it writes; its turn is done when it goes quiet; looked at, done is seen', () => {
+    let s = run([[{ kind: 'command', text: 'claude' }, 0], [{ kind: 'input', submit: true }, 50], [{ kind: 'output' }, 100]])
     expect(s).toMatchObject({ name: 'claude', status: 'running' })
     s = nextAgent(s, { kind: 'tick' }, 100 + QUIET_MS / 2, A)
     expect(s!.status).toBe('running')
     s = nextAgent(s, { kind: 'tick' }, 100 + QUIET_MS + 1, A)
     expect(s!.status).toBe('done')
+    // Its tab shown again, it redraws: not work.
+    expect(nextAgent(s, { kind: 'output' }, 5000, A)!.status).toBe('done')
     s = nextAgent(s, { kind: 'seen' }, 5000, A)
     expect(s!.status).toBe('idle')
-    // Seen and quiet: no mark until it writes again; then it works again.
     expect(nextAgent(s, { kind: 'tick' }, 99_999, A)!.status).toBe('idle')
-    expect(nextAgent(s, { kind: 'output' }, 100_000, A)!.status).toBe('running')
+    expect(nextAgent(s, { kind: 'output' }, 100_000, A)!.status).toBe('idle')
+    s = nextAgent(s, { kind: 'input', submit: true }, 100_001, A)
+    expect(nextAgent(s, { kind: 'output' }, 100_002, A)!.status).toBe('running')
+  })
+
+  it('a task on its command line: works from the start', () => {
+    expect(run([[{ kind: 'command', text: 'claude "fix the tests"' }, 0]])!.status).toBe('running')
+    expect(run([[{ kind: 'command', text: 'claude --continue' }, 0]])!.status).toBe('idle')
   })
 
   it('asks for the person: waiting until the person types; its own redraws do not end it', () => {

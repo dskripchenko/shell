@@ -93,7 +93,8 @@ export function onInput(paneId: string, data: string): void {
   if (!ui.agents[paneId]) return
   // eslint-disable-next-line no-control-regex -- an answer starts with ESC
   if (/^\x1b\[[\d;?>=]*[Rcnyt]$/.test(data) || data.startsWith('\x1b]') || data === '\x1b[I' || data === '\x1b[O') return
-  apply(paneId, { kind: 'input' })
+  // Enter typed, not pasted: a pasted line break does not send the prompt.
+  apply(paneId, { kind: 'input', submit: data.endsWith('\r') && !data.includes('\x1b[200~') })
 }
 
 /** Time passing and the person looking: run every second. */

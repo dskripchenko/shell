@@ -6,9 +6,11 @@ import { _electron as electron } from '@playwright/test'
 
 const mac = process.platform === 'darwin'
 
-// A stand-in for an agent: it works a second (a spinner), asks for permission
+// A stand-in for an agent: it waits for a task, works a second (a spinner), asks for permission
 // as Claude Code does (OSC 9), waits for the answer, says it and ends.
 const FAKE_AGENT = `#!/bin/sh
+printf '> '
+read task
 i=0
 while [ $i -lt 12 ]; do printf '\\râ ‹ thinking %s' $i; sleep 0.1; i=$((i+1)); done
 printf '\\n\\033]9;Claude needs your permission\\007'
@@ -38,6 +40,11 @@ test('an agent started from the palette: working, waiting for the person, done â
   const tab = page.locator('.tab.active')
   await expect(tab.locator('.tab-name')).toHaveText('claude')
 
+  // Started, it waits for a task: no mark; given one, it works.
+  await page.waitForTimeout(1500)
+  await expect(tab.locator('.agent-mark')).toHaveCount(0)
+  await page.keyboard.type('go')
+  await page.keyboard.press('Enter')
   await expect(tab.locator('.agent-mark.running')).toBeVisible({ timeout: 20_000 })
   await expect(tab.locator('.agent-mark.waiting')).toBeVisible({ timeout: 20_000 })
   await expect(page.locator('.group-row.active .agent-mark.waiting')).toBeVisible()

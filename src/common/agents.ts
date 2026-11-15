@@ -21,6 +21,12 @@ export interface AgentState {
   ended?: boolean
   /** It tells its turns itself (shell-notify, its hooks): quiet is not taken for done. */
   precise?: boolean
+  /**
+   * The person gave it a task (a prompt on its command line, Enter in it, an answer to its
+   * question) and it has not gone quiet since: only then its output is taken for work. Without
+   * one, its screen moving is a redraw (started, resized, its tab shown), not work.
+   */
+  turn?: boolean
 }
 
 export const DEFAULT_AGENTS = ['claude', 'codex', 'grok', 'gemini', 'aider', 'opencode', 'cursor-agent', 'amp', 'qwen', 'goose']
@@ -33,6 +39,11 @@ export const QUIET_MS = 3000
  * assignments and a runner (`npx`, `bunx`, `pnpm dlx`…), by its file name.
  */
 export function agentOf(command: string, agents: string[]): string | null {
+  return agentCall(command, agents)?.name ?? null
+}
+
+/** The agent a command line starts and whether it is given a task there (a word that is not an option). */
+function agentCall(command: string, agents: string[]): { name: string; task: boolean } | null {
   const words = command.trim().split(/\s+/).filter(Boolean)
   let i = 0
   while (i < words.length && /^[A-Za-z_][A-Za-z0-9_]*=/.test(words[i]!)) i++
@@ -45,7 +56,8 @@ export function agentOf(command: string, agents: string[]): string | null {
   const word = words[i]
   if (!word) return null
   const name = word.split(/[\\/]/).pop()!.replace(/\.(exe|cmd|ps1)$/i, '').replace(/@[^@]*$/, '').toLowerCase()
-  return agents.includes(name) ? name : null
+  if (!agents.includes(name)) return null
+  return { name, task: words.slice(i + 1).some((w) => !w.startsWith('-')) }
 }
 
 export type AgentInput =
@@ -54,8 +66,8 @@ export type AgentInput =
   | { kind: 'notify'; text: string }
   | { kind: 'bell' }
   | { kind: 'output' }
-  /** The person typed in the pane. */
-  | { kind: 'input' }
+  /** The person typed in the pane; `submit`: it ended with Enter. */
+  | { kind: 'input'; submit?: boolean }
   /** The pane was looked at: a done turn is seen. */
   | { kind: 'seen' }
   /** Time passing: a quiet agent's turn is done. */
@@ -67,8 +79,10 @@ export type AgentInput =
 export function nextAgent(state: AgentState | null, input: AgentInput, now: number, agents: string[]): AgentState | null {
   switch (input.kind) {
     case 'command': {
-      const name = agentOf(input.text, agents)
-      return name ? { name, status: 'running', lastOutput: now } : null
+      const call = agentCall(input.text, agents)
+      if (!call) return null
+      // Started with no task, it waits for one: no mark until the person gives it.
+      return { name: call.name, status: call.task ? 'running' : 'idle', lastOutput: now, turn: call.task }
     }
     case 'end':
       if (!state) return null
@@ -81,17 +95,21 @@ export function nextAgent(state: AgentState | null, input: AgentInput, now: numb
       if (!state) return null
       // A waiting agent redraws its question; only the person's answer moves it on. One that tells
       // its turns itself is not moved by its screen.
-      if (state.status === 'waiting' || state.ended || state.precise) return state
+      // Without a task given, its screen moving is a redraw.
+      if (state.status === 'waiting' || state.ended || state.precise || !state.turn) return state
       return { ...state, status: 'running', lastOutput: now }
     case 'input':
       if (!state || state.ended) return state
-      return { ...state, status: 'running', lastOutput: now, message: undefined }
+      // Typing a prompt is not a task yet; Enter is. Any key answers a question (a menu takes digits).
+      if (state.status !== 'waiting' && !input.submit) return state
+      if (state.precise) return { ...state, status: state.status === 'waiting' ? 'running' : state.status, message: undefined }
+      return { ...state, status: 'running', lastOutput: now, message: undefined, turn: true }
     case 'seen':
       // An ended agent, seen, is gone from its pane; a turn done, seen, leaves it idle.
       if (state?.ended) return null
       return state && state.status === 'done' ? { ...state, status: 'idle' } : state
     case 'tick':
-      if (state && !state.precise && state.status === 'running' && now - state.lastOutput > QUIET_MS) return { ...state, status: 'done' }
+      if (state && !state.precise && state.status === 'running' && now - state.lastOutput > QUIET_MS) return { ...state, status: 'done', turn: false }
       return state
     case 'signal': {
       const base: AgentState = state && !state.ended ? state : { name: input.agent ?? 'agent', status: 'running', lastOutput: now }
