@@ -2,8 +2,10 @@ name: release
 
 # The portable builds: a zip for macOS (Apple Silicon and Intel) and Windows,
 # an AppImage for Linux, each built on its own system with a .sha256 beside it.
-# A tag `v<version>` publishes them with their provenance; on a pull request
-# touching the packaging the same builds run and nothing is published.
+# Each is then unpacked and run with nothing of the development setup around
+# it, and updates itself to a later version (tests/package, as in folio). A tag
+# `v<version>` publishes them with their provenance; on a pull request touching
+# the packaging the same builds and checks run and nothing is published.
 
 on:
   push:
@@ -14,6 +16,9 @@ on:
       - .github/workflows/release.yml
       - scripts/checksums.mjs
       - src/main/dataDir.ts
+      - src/main/update.ts
+      - tests/package/**
+      - playwright.package.config.ts
 
 permissions:
   contents: read
@@ -56,6 +61,38 @@ jobs:
         run: pnpm dist
       - name: Checksums
         run: node scripts/checksums.mjs release
+
+      - name: Run the macOS build (Apple Silicon)
+        if: runner.os == 'macOS'
+        run: |
+          zip="$(ls release/shell-*-mac-arm64.zip)"
+          mkdir -p "$RUNNER_TEMP/app"
+          ditto -x -k "$zip" "$RUNNER_TEMP/app"
+          SHELL_APP="$RUNNER_TEMP/app/shell.app/Contents/MacOS/shell" SHELL_ARCHIVE="$PWD/$zip" \
+            pnpm exec playwright test -c playwright.package.config.ts
+
+      - name: Run the Windows build
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $zip = (Get-ChildItem release\shell-*-win-x64.zip).FullName
+          $dir = Join-Path $env:RUNNER_TEMP 'app'
+          New-Item -ItemType Directory -Force $dir | Out-Null
+          tar -xf $zip -C $dir
+          $env:SHELL_APP = Join-Path $dir 'shell.exe'
+          $env:SHELL_ARCHIVE = $zip
+          pnpm exec playwright test -c playwright.package.config.ts
+
+      # No FUSE on the runner: the AppImage unpacks itself and runs.
+      - name: Run the Linux build
+        if: runner.os == 'Linux'
+        run: |
+          image="$(ls release/shell-*-linux-x64.AppImage)"
+          mkdir -p "$RUNNER_TEMP/app"
+          cp "$image" "$RUNNER_TEMP/app/shell.AppImage"
+          chmod +x "$RUNNER_TEMP/app/shell.AppImage"
+          APPIMAGE_EXTRACT_AND_RUN=1 SHELL_APP="$RUNNER_TEMP/app/shell.AppImage" APPIMAGE_FILE="$RUNNER_TEMP/app/shell.AppImage" SHELL_ARCHIVE="$PWD/$image" \
+            xvfb-run --auto-servernum pnpm exec playwright test -c playwright.package.config.ts
       - name: Attest what was built
         if: startsWith(github.ref, 'refs/tags/v')
         uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
@@ -71,6 +108,12 @@ jobs:
             release/shell-*.AppImage
             release/shell-*.sha256
           if-no-files-found: error
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: failure()
+        with:
+          name: package-results-${{ runner.os }}
+          path: test-results
 
   publish:
     needs: build
