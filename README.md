@@ -12,7 +12,7 @@ on keys of your own — and, next, AI agents in their panes, files the Midnight
 Commander way, documents with live diagrams. Portable and offline: no
 installer, no account, no telemetry.
 
-> Status: **0.8.** Stage 1 — groups, tabs, splits, a palette, keys of your own
+> Status: **0.9.** Stage 1 — groups, tabs, splits, a palette, keys of your own
 > (on any keyboard layout), `config.toml`, profiles, imported themes, a
 > drop-down window, the session and each pane's output back after a restart,
 > updates. Stage 2 — shell integration in zsh, bash and PowerShell; AI

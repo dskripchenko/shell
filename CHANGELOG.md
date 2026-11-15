@@ -7,6 +7,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-11-15
+
+Updates from the settings, as in folio; agents' marks only for real work.
+
 ### Added
 
 - Updates in the settings, as in folio: the version, a *Check now* button that becomes *Restart and update to …* once the update is downloaded, the download's progress, and the daily check switch. A check asked for (from the settings or the palette) says its outcome: the latest version, an update ready, or why it failed.

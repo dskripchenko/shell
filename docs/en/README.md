@@ -7,7 +7,7 @@ changes with diffs, files the Midnight Commander way, documents with live
 diagrams, SSH hosts. Portable and offline: no installer, no account, no
 telemetry.
 
-> Status: **0.8** — download the archive for your system from the [latest release](https://github.com/dskripchenko/shell/releases/latest).
+> Status: **0.9** — download the archive for your system from the [latest release](https://github.com/dskripchenko/shell/releases/latest).
 
 - [Guide](guide.md) — what it does and how: groups, agents, files, the viewer,
   projects, settings, keys

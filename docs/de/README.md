@@ -7,7 +7,7 @@ sie arbeiten oder auf Sie warten, ihre Änderungen mit Diffs, Dateien wie im
 Midnight Commander, Dokumente mit lebenden Diagrammen, SSH-Hosts. Portabel und
 offline: kein Installer, kein Konto, keine Telemetrie.
 
-> Stand: **0.8** — das Archiv für Ihr System finden Sie im [neuesten Release](https://github.com/dskripchenko/shell/releases/latest).
+> Stand: **0.9** — das Archiv für Ihr System finden Sie im [neuesten Release](https://github.com/dskripchenko/shell/releases/latest).
 
 - [Anleitung](guide.md) — was es kann und wie: Gruppen, Agenten, Dateien,
   Betrachter, Projekte, Einstellungen, Tasten
