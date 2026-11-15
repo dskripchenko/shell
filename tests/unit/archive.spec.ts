@@ -92,6 +92,13 @@ describe('archives as folders', () => {
     expect('local' in fetched && readFileSync(fetched.local, 'utf8')).toBe('# Hi\n')
   })
 
+  it("macOS's own attributes are not shown: ._name beside name, the __MACOSX folder", async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'shell-zip-'))
+    const file = join(dir, 'a.zip')
+    writeFileSync(file, zip({ 'a.txt': 'a', '._a.txt': 'meta', '._lonely': 'kept', '__MACOSX/._a.txt': 'meta' }))
+    expect((await listArchive(file, '')).map((e) => e.name).sort()).toEqual(['._lonely', 'a.txt'])
+  })
+
   it.skipIf(process.platform === 'win32')('a tar.gz: read in one pass, long names too', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'shell-tgz-'))
     const src = join(dir, 'src')

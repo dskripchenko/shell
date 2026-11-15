@@ -175,6 +175,20 @@ async function tarPass(file: string, gz: boolean, take: (item: ArchiveItem) => (
 
 // Listing and taking out -------------------------------------------------------------------
 
+/**
+ * The archive without what macOS adds for its own file attributes, hidden by Finder too:
+ * `._name` beside `name` (its tar), the `__MACOSX` folder (Archive Utility's zip).
+ */
+export function withoutMacMeta(items: ArchiveItem[]): ArchiveItem[] {
+  const paths = new Set(items.map((i) => i.path))
+  return items.filter((i) => {
+    if (i.path === '__MACOSX' || i.path.startsWith('__MACOSX/')) return false
+    const slash = i.path.lastIndexOf('/')
+    const name = i.path.slice(slash + 1)
+    return !(i.kind === 'file' && name.startsWith('._') && paths.has(i.path.slice(0, slash + 1) + name.slice(2)))
+  })
+}
+
 const cache = new Map<string, { key: string; items: ArchiveItem[] }>()
 
 /** Every entry of an archive, folders implied by the files' paths too. */
@@ -185,7 +199,7 @@ export async function archiveItems(file: string): Promise<ArchiveItem[]> {
   if (hit?.key === key) return hit.items
   const kind = archiveKind(file)
   if (!kind) throw new Error(msg().main.notArchive)
-  const items = kind === 'zip' ? await zipItems(file) : await tarPass(file, kind === 'tgz', () => null)
+  const items = withoutMacMeta(kind === 'zip' ? await zipItems(file) : await tarPass(file, kind === 'tgz', () => null))
   // Folders only implied by a file inside them.
   const have = new Set(items.map((i) => i.path))
   for (const i of [...items]) {
