@@ -10,6 +10,7 @@ import type { Messages } from '../common/i18n'
 import { api, baseName, commit, newId, say, toFolio, ui, ws } from './store'
 import * as agents from './agents'
 import * as terminals from './terminals'
+import { checkUpdate, restartToUpdate } from './updates'
 
 export type GroupKey = keyof Messages['groups']
 
@@ -125,8 +126,8 @@ const list: Omit<Command, 'title'>[] = [
   { id: 'claude.hooksOff', group: 'agents', run: () => void api.claudeHooks(false).then(say) },
   { id: 'folio.review', group: 'folio', hidden: () => !ui.folio, run: () => void folioRepo('review') },
   { id: 'folio.project', group: 'folio', hidden: () => !ui.folio, run: () => void folioRepo('project') },
-  { id: 'update.check', group: 'window', run: () => api.checkUpdate() },
-  { id: 'update.restart', group: 'window', run: () => api.restartToUpdate() },
+  { id: 'update.check', group: 'window', run: () => checkUpdate() },
+  { id: 'update.restart', group: 'window', run: () => restartToUpdate() },
   { id: 'font.bigger', group: 'window', run: () => fontBy(1) },
   { id: 'font.smaller', group: 'window', run: () => fontBy(-1) },
   { id: 'font.reset', group: 'window', run: () => fontBy(null) },

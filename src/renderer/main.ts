@@ -14,6 +14,7 @@ import * as triggers from './triggers'
 import { useLang } from './i18n'
 import { api, commit, findFolio, newId, onCommit, ui, ws } from './store'
 import * as terminals from './terminals'
+import { onUpdateInfo } from './updates'
 import { applyChrome, currentTheme } from './theme'
 
 async function start(): Promise<void> {
@@ -128,7 +129,7 @@ async function start(): Promise<void> {
     }
   }
   ui.update = await api.updateState()
-  api.onUpdate((info) => (ui.update = info))
+  api.onUpdate(onUpdateInfo)
   install()
   createApp(App).mount('#app')
 }

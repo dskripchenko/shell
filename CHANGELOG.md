@@ -7,6 +7,16 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added
+
+- Updates in the settings, as in folio: the version, a *Check now* button that becomes *Restart and update to …* once the update is downloaded, the download's progress, and the daily check switch. A check asked for (from the settings or the palette) says its outcome: the latest version, an update ready, or why it failed.
+
+### Fixed
+
+- An agent started with no task shows no "working" mark: its output counts as work only after the person gives it a task (Enter, an answer to its question, or a prompt on its command line). Typing a prompt, redrawing on resize, or showing its tab no longer starts the spinner.
+- On macOS the first tab no longer sits right against the window buttons.
+- Archives made on a Mac no longer show macOS's attribute files in the file panels: `._name` beside `name` (tar) and the `__MACOSX` folder (zip); they are not extracted either.
+
 ## [0.8.0] - 2026-11-14
 
 The interface in four languages: English, Russian, German, Chinese.

@@ -112,6 +112,9 @@ ignore-case = true
 "ctrl+a>c" = "tab.new"       # 组合键序列，类似 tmux
 ```
 
+**更新**在设置的“更新”部分：当前版本、“立即检查”按钮（或命令面板中的命令），并且每天自动检查一次。
+新版本下载后会与发布的校验和比对；“重启并更新”立即安装，否则在退出时安装。更新从不触碰 `shell-data`。
+
 主题：把 `.itermcolors`、Ghostty 主题、Windows Terminal 的 `.json` 和 base16 的 `.yaml`
 放进 `shell-data/themes/`，并在 `[theme]` 中写上名称。
 

@@ -145,6 +145,12 @@ ignore-case = true
 "ctrl+a>c" = "tab.new"       # Ketten, wie in tmux
 ```
 
+**Updates** stehen in den Einstellungen, Abschnitt „Updates“: die Version, die
+Schaltfläche *Jetzt prüfen* (oder der Befehl der Palette) und einmal am Tag von
+selbst. Eine neue Version wird geladen und mit der Prüfsumme des Releases
+verglichen; *Neu starten und aktualisieren* setzt sie sofort ein, sonst beim
+Beenden. Ein Update berührt `shell-data` nie.
+
 Themes: `.itermcolors`, Ghostty-Themes, Windows-Terminal-`.json` und
 base16-`.yaml` in `shell-data/themes/`, benannt in `[theme]`.
 

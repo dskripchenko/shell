@@ -5,6 +5,7 @@ import { DEFAULTS } from '../../common/config'
 import { api, say, ui } from '../store'
 import { m } from '../i18n'
 import { LANGS, messagesOf } from '../../common/i18n'
+import { checkUpdate, restartToUpdate, updateText } from '../updates'
 
 /**
  * The settings with fields: each change written into config.toml at once
@@ -17,6 +18,10 @@ const themes = computed(() => ['system', ...(ui.settings?.themes.map((t) => t.na
 const errors = ref<Record<string, string>>({})
 const panel = ref<HTMLElement | null>(null)
 const mac = ui.os === 'darwin'
+const update = computed(() => ui.update)
+const updateNote = computed(() => (update.value ? (update.value.available ? updateText(update.value) : m().settings.devBuild) : null))
+const updateBusy = computed(() => ['checking', 'downloading'].includes(update.value?.state.status ?? ''))
+const readyVersion = computed(() => (update.value?.state.status === 'ready' ? update.value.state.version : null))
 
 onMounted(() => panel.value?.querySelector<HTMLElement>('input, select')?.focus())
 
@@ -122,8 +127,17 @@ function openFile(): void {
           <legend>{{ m().settings.agents }}</legend>
           <label class="settings-check"><input type="checkbox" :checked="config.agents.notify" @change="set('agents', 'notify', checked($event))" /> {{ m().settings.notify }}</label>
           <label class="settings-check"><input type="checkbox" :checked="config.folio.enabled" @change="set('folio', 'enabled', checked($event))" /> {{ m().settings.folio }}</label>
-          <label class="settings-check"><input type="checkbox" :checked="config.updates.auto" @change="set('updates', 'auto', checked($event))" /> {{ m().settings.updates }}</label>
           <label v-if="mac" class="settings-check"><input type="checkbox" :checked="config.security.secureKeyboard" @change="set('security', 'secure-keyboard', checked($event))" /> {{ m().settings.secure }}</label>
+        </fieldset>
+        <fieldset class="settings-update">
+          <legend>{{ m().settings.updatesTitle }}</legend>
+          <div class="settings-update-row">
+            <span class="settings-version">{{ m().settings.version(update?.current ?? '') }}</span>
+            <button v-if="readyVersion" type="button" class="button primary" data-testid="update-restart" @click="restartToUpdate">{{ m().settings.restartUpdate(readyVersion) }}</button>
+            <button v-else type="button" class="button" data-testid="update-check" :disabled="!update?.available || updateBusy" @click="checkUpdate">{{ m().settings.checkNow }}</button>
+          </div>
+          <p v-if="updateNote" class="settings-note" role="status" data-testid="update-note">{{ updateNote }}</p>
+          <label class="settings-check"><input type="checkbox" :checked="config.updates.auto" @change="set('updates', 'auto', checked($event))" /> {{ m().settings.updates }}</label>
         </fieldset>
         <p v-for="(e, id) in errors" :key="id" class="dialog-error" role="alert">{{ e }}</p>
       </div>

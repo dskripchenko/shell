@@ -13,8 +13,8 @@ export function dataFolder(extra = ''): string {
   return dir
 }
 
-export async function launch(data: string): Promise<{ app: ElectronApplication; page: Page }> {
-  const app = await electron.launch({ args: ['.'], env: { ...process.env, SHELL_DATA: data, SHELL_E2E: '1', PS1: '$ ' } })
+export async function launch(data: string, env: Record<string, string> = {}): Promise<{ app: ElectronApplication; page: Page }> {
+  const app = await electron.launch({ args: ['.'], env: { ...process.env, SHELL_DATA: data, SHELL_E2E: '1', PS1: '$ ', ...env } })
   const page = await app.firstWindow()
   await page.waitForSelector('.term-host .dsk-term')
   return { app, page }

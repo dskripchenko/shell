@@ -133,6 +133,12 @@ ignore-case = true
 "ctrl+a>c" = "tab.new"       # chains, as in tmux
 ```
 
+**Updates** are in the settings' Updates section: the version, a *Check now*
+button (or the palette's command), and a check once a day on its own. A new
+version is downloaded and checked against the release's checksum; *Restart and
+update* puts it in place at once, otherwise it goes in on quitting. An update
+never touches `shell-data`.
+
 Themes: `.itermcolors`, Ghostty themes, Windows Terminal `.json` and base16
 `.yaml` in `shell-data/themes/`, named in `[theme]`.
 
