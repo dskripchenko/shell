@@ -32,6 +32,19 @@ const entries = new Map<string, Entry>()
  * writes and scrolled up into the scrollback: a shell that clears the screen
  * as it starts (ConPTY on Windows does) cannot wipe it.
  */
+/**
+ * Rows to push the output from before up by. ConPTY (Windows) owns the whole
+ * screen: it clears it as the shell starts and paints all of it again on a
+ * resize, so what is shown again must stay in the scrollback even once the
+ * pane is fit taller — as many rows as the tallest pane the screen can hold.
+ */
+function restoredRows(term: Terminal): number {
+  if (ui.os !== 'win32') return term.rows
+  const c = ui.settings?.config
+  const cell = Math.max(6, (c?.font.size ?? 13) + ui.fontDelta) * (c?.font.lineHeight ?? 1.3)
+  return Math.max(term.rows, Math.ceil(window.screen.height / cell))
+}
+
 function restored(rows: number): string {
   return `\x1b[0m\x1b[?1049l\x1b[?25h${MODES_OFF}\r\n\x1b[2m── ${m().pane.restored} ──\x1b[0m` + '\r\n'.repeat(Math.max(1, rows))
 }
@@ -138,7 +151,7 @@ function create(pane: PaneLeaf, replay?: string): Entry {
   term.onTitle((title) => (ui.titles[pane.id] = title))
   // A Windows path in a file URL comes as /C:/Users/…: the drive first.
   term.onCwd((cwd) => (ui.cwds[pane.id] = /^\/[A-Za-z]:/.test(cwd) ? cwd.slice(1) : cwd))
-  if (replay) term.write(replay + restored(term.rows))
+  if (replay) term.write(replay + restored(restoredRows(term)))
   spawn(entry, pane.cwd)
   return entry
 }
