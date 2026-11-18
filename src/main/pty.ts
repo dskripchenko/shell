@@ -1,7 +1,7 @@
 /**
  * Shells in pseudo-terminals, one per pane. What a shell writes is gathered
  * for a few milliseconds and sent to the window in one message (a `cat` of a
- * big file is thousands of pieces), and its last part is kept per pane, so a
+ * big file is thousands of pieces), and its screen is kept per pane, so a
  * pane shows its output again after a restart.
  */
 import { chmodSync, existsSync, statSync } from 'node:fs'
@@ -10,59 +10,73 @@ import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
 import type { IPty } from 'node-pty'
 import { EventReader, integrate, type ShellEvent } from '@dskripchenko/shell-integration'
+import { Terminal } from '@dskripchenko/terminal'
+import { snapshot } from '../common/snapshot'
 
 // The main process is bundled as CommonJS; the tests' runner gives __filename too.
 const require = createRequire(__filename)
 
-/** The last `limit` characters written, kept cheaply: pieces dropped from the front as a whole. */
+/**
+ * A pane's screen as its output draws it, kept in the main process — the
+ * window's own terminal may be gone when it closes — to be saved and shown
+ * again after a restart (see `snapshot`). The raw output is not saved: cut at
+ * any point, it begins inside a program's redraw, and modes it turns on (the
+ * mouse, focus events) would come back with it.
+ */
 export class Tail {
-  private parts: string[] = []
-  private size = 0
+  private term: Terminal | null = null
+  /** The last snapshot, until something changes: a pane left alone is not read again at each save. */
+  private cached: string | null = null
 
-  constructor(private limit: number) {}
+  constructor(
+    private limit: number,
+    private cols = 120,
+    private rows = 40,
+  ) {}
+
+  /** Rows kept above the screen: about what fits in the limit, a hundred characters a line. */
+  private scrollback(): number {
+    return Math.min(10_000, Math.max(200, Math.ceil(this.limit / 100)))
+  }
 
   push(data: string): void {
     if (this.limit <= 0) return
-    this.parts.push(data)
-    this.size += data.length
-    while (this.size - this.parts[0]!.length >= this.limit) this.size -= this.parts.shift()!.length
+    this.term ??= new Terminal({ cols: this.cols, rows: this.rows, scrollback: this.scrollback() })
+    this.term.write(data)
+    this.cached = null
+  }
+
+  resize(cols: number, rows: number): void {
+    this.cols = cols
+    this.rows = rows
+    if (this.term && (this.term.cols !== cols || this.term.rows !== rows)) {
+      this.term.resize(cols, rows)
+      this.cached = null
+    }
   }
 
   setLimit(limit: number): void {
+    const was = this.scrollback()
     this.limit = limit
+    this.cached = null
     if (limit <= 0) this.clear()
+    else if (this.term && this.scrollback() !== was) {
+      // The scrollback's size is the terminal's from the start: what there is goes to a new one.
+      const text = this.text()
+      this.term = null
+      this.push(text)
+    }
   }
 
   clear(): void {
-    this.parts = []
-    this.size = 0
+    this.term = null
+    this.cached = null
   }
 
-  /**
-   * The text kept, cut at the limit — after a line break, so no row starts in
-   * its middle. Pictures (DCS and APC strings) are not brought back: taken out,
-   * and the end of one cut at the start (its data would show as text) too.
-   */
+  /** What there is to show again: the lines with their colours, within the limit. */
   text(): string {
-    const all = withoutPictures(this.parts.join(''))
-    if (all.length <= this.limit) return all
-    const cut = all.slice(all.length - this.limit)
-    const nl = cut.indexOf('\n')
-    return nl >= 0 ? cut.slice(nl + 1) : cut
+    return (this.cached ??= this.term ? snapshot(this.term, this.limit) : '')
   }
-}
-
-/** DCS and APC strings (sixel, kitty pictures) out of output; one cut short at either end too. */
-export function withoutPictures(text: string): string {
-  // eslint-disable-next-line no-control-regex -- escape sequences are what is taken out
-  let out = text.replace(/\x1b[P_][\s\S]*?\x1b\\/g, '')
-  // The rest of one whose start was cut off: up to its terminator, with no other escape before it.
-  const firstEsc = out.indexOf('\x1b')
-  if (firstEsc >= 0 && out[firstEsc + 1] === '\\') out = out.slice(firstEsc + 2)
-  // One still coming at the end.
-  // eslint-disable-next-line no-control-regex -- the same
-  const open = out.search(/\x1b[P_][^\x1b]*$/)
-  return open >= 0 ? out.slice(0, open) : out
 }
 
 /** The shell people use: theirs on macOS and Linux, PowerShell on Windows. */
@@ -191,6 +205,7 @@ export class Ptys {
     this.sessions.set(paneId, session)
     if (!this.tails.has(paneId)) this.tails.set(paneId, new Tail(this.tailLimit))
     const tail = this.tails.get(paneId)!
+    tail.resize(pty.cols, pty.rows)
     const reader = new EventReader()
     const flush = () => {
       session.timer = null
@@ -232,8 +247,11 @@ export class Ptys {
   }
 
   resize(paneId: string, cols: number, rows: number): void {
+    const session = this.sessions.get(paneId)
+    if (!session) return
     try {
-      this.sessions.get(paneId)?.pty.resize(Math.max(2, cols), Math.max(1, rows))
+      session.pty.resize(Math.max(2, cols), Math.max(1, rows))
+      this.tails.get(paneId)?.resize(session.pty.cols, session.pty.rows)
     } catch {
       // The shell has just ended.
     }

@@ -67,6 +67,8 @@ export const ui = reactive({
   /** What each pane's program says about itself: its title (OSC 0/2) and its folder. */
   titles: {} as Record<string, string>,
   cwds: {} as Record<string, string>,
+  /** Each pane's columns×rows, told as its view is fit (the terminal's own size is not reactive). */
+  sizes: {} as Record<string, string>,
   /** Panes whose shell ended with an error, by exit code (Enter starts it again). */
   exited: {} as Record<string, number>,
   branch: null as string | null,

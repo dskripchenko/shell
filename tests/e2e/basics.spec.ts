@@ -12,6 +12,11 @@ test('a shell runs; panes split and close; tabs and groups; the palette in any l
   await type(page, SUM)
   // The first start of a shell can be slow (PowerShell on a CI runner).
   await expect.poll(() => screen(page), { timeout: 30_000 }).toContain('hello-42')
+  // A line filled with spaces to the last column, then the start of it written over — as zsh does before its prompt.
+  if (process.platform !== 'win32') {
+    await type(page, "printf 'A%*s\\rfull-%s\\n' $(($(tput cols)-1)) '' row")
+    await expect.poll(() => screen(page), { timeout: 30_000 }).toContain('full-row')
+  }
 
   // Split right, then down: three panes, the newest focused.
   await page.keyboard.press(`${MOD}+d`)
@@ -71,6 +76,8 @@ test('a shell runs; panes split and close; tabs and groups; the palette in any l
   const history = () => page.evaluate(() => (window as unknown as { shellTest: { text(): string } }).shellTest.text())
   await expect.poll(history).toContain('hello-42')
   await expect.poll(history).toMatch(/hello-42[\s\S]*вывод до перезапуска/)
+  // Shown again at the width it was written for: the line not wrapped before the pane is fit, its start where it was.
+  if (process.platform !== 'win32') expect(await history()).toMatch(/^full-row/m)
   await app.close()
 })
 

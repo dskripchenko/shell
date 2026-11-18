@@ -12,6 +12,7 @@ import { PATH_IN_OUTPUT, splitPathLine } from '../common/viewer'
 import { HIGHLIGHT, regexOf } from '../common/triggers'
 import { themeNamed } from '../common/themes'
 import { m } from './i18n'
+import { MODES_OFF } from '../common/snapshot'
 
 interface Entry {
   id: string
@@ -32,7 +33,7 @@ const entries = new Map<string, Entry>()
  * as it starts (ConPTY on Windows does) cannot wipe it.
  */
 function restored(rows: number): string {
-  return `\x1b[0m\x1b[?1049l\x1b[?25h\r\n\x1b[2m── ${m().pane.restored} ──\x1b[0m` + '\r\n'.repeat(Math.max(1, rows))
+  return `\x1b[0m\x1b[?1049l\x1b[?25h${MODES_OFF}\r\n\x1b[2m── ${m().pane.restored} ──\x1b[0m` + '\r\n'.repeat(Math.max(1, rows))
 }
 
 /** A pane's theme: its profile's, if it names one that exists; else the window's. */
@@ -48,7 +49,10 @@ function options(id: string, profile?: string): TerminalViewOptions {
     fontFamily: c?.font.family,
     fontSize: Math.max(6, (c?.font.size ?? 13) + ui.fontDelta),
     lineHeight: c?.font.lineHeight ?? 1.3,
-    onResize: (cols, rows) => api.resize(id, cols, rows),
+    onResize: (cols, rows) => {
+      api.resize(id, cols, rows)
+      ui.sizes[id] = `${cols}×${rows}`
+    },
     onLink: (url) => api.openExternal(url),
     // A command's block: its menu (copy the command or the output, run it again).
     onCommand: (c, e) => {
@@ -176,6 +180,7 @@ export function prune(w: Workspace): void {
     entries.delete(id)
     delete ui.titles[id]
     delete ui.cwds[id]
+    delete ui.sizes[id]
     delete ui.exited[id]
   }
 }

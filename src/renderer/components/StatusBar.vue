@@ -14,8 +14,10 @@ const cwd = computed(() => {
   return c ? shortPath(c) : ''
 })
 const size = computed(() => {
-  // Read when the workspace changes; the terminal's size itself is not reactive.
+  // The view tells it as it is fit; before that, the terminal's own (not reactive: read when the workspace changes).
   void ws.value
+  const told = ui.sizes[paneId.value]
+  if (told) return told
   const t = terminals.get(paneId.value)?.term
   return t ? `${t.cols}×${t.rows}` : ''
 })

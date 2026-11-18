@@ -1,29 +1,55 @@
 import { describe, expect, it } from 'vitest'
-import { shellEnv, shellOf, Tail, withoutPictures } from '../../src/main/pty'
+import { shellEnv, shellOf, Tail } from '../../src/main/pty'
+
+// eslint-disable-next-line no-control-regex -- the escapes are what is looked at
+const plain = (s: string) => s.replace(/\x1b\[[0-9;:]*m|\x1b\]8;;[^\x1b]*\x1b\\/g, '')
 
 describe('a pane’s last output', () => {
-  it('keeps the last part, cut after a line break', () => {
-    const t = new Tail(12)
+  it('the screen as it was drawn: lines, not the redraws that made them', () => {
+    const t = new Tail(10_000, 40, 10)
+    t.push('first\r\n')
+    // A program draws a frame, then draws it again over the first one.
+    t.push('\x1b[?2026hframe 1\r\nstatus: working\x1b[?2026l')
+    t.push('\x1b[1A\r\x1b[Jframe 2\r\nstatus: \x1b[32mdone\x1b[0m')
+    expect(plain(t.text())).toBe('first\r\nframe 2\r\nstatus: done\r\n')
+    expect(t.text()).toContain('\x1b[0;32mdone')
+  })
+
+  it('no modes come back: the mouse, focus events, the alternate screen', () => {
+    const t = new Tail(10_000, 40, 10)
+    t.push('\x1b[?1000h\x1b[?1006h\x1b[?1004h\x1b[?2004hprompt % ')
+    // eslint-disable-next-line no-control-regex -- the same
+    expect(t.text()).not.toMatch(/\x1b\[\?/)
+    expect(plain(t.text())).toBe('prompt % \r\n')
+  })
+
+  it('zsh’s mark before a prompt, at the width it was written for: no stray row', () => {
+    const t = new Tail(10_000, 20, 5)
+    t.push('out\r\n\x1b[7m%\x1b[0m' + ' '.repeat(19) + '\r\x1b[Kuser % ls')
+    expect(plain(t.text())).toBe('out\r\nuser % ls\r\n')
+  })
+
+  it('a row wrapped at the edge goes on with the next: another width wraps it again', () => {
+    const t = new Tail(10_000, 10, 5)
+    t.push('0123456789abcdef\r\nnext')
+    expect(plain(t.text())).toBe('0123456789abcdef\r\nnext\r\n')
+    t.resize(30, 5)
+    expect(plain(t.text())).toBe('0123456789abcdef\r\nnext\r\n')
+  })
+
+  it('the newest lines that fit the limit; nothing with no room', () => {
+    const t = new Tail(20, 40, 5)
     for (let i = 0; i < 10; i++) t.push(`line ${i}\r\n`)
-    expect(t.text()).toBe('line 9\r\n')
-    expect(t.text().length).toBeLessThanOrEqual(12)
+    expect(plain(t.text())).toBe('line 8\r\nline 9\r\n')
+    t.setLimit(0)
+    t.push('x')
+    expect(t.text()).toBe('')
   })
 
-  it('all of it while it fits; nothing with no room', () => {
-    const t = new Tail(100)
-    t.push('a\r\n')
-    t.push('b')
-    expect(t.text()).toBe('a\r\nb')
-    const none = new Tail(0)
-    none.push('x')
-    expect(none.text()).toBe('')
-  })
-
-  it('a smaller limit applies at once', () => {
-    const t = new Tail(1000)
-    for (let i = 0; i < 50; i++) t.push(`row ${i}\n`)
-    t.setLimit(10)
-    expect(t.text()).toBe('row 49\n')
+  it('a link stays a link', () => {
+    const t = new Tail(1000, 40, 5)
+    t.push('see \x1b]8;;https://example.org\x1b\\here\x1b]8;;\x1b\\ now')
+    expect(t.text()).toContain('\x1b]8;;https://example.org\x1b\\here\x1b]8;;\x1b\\')
   })
 })
 
@@ -40,15 +66,5 @@ describe('the shell and its environment', () => {
     expect(env.ELECTRON_RUN_AS_NODE).toBeUndefined()
     expect(env.npm_config_prefix).toBeUndefined()
     expect(env.SHELL_DATA).toBeUndefined()
-  })
-})
-
-
-describe('the output kept for a restart', () => {
-  it('without pictures: whole ones, the end of one cut at the start, one still coming', () => {
-    expect(withoutPictures('a\x1b_Ga=T;AAAA\x1b\\b\x1bP0;1q#0!5~\x1b\\c')).toBe('abc')
-    expect(withoutPictures('QUFBQUFB\x1b\\after\x1b[31mred')).toBe('after\x1b[31mred')
-    expect(withoutPictures('before\x1b_Ga=T;AAA')).toBe('before')
-    expect(withoutPictures('\x1b]0;title\x1b\\text')).toBe('\x1b]0;title\x1b\\text')
   })
 })

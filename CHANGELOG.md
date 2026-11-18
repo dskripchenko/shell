@@ -7,6 +7,11 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Fixed
+
+- Panes after a restart show the screen they had, not a replay of raw output: each pane's screen and scrollback are kept by a terminal of its own in the main process and saved as plain lines with their colours. An agent's interface no longer comes back as torn, overlapping lines, zsh's prompt mark no longer pushes the prompt to the right, and modes a program left on (the mouse, focus events, bracketed paste, the kitty keyboard) stay off — moving the mouse no longer types escape codes into the shell.
+- The status bar shows the pane's real size, not 80×24, from the moment it is fit.
+
 ## [0.9.0] - 2026-11-15
 
 Updates from the settings, as in folio; agents' marks only for real work.
