@@ -205,7 +205,7 @@ export class Ptys {
     this.sessions.set(paneId, session)
     if (!this.tails.has(paneId)) this.tails.set(paneId, new Tail(this.tailLimit))
     const tail = this.tails.get(paneId)!
-    tail.resize(pty.cols, pty.rows)
+    tail.resize(Math.max(2, opts.cols), Math.max(1, opts.rows))
     const reader = new EventReader()
     const flush = () => {
       session.timer = null
@@ -250,8 +250,10 @@ export class Ptys {
     const session = this.sessions.get(paneId)
     if (!session) return
     try {
-      session.pty.resize(Math.max(2, cols), Math.max(1, rows))
-      this.tails.get(paneId)?.resize(session.pty.cols, session.pty.rows)
+      const size = [Math.max(2, cols), Math.max(1, rows)] as const
+      session.pty.resize(...size)
+      // The size asked for: on Windows node-pty applies it later, its cols and rows are still the old ones.
+      this.tails.get(paneId)?.resize(...size)
     } catch {
       // The shell has just ended.
     }
